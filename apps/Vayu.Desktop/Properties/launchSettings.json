@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Vayu.Desktop (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "Vayu.Desktop (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
