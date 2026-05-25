@@ -1,0 +1,36 @@
+root = true
+
+[*]
+indent_style = space
+indent_size = 4
+end_of_line = crlf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.{json,yml,yaml,md}]
+indent_size = 2
+
+[*.cs]
+# Nullable
+dotnet_diagnostic.CS8600.severity = warning
+dotnet_diagnostic.CS8602.severity = warning
+dotnet_diagnostic.CS8625.severity = warning
+
+# Style
+csharp_style_namespace_declarations = file_scoped:warning
+csharp_using_directive_placement = outside_namespace:warning
+csharp_prefer_braces = true:warning
+csharp_style_var_for_built_in_types = false:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+
+# Naming
+dotnet_naming_rule.async_methods_end_in_async.symbols = method_async_symbol
+dotnet_naming_rule.async_methods_end_in_async.style = async_suffix_style
+dotnet_naming_rule.async_methods_end_in_async.severity = warning
+
+dotnet_naming_symbols.method_async_symbol.applicable_kinds = method
+dotnet_naming_symbols.method_async_symbol.required_modifiers = async
+
+dotnet_naming_style.async_suffix_style.required_suffix = Async
+dotnet_naming_style.async_suffix_style.capitalization = pascal_case
