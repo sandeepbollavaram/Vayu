@@ -1,0 +1,64 @@
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  secret-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Forbid committed env / secret files
+        shell: bash
+        run: |
+          set -e
+          BAD=$(git ls-files | grep -E '(^|/)(\.env(\..*)?$|secrets\.json$|.*\.pfx$|.*\.cer$)' || true)
+          if [ -n "$BAD" ]; then
+            echo "::error::Forbidden secret file(s) committed:"
+            echo "$BAD"
+            exit 1
+          fi
+
+      - name: Scan tracked files for key-shaped strings
+        shell: bash
+        run: |
+          set -e
+          # Patterns we never want to see in committed text files.
+          PATTERNS=(
+            'AIza[0-9A-Za-z_-]{30,}'
+            'sk-[A-Za-z0-9]{20,}'
+            'ghp_[A-Za-z0-9]{30,}'
+            'gho_[A-Za-z0-9]{30,}'
+            'ghs_[A-Za-z0-9]{30,}'
+            'xox[baprs]-[A-Za-z0-9-]{10,}'
+            'Bearer [A-Za-z0-9._-]{20,}'
+            'eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}'
+            '-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----'
+          )
+          HIT=0
+          for p in "${PATTERNS[@]}"; do
+            if git grep -nE "$p" -- ':!**/SECURITY.md' ':!docs/SECURITY.md' ':!docs/GEMINI_SETUP.md' ':!.github/workflows/security.yml'; then
+              HIT=1
+            fi
+          done
+          if [ $HIT -ne 0 ]; then
+            echo "::error::Possible secret detected in tracked files."
+            exit 1
+          fi
+
+      - name: Run security tests
+        if: hashFiles('tests/Vayu.Security.Tests/Vayu.Security.Tests.csproj') != ''
+        run: |
+          echo "Security tests run in ci.yml on Windows; this job only enforces no-secret rules."
