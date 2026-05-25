@@ -1,0 +1,13 @@
+{
+  "$schema": "../../docs/schemas/workflow.schema.json",
+  "id": "morning-startup",
+  "name": "Morning startup",
+  "description": "Open my daily tools and start focus music.",
+  "steps": [
+    { "intent": "ui.summarize",      "args": { "source": "calendar" } },
+    { "intent": "ui.summarize",      "args": { "source": "gmail.important" } },
+    { "intent": "app.launch",        "args": { "app": "vscode" } },
+    { "intent": "app.launch",        "args": { "app": "browser", "url": "https://github.com" } },
+    { "intent": "music.playPlaylist", "args": { "name": "Focus" } }
+  ]
+}
