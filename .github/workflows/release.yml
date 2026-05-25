@@ -1,0 +1,41 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-artifacts:
+    runs-on: windows-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore + Build (Release)
+        run: |
+          dotnet restore Vayu.sln
+          dotnet build Vayu.sln --configuration Release --no-restore
+
+      # Placeholder — actual MSIX + installer steps land with Milestone 7.
+      - name: Stub artifact (until M7)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force out | Out-Null
+          "Vayu ${{ github.ref_name }}" | Out-File out/README.txt
+          Get-FileHash out/README.txt -Algorithm SHA256 | Format-List | Out-File out/SHA256SUMS.txt
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            out/*
+          generate_release_notes: true
