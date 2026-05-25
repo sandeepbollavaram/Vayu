@@ -1,0 +1,67 @@
+# Build output
+bin/
+obj/
+out/
+publish/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio
+.vs/
+.idea/
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Rider / ReSharper
+_ReSharper*/
+*.DotSettings.user
+
+# Test output
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+
+# Local config and secrets — NEVER COMMIT
+*.local.json
+appsettings.Development.json
+secrets.json
+.env
+.env.*
+!.env.example
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# SQLite
+*.db
+*.db-shm
+*.db-wal
+
+# Packaging artifacts
+*.msix
+*.appx
+*.cer
+*.pfx
+*.exe.config
+
+# Crash dumps
+*.dmp
+*.mdmp
