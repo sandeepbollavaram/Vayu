@@ -26,6 +26,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/Vayu.AgentRuntime.Tests/Vayu.AgentRuntime.Tests.csproj" />
     <Project Path="tests/Vayu.Core.Tests/Vayu.Core.Tests.csproj" />
+    <Project Path="tests/Vayu.Logging.Tests/Vayu.Logging.Tests.csproj" />
     <Project Path="tests/Vayu.Memory.Tests/Vayu.Memory.Tests.csproj" />
     <Project Path="tests/Vayu.Permissions.Tests/Vayu.Permissions.Tests.csproj" />
     <Project Path="tests/Vayu.Security.Tests/Vayu.Security.Tests.csproj" />
