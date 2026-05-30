@@ -70,3 +70,5 @@ logs/
 # Local agent / MCP state — never commit
 .claude/
 .mcp.json
+*-ci-capsule.md
+*-capsule.md
