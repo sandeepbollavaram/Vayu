@@ -27,13 +27,14 @@ jobs:
         run: dotnet restore Vayu.slnx
 
       - name: Build
-        run: dotnet build Vayu.slnx --configuration Debug --no-restore /warnaserror
+        run: dotnet build Vayu.slnx --configuration Debug --no-restore /warnaserror -p:Platform=x64
 
       - name: Test
         run: >
           dotnet test Vayu.slnx
           --configuration Debug
           --no-build
+          -p:Platform=x64
           --logger "trx;LogFileName=test-results.trx"
           --collect:"XPlat Code Coverage"
 
