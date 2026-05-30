@@ -4,12 +4,20 @@ Each milestone is a *shippable* state: CI green, docs current, demo-able.
 
 ## First Run Setup Wizard — product feature (multi-milestone)
 
-A core product feature of Vayu: on first launch, a wizard guides the user to a working local AI (Ollama + Gemma) and optionally a Gemini key. See [FIRST_RUN_SETUP.md](FIRST_RUN_SETUP.md). The work is intentionally split:
+A core product feature of Vayu: on first launch, a wizard guides the user to a working local AI (Ollama + Gemma) and optionally an online provider key (any entry from the AI Provider Registry). See [FIRST_RUN_SETUP.md](FIRST_RUN_SETUP.md). The work is intentionally split:
 
 - **M1**: architecture doc + minimal interfaces (`IFirstRunSetupService`, `IOllamaRuntimeService`, `IGeminiKeySetupService`, `FirstRunSetupMode`, `FirstRunSetupState`, `OllamaModelInfo`). **No UI, no installer automation, no real Ollama/Gemini calls.**
 - **M2**: real Ollama runtime detection (`winget` query, PATH probe, `/api/tags` ping) + local model presence check + pull-with-consent flow. WinUI wizard pages land here.
-- **M3**: Gemini key save/validate via Windows Credential Manager + first-call consent dialog.
+- **M3**: Gemini key save/validate via Windows Credential Manager + first-call consent dialog (first concrete provider connector wired through the registry).
 - **Later (M7 or earlier)**: optional bundled installer integration.
+
+## AI Provider Registry — product feature (multi-milestone)
+
+Vayu is not Gemini-only. The wizard offers a catalog of providers spanning offline (Ollama, llama.cpp, LM Studio, LocalAI), online-direct (Gemini, OpenAI, Anthropic, DeepSeek, Kimi/Moonshot, Mistral, Groq, Cohere, Perplexity, xAI, Together, Fireworks, Cerebras, Hugging Face, Replicate), cloud platforms (Azure OpenAI, AWS Bedrock, Vertex AI), and routers (OpenRouter, LiteLLM, custom OpenAI-compatible). See [AI_PROVIDER_REGISTRY.md](AI_PROVIDER_REGISTRY.md).
+
+- **M1**: registry doc + `AiProviderKind` enum + `AiProviderDescriptor` record + `AiProviderRegistry` static catalog of 25 entries. **No HTTP, no SDKs.**
+- **M3**: first concrete connector (Gemini) wired through the registry.
+- **M4+**: incremental connectors — one PR per provider, each carrying redaction patterns and "must not log key" tests. Connectors without an implementation appear greyed out in the wizard.
 
 ## Milestone 1 — Desktop shell (active)
 
@@ -18,6 +26,7 @@ A core product feature of Vayu: on first launch, a wizard guides the user to a w
 - WinUI 3 app: Home, Settings, Logs pages
 - `Vayu.Core` — interfaces, results, intents
 - `Vayu.Core/Setup/` — First Run Wizard contracts (`FirstRunSetupMode`, `FirstRunSetupState`, `IFirstRunSetupService`)
+- `Vayu.Core/Ai/` — Provider Registry contracts (`AiProviderKind`, `AiProviderDescriptor`, `AiProviderRegistry` — 25 entries)
 - `Vayu.AI.Local` — `IOllamaRuntimeService`, `OllamaModelInfo` (contracts only; no real runtime call)
 - `Vayu.AI.Gemini` — `IGeminiKeySetupService` (contract only; no real HTTP)
 - `Vayu.Security` — secret stores + redactor (full)
