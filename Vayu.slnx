@@ -1,2 +1,5 @@
 <Solution>
+  <Folder Name="/apps/">
+    <Project Path="apps/Vayu.Tray/Vayu.Tray.csproj" />
+  </Folder>
 </Solution>
