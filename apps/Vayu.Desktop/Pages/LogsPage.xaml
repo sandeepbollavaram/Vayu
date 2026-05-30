@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="Vayu_Desktop.Pages.LogsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:Vayu_Desktop.Pages"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid Padding="24" RowSpacing="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Text="Logs"
+                   Style="{StaticResource TitleLargeTextBlockStyle}" />
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8">
+            <Button Content="Refresh" Click="OnRefresh" />
+            <TextBlock x:Name="StatusLine"
+                       VerticalAlignment="Center"
+                       Opacity="0.7" />
+        </StackPanel>
+
+        <ListView Grid.Row="2"
+                  x:Name="LogList"
+                  ItemsSource="{x:Bind Rows, Mode=OneWay}"
+                  SelectionMode="Single"
+                  FontFamily="Consolas" />
+    </Grid>
+</Page>
