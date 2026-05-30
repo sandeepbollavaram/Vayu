@@ -25,6 +25,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Vayu.Core.Tests/Vayu.Core.Tests.csproj" />
+    <Project Path="tests/Vayu.Permissions.Tests/Vayu.Permissions.Tests.csproj" />
     <Project Path="tests/Vayu.Security.Tests/Vayu.Security.Tests.csproj" />
   </Folder>
 </Solution>
