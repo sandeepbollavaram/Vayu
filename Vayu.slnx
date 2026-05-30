@@ -14,6 +14,7 @@
     <Project Path="src/Vayu.Core/Vayu.Core.csproj" />
     <Project Path="src/Vayu.Memory/Vayu.Memory.csproj" />
     <Project Path="src/Vayu.Permissions/Vayu.Permissions.csproj" />
+    <Project Path="src/Vayu.Security/Vayu.Security.csproj" />
     <Project Path="src/Vayu.Voice/Vayu.Voice.csproj" />
   </Folder>
 </Solution>
