@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Vayu.Core\Vayu.Core.csproj" />
     <ProjectReference Include="..\Vayu.Permissions\Vayu.Permissions.csproj" />
+    <ProjectReference Include="..\Vayu.Logging\Vayu.Logging.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
