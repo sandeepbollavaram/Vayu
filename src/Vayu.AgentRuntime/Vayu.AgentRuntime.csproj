@@ -4,6 +4,8 @@
     <ProjectReference Include="..\Vayu.Core\Vayu.Core.csproj" />
     <ProjectReference Include="..\Vayu.Permissions\Vayu.Permissions.csproj" />
     <ProjectReference Include="..\Vayu.Logging\Vayu.Logging.csproj" />
+    <ProjectReference Include="..\Vayu.Memory\Vayu.Memory.csproj" />
+    <ProjectReference Include="..\Vayu.Security\Vayu.Security.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
