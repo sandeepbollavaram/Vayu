@@ -22,8 +22,8 @@ jobs:
 
       - name: Restore + Build (Release)
         run: |
-          dotnet restore Vayu.sln
-          dotnet build Vayu.sln --configuration Release --no-restore
+          dotnet restore Vayu.slnx
+          dotnet build Vayu.slnx --configuration Release --no-restore
 
       # Placeholder — actual MSIX + installer steps land with Milestone 7.
       - name: Stub artifact (until M7)
