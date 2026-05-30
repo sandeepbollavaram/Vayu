@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="Vayu_Desktop.Pages.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:Vayu_Desktop.Pages"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid Padding="24" RowSpacing="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Text="Settings"
+                   Style="{StaticResource TitleLargeTextBlockStyle}" />
+
+        <StackPanel Grid.Row="1" Spacing="12">
+            <TextBlock Text="AI mode" Style="{StaticResource BodyStrongTextBlockStyle}" />
+            <TextBlock Text="Offline (rule-based parser)  ·  read-only at M1" Opacity="0.8" />
+
+            <TextBlock Text="Verbose logging"
+                       Style="{StaticResource BodyStrongTextBlockStyle}"
+                       Margin="0,12,0,0" />
+            <ToggleSwitch x:Name="VerboseToggle" IsEnabled="False" />
+            <TextBlock Text="Disabled in M1. Will toggle Debug-level logs in M2."
+                       Opacity="0.7" />
+        </StackPanel>
+    </Grid>
+</Page>
