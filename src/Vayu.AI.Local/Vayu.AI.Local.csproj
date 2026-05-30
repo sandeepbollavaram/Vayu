@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Vayu.Core\Vayu.Core.csproj" />
+    <ProjectReference Include="..\Vayu.Security\Vayu.Security.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
