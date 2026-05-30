@@ -8,6 +8,7 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/Vayu.AgentRuntime/Vayu.AgentRuntime.csproj" />
+    <Project Path="src/Vayu.AI.Local/Vayu.AI.Local.csproj" />
     <Project Path="src/Vayu.Automation.Windows/Vayu.Automation.Windows.csproj" />
     <Project Path="src/Vayu.Core/Vayu.Core.csproj" />
     <Project Path="src/Vayu.Permissions/Vayu.Permissions.csproj" />
