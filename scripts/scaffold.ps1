@@ -5,7 +5,7 @@
 
 .DESCRIPTION
   Run this ONCE from the repo root, after cloning. It creates:
-    Vayu.sln
+    Vayu.slnx (or Vayu.sln if neither already exists)
     apps/Vayu.Desktop  (WinUI 3 packaged app)
     apps/Vayu.Tray     (Worker)
     apps/Vayu.Cli      (Console)
@@ -57,11 +57,14 @@ function New-WinUI {
 Write-Host "Vayu scaffold starting in: $Root (TFM: $Tfm)" -ForegroundColor Cyan
 
 # 1. Solution
-if (-not (Test-Path (Join-Path $Root 'Vayu.sln'))) {
+$slnxPath = Join-Path $Root 'Vayu.slnx'
+$slnPath  = Join-Path $Root 'Vayu.sln'
+if ((Test-Path $slnxPath) -or (Test-Path $slnPath)) {
+  $existing = if (Test-Path $slnxPath) { 'Vayu.slnx' } else { 'Vayu.sln' }
+  Write-Host "  exists  $existing" -ForegroundColor DarkGray
+} else {
   & dotnet new sln --name Vayu --output $Root | Out-Null
   Write-Host "  created Vayu.sln" -ForegroundColor Green
-} else {
-  Write-Host "  exists  Vayu.sln" -ForegroundColor DarkGray
 }
 
 # 2. Apps
@@ -103,12 +106,13 @@ foreach ($t in $tests) {
   New-Std -Template 'xunit' -Path "tests/$t" -Name $t
 }
 
-# 5. Add everything to the solution
-Write-Host "Adding projects to Vayu.sln..." -ForegroundColor Cyan
+# 5. Add everything to the solution (Vayu.slnx preferred; falls back to Vayu.sln)
+$slnFile = if (Test-Path $slnxPath) { $slnxPath } else { $slnPath }
+Write-Host "Adding projects to $(Split-Path -Leaf $slnFile)..." -ForegroundColor Cyan
 $allCsproj = Get-ChildItem -Path $Root -Recurse -Filter '*.csproj' |
   Where-Object { $_.FullName -notmatch '\\(bin|obj)\\' }
 foreach ($p in $allCsproj) {
-  & dotnet sln (Join-Path $Root 'Vayu.sln') add $p.FullName 2>$null | Out-Null
+  & dotnet sln $slnFile add $p.FullName 2>$null | Out-Null
 }
 
 Write-Host ""
