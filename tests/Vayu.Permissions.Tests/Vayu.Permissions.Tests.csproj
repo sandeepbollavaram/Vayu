@@ -18,4 +18,8 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Vayu.Permissions\Vayu.Permissions.csproj" />
+  </ItemGroup>
+
 </Project>
