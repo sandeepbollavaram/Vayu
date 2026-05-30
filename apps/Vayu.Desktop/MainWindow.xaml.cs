@@ -1,27 +1,72 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
+using Vayu_Desktop.Pages;
+using Vayu_Desktop.Services;
 
 namespace Vayu_Desktop;
 
 /// <summary>
-/// The application window. This hosts a Frame that displays pages. Add your
-/// UI and logic to MainPage.xaml / MainPage.xaml.cs instead of here so you
-/// can use Page features such as navigation events and the Loaded lifecycle.
+/// Shell window. Hosts the <see cref="NavigationView"/> and routes
+/// <see cref="UiNavigationService.NavigationRequested"/> events from
+/// agents back to the right page.
 /// </summary>
 public sealed partial class MainWindow : Window
 {
+    private readonly UiNavigationService _navigation;
+
     public MainWindow()
     {
         InitializeComponent();
 
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
-
         AppWindow.SetIcon("Assets/AppIcon.ico");
 
-        // Navigate the root frame to the main page on startup.
-        RootFrame.Navigate(typeof(MainPage));
+        _navigation = App.Services.GetRequiredService<UiNavigationService>();
+        _navigation.NavigationRequested += OnNavigationRequested;
+
+        // Default to Home.
+        Nav.SelectedItem = Nav.MenuItems[0];
+        ContentFrame.Navigate(typeof(HomePage));
+    }
+
+    private void OnNavigationRequested(object? sender, string pageKey)
+    {
+        DispatcherQueue.TryEnqueue(() => NavigateTo(pageKey));
+    }
+
+    private void Nav_OnSelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
+    {
+        if (args.SelectedItem is NavigationViewItem item && item.Tag is string tag)
+        {
+            NavigateTo(tag);
+        }
+    }
+
+    private void NavigateTo(string pageKey)
+    {
+        Type pageType = pageKey switch
+        {
+            "logs" => typeof(LogsPage),
+            "settings" => typeof(SettingsPage),
+            "security" => typeof(SecurityPage),
+            _ => typeof(HomePage),
+        };
+
+        if (ContentFrame.SourcePageType != pageType)
+        {
+            ContentFrame.Navigate(pageType);
+        }
+
+        foreach (var item in Nav.MenuItems)
+        {
+            if (item is NavigationViewItem ni && (ni.Tag as string) == pageKey)
+            {
+                Nav.SelectedItem = ni;
+                break;
+            }
+        }
     }
 }
