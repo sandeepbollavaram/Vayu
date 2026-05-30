@@ -6,4 +6,7 @@
     </Project>
     <Project Path="apps/Vayu.Tray/Vayu.Tray.csproj" />
   </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Vayu.Core/Vayu.Core.csproj" />
+  </Folder>
 </Solution>
