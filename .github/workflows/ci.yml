@@ -24,14 +24,14 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore
-        run: dotnet restore Vayu.sln
+        run: dotnet restore Vayu.slnx
 
       - name: Build
-        run: dotnet build Vayu.sln --configuration Release --no-restore /warnaserror
+        run: dotnet build Vayu.slnx --configuration Release --no-restore /warnaserror
 
       - name: Test
         run: >
-          dotnet test Vayu.sln
+          dotnet test Vayu.slnx
           --configuration Release
           --no-build
           --logger "trx;LogFileName=test-results.trx"
@@ -46,5 +46,5 @@ jobs:
           if-no-files-found: ignore
 
       - name: Format check
-        run: dotnet format Vayu.sln --verify-no-changes --severity warn
+        run: dotnet format Vayu.slnx --verify-no-changes --severity warn
         continue-on-error: true
