@@ -15,20 +15,25 @@ Vayu's default brain is local. Online AI is a strict opt-in.
 
 [Ollama](https://ollama.com) runs a small REST server at `http://localhost:11434`. Vayu's `OllamaAiProvider` calls `/api/chat`.
 
-Setup:
+> **The easy path is the [First Run Setup Wizard](FIRST_RUN_SETUP.md).** On first launch it detects whether Ollama is installed, asks permission to install it if not, asks permission to pull the recommended model, and verifies the result. Every step is skippable.
+
+If you'd rather set it up by hand:
 
 ```powershell
 winget install Ollama.Ollama
-ollama pull llama3.2:3b      # small + fast
-ollama pull llama3.1:8b      # better reasoning
+ollama pull gemma3:4b        # recommended default (~3 GB)
+ollama pull gemma3:1b        # low-end fallback (~1 GB)
+ollama pull llama3.2:3b      # alternative (~2 GB)
 ollama pull qwen2.5-coder:7b # coding-specialized
 ```
+
+> **Heads-up — model downloads are large.** A first `ollama pull` of a 4 B model is multiple gigabytes over your internet connection. After it finishes once, it's on disk and Vayu uses it offline forever — no re-download.
 
 In Vayu Settings → AI:
 
 - Provider: `Ollama`
 - Endpoint: `http://localhost:11434`
-- Model: `llama3.2:3b` (or whichever you pulled)
+- Model: `gemma3:4b` (or whichever you pulled)
 
 ### llama.cpp
 
@@ -36,12 +41,13 @@ For users who want a single-binary embedded model. Vayu spawns `llama-server.exe
 
 ## Choosing a model
 
-| Use case                  | Suggested model        | Why                                 |
-| ------------------------- | ---------------------- | ----------------------------------- |
-| Fast command parsing      | `llama3.2:3b`          | Snappy on CPU/iGPU                  |
-| Better intent planning    | `llama3.1:8b`          | Stronger JSON-following             |
-| Coding workflows          | `qwen2.5-coder:7b`     | Tuned for code                      |
-| Tiny laptops              | `phi3:mini`            | Runs on 8 GB RAM                    |
+| Use case                          | Suggested model        | Why                                            |
+| --------------------------------- | ---------------------- | ---------------------------------------------- |
+| **Default (modern laptops)**      | `gemma3:4b`            | Recommended by the First Run Wizard. Balanced. |
+| Low-end (8 GB RAM, integrated GPU)| `gemma3:1b`            | Fits everywhere, still useful for parsing.    |
+| Alternative                       | `llama3.2:3b`          | Solid 3 B model; pick if you already use Llama.|
+| Better intent planning            | `llama3.1:8b`          | Stronger JSON-following on capable machines.  |
+| Coding workflows                  | `qwen2.5-coder:7b`     | Tuned for code.                                |
 
 ## What the local model is asked to do
 
