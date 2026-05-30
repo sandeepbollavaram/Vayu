@@ -7,6 +7,8 @@ The Gemini connector lives in `Vayu.AI.Gemini`. It is only constructed when:
 1. `appsettings.json` has `"defaultProvider": "online"` or `"hybrid"`, *and*
 2. A Gemini key is resolvable from one of the secret stores.
 
+> **The easy path is the [First Run Setup Wizard](FIRST_RUN_SETUP.md).** If you pick **Online-only** or **Hybrid** mode in the wizard, you get a guided "paste your Gemini key" screen that writes the key directly to Windows Credential Manager and clears the textbox. The steps below are the manual equivalent for users who skipped the wizard or want to script the setup.
+
 ## Step 1 — Get a key
 
 1. Visit `https://aistudio.google.com/app/apikey`
