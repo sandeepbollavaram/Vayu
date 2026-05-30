@@ -37,7 +37,7 @@
     package has not yet been restored.
   -->
   <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
-    <ProjectCapability Include="Msix"/>
+    <ProjectCapability Include="Msix" />
   </ItemGroup>
 
   <!--
@@ -49,9 +49,18 @@
     <PropertyGroup> above to opt out.
   -->
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.8" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7705" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260317003" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools.WinApp" Version="0.3.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Vayu.Core\Vayu.Core.csproj" />
+    <ProjectReference Include="..\..\src\Vayu.AgentRuntime\Vayu.AgentRuntime.csproj" />
+    <ProjectReference Include="..\..\src\Vayu.Memory\Vayu.Memory.csproj" />
+    <ProjectReference Include="..\..\src\Vayu.Permissions\Vayu.Permissions.csproj" />
+    <ProjectReference Include="..\..\src\Vayu.Automation.Windows\Vayu.Automation.Windows.csproj" />
+    <ProjectReference Include="..\..\src\Vayu.Logging\Vayu.Logging.csproj" />
   </ItemGroup>
 
   <!--
