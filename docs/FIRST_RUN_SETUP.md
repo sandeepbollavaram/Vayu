@@ -5,7 +5,7 @@ Vayu opens a First Run Setup Wizard the first time it launches after install. Th
 ## Goals
 
 - Get the user to a working local AI (Ollama + Gemma) within a few minutes.
-- Make online AI (Gemini) trivial to enable for users who want it.
+- Make online AI trivial to enable for users who want it — Vayu supports many providers (Gemini is one of them; see [AI_PROVIDER_REGISTRY.md](AI_PROVIDER_REGISTRY.md)).
 - Make every step optional — Vayu must remain usable if the wizard is skipped.
 - Never install software, download models, or store keys without explicit consent.
 
@@ -25,14 +25,19 @@ Vayu opens a First Run Setup Wizard the first time it launches after install. Th
        → ask permission → pull via Ollama → show progress
 6.  Online AI? (only if user picked Online-only or Hybrid)
        yes → step 7
-       no  → step 9
-7.  Show "How to get a Gemini API key" (link to https://aistudio.google.com/app/apikey)
-8.  User pastes their own key → save to Windows Credential Manager → clear textbox
-9.  Verify:
+       no  → step 10
+7.  Pick an online provider from the catalog (Gemini, OpenAI, Anthropic,
+    DeepSeek, Mistral, Groq, OpenRouter, Azure OpenAI, AWS Bedrock, …).
+    See AI_PROVIDER_REGISTRY.md for the full list.
+8.  Show "How to get an API key" page (link comes from the chosen provider's
+    SetupHelpUrl)
+9.  User pastes their own key → save to Windows Credential Manager under
+    Vayu:<ProviderId>:ApiKey → clear textbox
+10. Verify:
        - Ollama reachable
        - Selected model present
-       - (if applicable) Gemini key resolvable
-10. Mark setup complete → write FirstRunSetupState to local SQLite
+       - (if applicable) selected online provider's key resolvable
+11. Mark setup complete → write FirstRunSetupState to local SQLite
 ```
 
 A **Skip** button is visible on every screen. Skipping does not break Vayu — it just leaves Vayu in a limited mode (rule-based parser, no cloud AI) until the user comes back to Settings.
@@ -76,9 +81,26 @@ Once a model is pulled, it lives on disk under Ollama's storage. Vayu never re-d
 
 ## Online mode setup
 
-The wizard only shows the Gemini steps if the user picked **Online-only** or **Hybrid**.
+The wizard only shows the online-provider steps if the user picked **Online-only** or **Hybrid**. The provider catalog comes from [AI_PROVIDER_REGISTRY.md](AI_PROVIDER_REGISTRY.md); Gemini below is shown as the worked example, but the same flow applies to OpenAI, Anthropic, DeepSeek, Mistral, Groq, OpenRouter, and the rest.
 
-### How the user gets a Gemini key
+### Provider selection
+
+The picker lists providers grouped by kind:
+
+- **OfflineLocal** — Ollama (default), llama.cpp, LM Studio, LocalAI.
+- **OnlineDirect** — Gemini, OpenAI, Anthropic Claude, DeepSeek, Kimi, Mistral, Groq, Cohere, Perplexity, xAI Grok, Together, Fireworks, Cerebras, Hugging Face, Replicate.
+- **CloudPlatform** — Azure OpenAI, AWS Bedrock, Google Vertex AI.
+- **RouterAggregator** — OpenRouter, LiteLLM-compatible endpoint, custom OpenAI-compatible endpoint.
+
+The user can:
+
+- pick one online provider now and add more later from Settings,
+- pick **none** and rely entirely on local AI,
+- pick a provider but defer the key (the wizard records "selected, key pending" and Settings nudges the user later).
+
+### How the user gets a provider API key
+
+For each `RequiresApiKey == true` provider in the registry, the wizard shows a "How to get an API key" page using the provider's `SetupHelpUrl`. Below is the Gemini example; the OpenAI, Anthropic, Groq, etc. pages follow the same shape with their respective help URLs.
 
 The wizard links to `https://aistudio.google.com/app/apikey` and explains:
 
