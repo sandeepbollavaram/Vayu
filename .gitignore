@@ -65,3 +65,8 @@ logs/
 # Crash dumps
 *.dmp
 *.mdmp
+.kairo/
+
+# Local agent / MCP state — never commit
+.claude/
+.mcp.json
