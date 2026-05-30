@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Vayu.Permissions\Vayu.Permissions.csproj" />
+    <ProjectReference Include="..\..\src\Vayu.Memory\Vayu.Memory.csproj" />
   </ItemGroup>
 
 </Project>
