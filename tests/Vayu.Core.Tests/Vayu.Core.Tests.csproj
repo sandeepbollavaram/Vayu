@@ -18,4 +18,8 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Vayu.Core\Vayu.Core.csproj" />
+  </ItemGroup>
+
 </Project>
