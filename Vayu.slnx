@@ -1,5 +1,8 @@
 <Solution>
   <Folder Name="/apps/">
+    <Project Path="apps/Vayu.Desktop/Vayu.Desktop.csproj">
+      <Platform Project="x86" />
+    </Project>
     <Project Path="apps/Vayu.Tray/Vayu.Tray.csproj" />
   </Folder>
 </Solution>
