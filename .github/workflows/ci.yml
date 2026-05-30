@@ -36,7 +36,8 @@ jobs:
           set -e
           find src tests -name '*.csproj' | sort | while read csproj; do
             echo "::group::build $csproj"
-            dotnet build "$csproj" --configuration Debug --no-restore            echo "::endgroup::"
+            dotnet build "$csproj" --configuration Debug --no-restore
+            echo "::endgroup::"
           done
 
       - name: Build Vayu.Desktop (WinUI 3, x64)
