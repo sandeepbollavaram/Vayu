@@ -27,7 +27,7 @@ csharp_style_var_when_type_is_apparent = true:suggestion
 # Naming
 dotnet_naming_rule.async_methods_end_in_async.symbols = method_async_symbol
 dotnet_naming_rule.async_methods_end_in_async.style = async_suffix_style
-dotnet_naming_rule.async_methods_end_in_async.severity = warning
+dotnet_naming_rule.async_methods_end_in_async.severity = suggestion
 
 dotnet_naming_symbols.method_async_symbol.applicable_kinds = method
 dotnet_naming_symbols.method_async_symbol.required_modifiers = async
