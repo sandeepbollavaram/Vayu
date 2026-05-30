@@ -11,6 +11,7 @@
     <Project Path="src/Vayu.AI.Gemini/Vayu.AI.Gemini.csproj" />
     <Project Path="src/Vayu.AI.Local/Vayu.AI.Local.csproj" />
     <Project Path="src/Vayu.Automation.Windows/Vayu.Automation.Windows.csproj" />
+    <Project Path="src/Vayu.Connectors.GitHub/Vayu.Connectors.GitHub.csproj" />
     <Project Path="src/Vayu.Connectors.Gmail/Vayu.Connectors.Gmail.csproj" />
     <Project Path="src/Vayu.Connectors.VSCode/Vayu.Connectors.VSCode.csproj" />
     <Project Path="src/Vayu.Core/Vayu.Core.csproj" />
