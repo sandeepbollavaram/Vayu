@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="Vayu_Desktop.Pages.HomePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:Vayu_Desktop.Pages"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid Padding="24" RowSpacing="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Text="Vayu"
+                   Style="{StaticResource TitleLargeTextBlockStyle}" />
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="12">
+            <Border Background="{ThemeResource SystemControlBackgroundBaseLowBrush}"
+                    CornerRadius="12" Padding="8,4">
+                <TextBlock x:Name="ModeLabel" Text="Mode: Offline" />
+            </Border>
+            <Border Background="{ThemeResource SystemControlBackgroundBaseLowBrush}"
+                    CornerRadius="12" Padding="8,4">
+                <TextBlock x:Name="ProviderLabel" Text="Provider: rule-based (M1)" />
+            </Border>
+        </StackPanel>
+
+        <Grid Grid.Row="2" ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBox Grid.Column="0"
+                     x:Name="CommandBox"
+                     PlaceholderText="Try: open notepad"
+                     KeyDown="CommandBox_OnKeyDown" />
+            <Button Grid.Column="1"
+                    Content="Run"
+                    Style="{StaticResource AccentButtonStyle}"
+                    Click="OnRun" />
+        </Grid>
+
+        <Border Grid.Row="3"
+                Background="{ThemeResource SystemControlBackgroundBaseLowBrush}"
+                CornerRadius="6"
+                Padding="12">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <TextBlock x:Name="ResultText"
+                           TextWrapping="Wrap"
+                           FontFamily="Consolas"
+                           Text="Type a command above and press Enter." />
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</Page>
