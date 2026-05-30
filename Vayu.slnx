@@ -23,4 +23,7 @@
     <Project Path="src/Vayu.Security/Vayu.Security.csproj" />
     <Project Path="src/Vayu.Voice/Vayu.Voice.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Vayu.Core.Tests/Vayu.Core.Tests.csproj" />
+  </Folder>
 </Solution>
