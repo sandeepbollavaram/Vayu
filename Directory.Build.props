@@ -1,0 +1,27 @@
+<Project>
+
+  <!--
+    Repo-wide C# language and quality baseline.
+    Imported automatically by every csproj under d:\Vayu.
+    Does NOT set TargetFramework — each project picks its own
+    (Vayu.Desktop is net10.0-windows10.0.26100.0; libraries and
+    tests use plain net10.0).
+  -->
+
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <Deterministic>true</Deterministic>
+    <Company>Vayu</Company>
+    <Product>Vayu</Product>
+    <Copyright>Copyright (c) Sandeep Bollavaram and Vayu contributors</Copyright>
+  </PropertyGroup>
+
+</Project>
