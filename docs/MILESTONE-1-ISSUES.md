@@ -9,6 +9,25 @@ Open these as individual issues with the label `milestone-1`. They are sized to 
 - **M1-02 .editorconfig, Directory.Build.props with nullable + warnings-as-errors**
 - **M1-03 CI workflow green on first PR**
 
+## First Run Setup Wizard (docs + interfaces only for M1)
+
+- **M1-34 Add First Run Setup Wizard architecture doc** (`docs/FIRST_RUN_SETUP.md`)
+  - Acceptance: doc covers flow, Ollama detection, Gemma model picks (`gemma3:4b` recommended, `gemma3:1b` low-end, `llama3.2:3b` alternative), Gemini key storage rules, troubleshooting, safety rules.
+- **M1-35 Add `FirstRunSetupMode` enum** in `Vayu.Core.Setup`
+  - Values: `OfflineOnly`, `OnlineOnly`, `Hybrid`.
+- **M1-36 Add `FirstRunSetupState` record** in `Vayu.Core.Setup`
+  - Fields: `Completed`, `Mode`, `OllamaDetected`, `OllamaEndpoint`, `SelectedLocalModel`, `LocalModelInstalled`, `GeminiKeyConfigured`, `CompletedAtUtc`.
+- **M1-37 Add `IFirstRunSetupService` interface** in `Vayu.Core.Setup`
+  - Contract: `GetStateAsync`, `StartAsync(mode)`, `CompleteAsync`, `ResetAsync`. No implementation in M1.
+- **M1-38 Add `OllamaModelInfo` record** in `Vayu.AI.Local`
+  - Fields: `Name`, `Tag`, `SizeBytes`, `IsPresent`.
+- **M1-39 Add `IOllamaRuntimeService` interface** in `Vayu.AI.Local`
+  - Contract: `IsInstalledAsync`, `IsReachableAsync`, `ListLocalModelsAsync`, `Endpoint` (Uri). No implementation in M1 — real detection lands in M2.
+- **M1-40 Add `IGeminiKeySetupService` interface** in `Vayu.AI.Gemini`
+  - Contract: `IsKeyConfiguredAsync`, `SaveKeyAsync(string apiKey)`, `RemoveKeyAsync`, `ValidateKeyAsync`. No implementation in M1 — real save/validate lands in M3.
+
+> Real installer/runtime/HTTP work is **not** in M1. See `docs/ROADMAP.md` Milestones 2 and 3.
+
 ## Vayu.Core
 
 - **M1-04 Define `RiskLevel` enum (L0–L6)**
