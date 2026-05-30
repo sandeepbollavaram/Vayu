@@ -26,17 +26,35 @@ jobs:
       - name: Restore
         run: dotnet restore Vayu.slnx
 
-      - name: Build
-        run: dotnet build Vayu.slnx --configuration Debug --no-restore /warnaserror -p:Platform=x64
+      # Libraries and tests use Any CPU. Vayu.Desktop (WinUI 3) defines its
+      # own <Platforms>x86;x64;ARM64</Platforms> and is built separately
+      # below with -p:Platform=x64 so its RuntimeIdentifier (win-x64 on the
+      # runner) matches the chosen PlatformTarget.
+      - name: Build libs and tests
+        shell: bash
+        run: |
+          set -e
+          find src tests -name '*.csproj' | sort | while read csproj; do
+            echo "::group::build $csproj"
+            dotnet build "$csproj" --configuration Debug --no-restore /warnaserror
+            echo "::endgroup::"
+          done
+
+      - name: Build Vayu.Desktop (WinUI 3, x64)
+        run: dotnet build apps/Vayu.Desktop/Vayu.Desktop.csproj --configuration Debug --no-restore /warnaserror -p:Platform=x64
 
       - name: Test
-        run: >
-          dotnet test Vayu.slnx
-          --configuration Debug
-          --no-build
-          -p:Platform=x64
-          --logger "trx;LogFileName=test-results.trx"
-          --collect:"XPlat Code Coverage"
+        shell: bash
+        run: |
+          set -e
+          find tests -name '*.csproj' | sort | while read csproj; do
+            name=$(basename "$csproj" .csproj)
+            echo "::group::test $csproj"
+            dotnet test "$csproj" --configuration Debug --no-build \
+              --logger "trx;LogFileName=${name}-results.trx" \
+              --collect:"XPlat Code Coverage"
+            echo "::endgroup::"
+          done
 
       - name: Upload test results
         if: always()
