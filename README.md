@@ -57,7 +57,19 @@ Vayu's offline brain is functional end to end as of M2:
 - **Offline AI planner (opt-in)** — a local Ollama model turns commands into structured `IntentPlan`s. It is **off by default** and the Settings toggle stays disabled until Ollama is reachable and a curated model is installed.
 - **Safety pipeline intact** — the local model only *proposes* a plan. Every action still flows `AgentRuntime → PermissionService → agent → audit log`. If the model is unavailable, unsure, or proposes anything outside the allowlist, Vayu falls back to the deterministic rule-based parser.
 
-Cloud providers (Gemini and the wider registry) are **M3**, voice is **M4**, and typing/clicking inside apps is **M5** — none of these is active in M2.
+Voice is **M4** and typing/clicking inside apps is **M5** — neither is active yet.
+
+## Online AI status (Milestone 3)
+
+Vayu's optional cloud layer is functional through **Gemini** as of M3 (off by default):
+
+- **Optional online AI via Gemini** — save a Gemini API key in **Settings → Online AI · Gemini**; it goes to Windows Credential Manager (DPAPI fallback), the textbox clears on save, and the key is never shown or logged again.
+- **Cloud calls require "Allow once"** — a consent dialog appears before every cloud request (provider, purpose, estimated prompt size). **Cancel** and **Use local instead** make no cloud call.
+- **Online / Hybrid routing** — pick **Online Gemini** or **Hybrid** in **Settings → AI Mode** (Hybrid plans locally first and only asks for cloud consent when the local model is unsure). The default mode stays **Rule-based** (cloud off).
+- **Provider registry** — the Settings registry lists 13 providers. **Gemini is one optional provider, not the only one**; OpenAI / Claude / DeepSeek / Kimi / OpenRouter / Custom OpenAI-compatible are **planned connector shells** (no real calls yet).
+- **Safety pipeline intact** — online AI only *proposes* `IntentPlan`s; every action still flows `AgentRuntime → PermissionService → agent → audit log`, and Vayu falls back to the rule-based parser on any decline or failure. No prompt body or key is ever logged.
+
+See [docs/M3_DEMO.md](docs/M3_DEMO.md) for the full walkthrough. Voice is **M4**; typing/clicking is **M5**.
 
 ## Security at a glance
 
