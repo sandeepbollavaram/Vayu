@@ -20,6 +20,8 @@ public sealed partial class SettingsPage : Page
     private readonly SettingsLocalAiViewModel? _localAi;
     private readonly LocalAiPlannerState? _plannerState;
     private readonly GeminiKeySetupService? _geminiKeys;
+    private readonly GeminiProvider? _geminiProvider;
+    private readonly DesktopCloudConsentService? _cloudConsent;
 
     public SettingsPage()
     {
@@ -27,6 +29,9 @@ public sealed partial class SettingsPage : Page
 
         // M3.3: Gemini key setup. Available when the secret stores are wired.
         _geminiKeys = App.Services?.GetService<GeminiKeySetupService>();
+        // M3.4: cloud consent + connector for the consented Test-key round-trip.
+        _geminiProvider = App.Services?.GetService<GeminiProvider>();
+        _cloudConsent = App.Services?.GetService<DesktopCloudConsentService>();
         if (_geminiKeys is not null)
         {
             Loaded += OnGeminiKeyLoaded;
@@ -157,11 +162,61 @@ public sealed partial class SettingsPage : Page
             }
 
             RemoveGeminiKeyButton.IsEnabled = canRemove;
+            // M3.4: Test is enabled only when a key is configured AND the consent
+            // path is available. Tapping it asks for explicit per-call consent.
+            TestGeminiKeyButton.IsEnabled = status.IsConfigured
+                && _geminiProvider is not null
+                && _cloudConsent is not null;
         }
         catch (Exception ex)
         {
             GeminiKeyStatusText.Text = $"CHECK FAILED · {ex.GetType().Name.ToUpperInvariant()}";
             ApplyChipStyle(GeminiKeyStatusBadge, "VayuChipRed");
+        }
+    }
+
+    private async void OnTestGeminiKeyClick(object sender, RoutedEventArgs e)
+    {
+        if (_geminiProvider is null || _cloudConsent is null)
+        {
+            return;
+        }
+
+        // Ask for explicit, per-call consent before any cloud request.
+        _cloudConsent.XamlRoot = this.XamlRoot;
+        var request = new Vayu.AI.Online.CloudConsentRequest(
+            ProviderId: "gemini",
+            ProviderDisplayName: "Gemini",
+            Purpose: "Test Gemini provider key",
+            DataSummary: "A minimal provider health-check prompt; no private files, no command history, no secrets.",
+            EstimatedPromptChars: 8,
+            RequiresSensitiveContext: false,
+            CreatedAtUtc: DateTimeOffset.UtcNow);
+
+        var decision = await _cloudConsent.RequestConsentAsync(request).ConfigureAwait(true);
+
+        switch (decision)
+        {
+            case Vayu.AI.Online.CloudConsentDecision.Cancel:
+                GeminiKeyMessageText.Text = "Test cancelled.";
+                return;
+            case Vayu.AI.Online.CloudConsentDecision.UseLocalInstead:
+                GeminiKeyMessageText.Text = "Skipped cloud test; local AI remains available.";
+                return;
+        }
+
+        TestGeminiKeyButton.IsEnabled = false;
+        GeminiKeyMessageText.Text = "Testing…";
+        try
+        {
+            var result = await _geminiProvider
+                .TestKeyAsync(Vayu.AI.Online.CloudConsentDecision.AllowOnce)
+                .ConfigureAwait(true);
+            GeminiKeyMessageText.Text = result.Message;
+        }
+        finally
+        {
+            TestGeminiKeyButton.IsEnabled = true;
         }
     }
 
