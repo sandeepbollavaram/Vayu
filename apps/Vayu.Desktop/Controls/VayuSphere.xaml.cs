@@ -1,4 +1,3 @@
-using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -28,20 +27,22 @@ public enum VayuSphereState
 }
 
 /// <summary>
-/// Lightweight 2D AI-core visual that mirrors the Vayu app icon:
-/// a glowing cyan/teal orb with a flowing wind "V" inside, ringed by a
-/// dotted particle halo. Pure XAML + storyboards.
+/// Bounded 320×320 2D AI-core visual matching the Vayu icon identity:
+/// glowing teal/cyan orb with a layered wind "V" inside and a tight
+/// dotted particle halo. The control is fixed-size so the dot ring
+/// cannot escape into the surrounding card layout.
 /// </summary>
 /// <remarks>
-/// TODO (M4+): swap this 2D scene for a voice-reactive particle / 3D
-/// visualization driven by microphone amplitude and STT state.
+/// TODO (M11): swap this 2D scene for a true 3D / particle voice-reactive
+/// visualisation driven by microphone amplitude and STT state.
 /// </remarks>
 public sealed partial class VayuSphere : UserControl
 {
+    private const int CanvasSize = 320;
+    private const double CentreXY = CanvasSize / 2.0;
+    private const double RingRadius = 135;
     private const int DotCount = 36;
-    private const double DotRadius = 2.4;
-    private const double RingRadius = 168;
-    private const double CanvasSize = 360;
+    private const double DotBaseRadius = 2.3;
 
     private static readonly Color SuccessColor = Color.FromArgb(0xFF, 0x2E, 0xE6, 0xC9);
     private static readonly Color ErrorColor   = Color.FromArgb(0xFF, 0xFF, 0x5C, 0x7C);
@@ -64,24 +65,23 @@ public sealed partial class VayuSphere : UserControl
 
     private void BuildDottedRing()
     {
-        var centre = CanvasSize / 2.0;
-        var brush = new SolidColorBrush(DotColor);
+        var dotBrush = new SolidColorBrush(DotColor);
 
         for (var i = 0; i < DotCount; i++)
         {
             var angle = (i * 360.0 / DotCount) * Math.PI / 180.0;
-            var x = centre + (RingRadius * Math.Cos(angle));
-            var y = centre + (RingRadius * Math.Sin(angle));
+            var x = CentreXY + (RingRadius * Math.Cos(angle));
+            var y = CentreXY + (RingRadius * Math.Sin(angle));
 
-            // Every 4th dot is brighter — gives the halo a varied "particle" feel.
+            // Every fourth dot is brighter — gives the halo a varied particle feel.
             var bright = i % 4 == 0;
-            var diameter = bright ? DotRadius * 2.2 : DotRadius * 2.0;
+            var diameter = bright ? DotBaseRadius * 2.3 : DotBaseRadius * 1.8;
 
             var dot = new Ellipse
             {
                 Width = diameter,
                 Height = diameter,
-                Fill = brush,
+                Fill = dotBrush,
                 Opacity = bright ? 1.0 : 0.55,
             };
 
@@ -107,7 +107,7 @@ public sealed partial class VayuSphere : UserControl
                 break;
             case VayuSphereState.Idle:
             default:
-                // Idle storyboard already runs forever; nothing to do.
+                // The idle storyboard already runs forever; nothing to do.
                 break;
         }
     }
