@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml;
 using Vayu.AgentRuntime;
 using Vayu.AI.Gemini;
 using Vayu.AI.Local;
+using Vayu.AI.Online;
 using Vayu.Automation.Windows;
 using Vayu.Core;
 using Vayu.Core.Setup;
@@ -72,6 +73,15 @@ public partial class App : Application
             sp.GetRequiredService<WindowsCredentialSecretStore>(),
             sp.GetRequiredService<EnvironmentSecretStore>(),
             sp.GetRequiredService<EncryptedJsonSecretStore>()));
+
+        // M3.4: cloud consent dialog + Gemini connector for the consented Test-key round-trip.
+        services.AddSingleton<DesktopCloudConsentService>();
+        services.AddSingleton<ICloudConsentService>(sp => sp.GetRequiredService<DesktopCloudConsentService>());
+        services.AddSingleton(new GeminiProviderOptions());
+        services.AddSingleton(sp => new GeminiProvider(
+            new HttpClient(),
+            sp.GetRequiredService<SecureConfigService>(),
+            sp.GetRequiredService<GeminiProviderOptions>()));
 
         // --- Memory: SQLite audit log ---
         services.AddSingleton(new MemoryOptions());
