@@ -1,6 +1,8 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
+using Vayu.Voice;
+
 using Windows.UI;
 
 namespace Vayu_Desktop.Controls;
@@ -66,6 +68,34 @@ public sealed partial class VayuSphere : UserControl
             case VayuSphereState.Idle:
             default:
                 // The idle storyboard already runs forever; nothing to do.
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Maps a voice interaction state onto the sphere's existing visual states
+    /// (M4.2 foundation). Full voice-reactive animation is M4.6.
+    /// </summary>
+    public void SetVoiceState(VoiceInteractionState voiceState)
+    {
+        switch (voiceState)
+        {
+            case VoiceInteractionState.Listening:
+            case VoiceInteractionState.Transcribing:
+            case VoiceInteractionState.Thinking:
+            case VoiceInteractionState.Executing:
+                SetState(VayuSphereState.Processing);
+                break;
+            case VoiceInteractionState.Error:
+                SetState(VayuSphereState.Error);
+                break;
+            case VoiceInteractionState.Speaking:
+                SetState(VayuSphereState.Success);
+                break;
+            case VoiceInteractionState.Cancelled:
+            case VoiceInteractionState.Idle:
+            default:
+                SetState(VayuSphereState.Idle);
                 break;
         }
     }
