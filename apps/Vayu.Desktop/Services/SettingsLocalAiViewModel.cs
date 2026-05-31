@@ -2,6 +2,8 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
+using Microsoft.UI.Xaml;
+
 using Vayu.AI.Local;
 
 namespace Vayu_Desktop.Services;
@@ -225,6 +227,18 @@ public sealed class SettingsLocalAiViewModel : INotifyPropertyChanged
             var curatedHits = 0;
             foreach (var row in Models)
             {
+                // A pull in flight owns its own row state (BeginDownload/ApplyProgress).
+                // The detection refresh only reconciles idle/installed rows.
+                if (row.IsDownloading)
+                {
+                    row.SetServerReachable(isReachable);
+                    if (byTag.ContainsKey(row.ModelTag))
+                    {
+                        curatedHits++;
+                    }
+                    continue;
+                }
+
                 if (byTag.TryGetValue(row.ModelTag, out var match))
                 {
                     row.ApplyInstalled(match);
@@ -235,11 +249,7 @@ public sealed class SettingsLocalAiViewModel : INotifyPropertyChanged
                     row.ApplyMissing();
                 }
                 // Download is offered only when the server can answer pull requests.
-                // A pull in flight is owned by the wizard's PullAsync helper.
-                if (!row.IsDownloading)
-                {
-                    row.CanDownload = isReachable && !row.IsInstalled;
-                }
+                row.SetServerReachable(isReachable);
             }
             InstalledCuratedCount = curatedHits;
             InstalledUnknownCount = Math.Max(0, byTag.Count - curatedHits);
@@ -294,19 +304,51 @@ public sealed class SettingsLocalAiViewModel : INotifyPropertyChanged
 }
 
 /// <summary>
+/// The single source of truth for a catalog row's UI. Exactly one state is
+/// active at a time, so the XAML can never show contradictory affordances
+/// (e.g. a "Missing" chip next to a live download, or a Download button on an
+/// installed model).
+/// </summary>
+public enum ModelRowState
+{
+    /// <summary>Not installed, idle. Shows the Missing chip and an actionable Download button.</summary>
+    MissingIdle = 0,
+
+    /// <summary>A pull is in flight. Shows the Downloading chip, progress, and Cancel — no Download button.</summary>
+    Downloading = 1,
+
+    /// <summary>The last pull was cancelled. Shows a retry hint and re-enables Download.</summary>
+    Cancelled = 2,
+
+    /// <summary>The last pull failed. Shows the error and re-enables Download for retry.</summary>
+    Failed = 3,
+
+    /// <summary>Installed and confirmed by <c>/api/tags</c>. Shows the Installed chip and metadata — no Download button.</summary>
+    Installed = 4,
+}
+
+/// <summary>
 /// Mutable row backing one entry in the curated model catalog. Class
 /// rather than record because WinUI <c>x:Bind</c> requires get/set
 /// properties (CS8852 on init-only records).
 /// </summary>
+/// <remarks>
+/// M2.9 collapsed the previous bag of booleans (<c>IsInstalled</c> /
+/// <c>IsDownloading</c> / <c>CanDownload</c>) into a single
+/// <see cref="ModelRowState"/>. Every visibility/text/enabled property below
+/// is <i>derived</i> from <see cref="State"/>, so a state change raises one
+/// coherent set of UI updates and contradictory combinations are impossible.
+/// </remarks>
 public sealed class LocalModelRow : INotifyPropertyChanged
 {
-    private bool _isInstalled;
+    private ModelRowState _state = ModelRowState.MissingIdle;
     private string _displaySize = string.Empty;
     private string _familyLabel = string.Empty;
     private string _parameterSize = string.Empty;
-    private bool _isDownloading;
-    private string _downloadStatus = string.Empty;
-    private bool _canDownload;
+    private double _progressPercent;
+    private bool _progressIsIndeterminate = true;
+    private string _statusDetail = string.Empty;
+    private bool _serverReachable;
 
     public LocalModelRow(LocalModelDescriptor descriptor)
     {
@@ -327,30 +369,98 @@ public sealed class LocalModelRow : INotifyPropertyChanged
     public string HardwareNote { get; }
     public bool IsRecommended { get; }
 
-    /// <summary>True when this catalog entry is present in Ollama's <c>/api/tags</c> response.</summary>
-    public bool IsInstalled
+    /// <summary>The single row state. Setting it refreshes every derived UI property.</summary>
+    public ModelRowState State
     {
-        get => _isInstalled;
+        get => _state;
         private set
         {
-            if (_isInstalled == value)
+            if (_state == value)
             {
                 return;
             }
-            _isInstalled = value;
-            Raise(nameof(IsInstalled));
-            Raise(nameof(StatusText));
+            _state = value;
+            Raise(nameof(State));
+            RaiseDerived();
         }
     }
 
-    /// <summary>Status pill text bound by the XAML row template.</summary>
-    public string StatusText => IsInstalled ? "Installed" : "Missing";
+    // ---- derived UI (all read-only, single source of truth = State) ----
+
+    /// <summary>True only in <see cref="ModelRowState.Installed"/>.</summary>
+    public bool IsInstalled => State == ModelRowState.Installed;
+
+    /// <summary>True only while a pull is in flight.</summary>
+    public bool IsDownloading => State == ModelRowState.Downloading;
+
+    /// <summary>The status chip text, one per state.</summary>
+    public string StatusText => State switch
+    {
+        ModelRowState.Installed => "Installed",
+        ModelRowState.Downloading => "Downloading",
+        ModelRowState.Cancelled => "Cancelled",
+        ModelRowState.Failed => "Failed",
+        _ => "Missing",
+    };
+
+    /// <summary>The Download button is actionable only when missing/cancelled/failed AND the server is reachable.</summary>
+    public bool CanDownload
+        => _serverReachable && State is ModelRowState.MissingIdle or ModelRowState.Cancelled or ModelRowState.Failed;
+
+    /// <summary>Show the Download button (hidden entirely once installing/installed).</summary>
+    public Visibility DownloadButtonVisibility
+        => State is ModelRowState.Installed or ModelRowState.Downloading ? Visibility.Collapsed : Visibility.Visible;
+
+    /// <summary>Show the progress + cancel block only while downloading.</summary>
+    public Visibility ProgressVisibility
+        => State == ModelRowState.Downloading ? Visibility.Visible : Visibility.Collapsed;
+
+    /// <summary>Show the status-detail line when there is something worth saying (downloading / cancelled / failed).</summary>
+    public Visibility StatusDetailVisibility
+        => string.IsNullOrEmpty(StatusDetail) ? Visibility.Collapsed : Visibility.Visible;
+
+    /// <summary>Show the installed-metadata chips only when installed and a size is known.</summary>
+    public Visibility MetadataVisibility
+        => State == ModelRowState.Installed && !string.IsNullOrEmpty(DisplaySize) ? Visibility.Visible : Visibility.Collapsed;
+
+    /// <summary>0–100 progress for the bar; meaningful only while downloading.</summary>
+    public double ProgressPercent
+    {
+        get => _progressPercent;
+        private set => SetField(ref _progressPercent, value, nameof(ProgressPercent));
+    }
+
+    /// <summary>True when Ollama has not reported byte totals yet (manifest/verify phases).</summary>
+    public bool ProgressIsIndeterminate
+    {
+        get => _progressIsIndeterminate;
+        private set => SetField(ref _progressIsIndeterminate, value, nameof(ProgressIsIndeterminate));
+    }
+
+    /// <summary>Human-readable status line (e.g. <c>"downloading · 14%"</c>, <c>"Cancelled. You can retry."</c>).</summary>
+    public string StatusDetail
+    {
+        get => _statusDetail;
+        private set
+        {
+            if (SetField(ref _statusDetail, value, nameof(StatusDetail)))
+            {
+                Raise(nameof(StatusDetailVisibility));
+            }
+        }
+    }
 
     /// <summary>Size string for installed models (e.g. <c>"3.6 GB"</c>); empty otherwise.</summary>
     public string DisplaySize
     {
         get => _displaySize;
-        private set => SetField(ref _displaySize, value, nameof(DisplaySize));
+        private set
+        {
+            if (SetField(ref _displaySize, value, nameof(DisplaySize)))
+            {
+                Raise(nameof(MetadataVisibility));
+            }
+        }
     }
 
     /// <summary>Family label parsed from Ollama details (e.g. <c>"gemma3"</c>); empty when unavailable.</summary>
@@ -367,6 +477,8 @@ public sealed class LocalModelRow : INotifyPropertyChanged
         private set => SetField(ref _parameterSize, value, nameof(ParameterSize));
     }
 
+    // ---- transitions (called by the detection refresh and the wizard pull) ----
+
     /// <summary>Apply an installed-model match. Pulls size/family/parameter-size from the runtime payload.</summary>
     public void ApplyInstalled(OllamaModelInfo match)
     {
@@ -374,67 +486,122 @@ public sealed class LocalModelRow : INotifyPropertyChanged
         DisplaySize = match.DisplaySize;
         FamilyLabel = match.Family ?? string.Empty;
         ParameterSize = match.ParameterSize ?? string.Empty;
-        IsInstalled = true;
-        CanDownload = false;
-        DownloadStatus = string.Empty;
+        StatusDetail = string.Empty;
+        ProgressPercent = 0;
+        State = ModelRowState.Installed;
     }
 
-    /// <summary>Reset to the "missing" state — clears all installed-only metadata.</summary>
+    /// <summary>
+    /// Reset to a not-installed state, preserving a Cancelled/Failed status (so a
+    /// post-pull refresh that still shows "missing" keeps the retry hint).
+    /// </summary>
     public void ApplyMissing()
     {
         DisplaySize = string.Empty;
         FamilyLabel = string.Empty;
         ParameterSize = string.Empty;
-        IsInstalled = false;
-    }
-
-    /// <summary>True while an M2.6 pull is in flight for this row.</summary>
-    public bool IsDownloading
-    {
-        get => _isDownloading;
-        set => SetField(ref _isDownloading, value, nameof(IsDownloading));
-    }
-
-    /// <summary>Per-row download status (Ollama's <c>downloading</c> line, percent, or final error/cancelled).</summary>
-    public string DownloadStatus
-    {
-        get => _downloadStatus;
-        set => SetField(ref _downloadStatus, value, nameof(DownloadStatus));
-    }
-
-    /// <summary>True when the Download affordance should be enabled (missing + Ollama reachable + not already downloading).</summary>
-    public bool CanDownload
-    {
-        get => _canDownload;
-        set
+        // Don't clobber a just-set Cancelled/Failed state during the post-pull refresh.
+        if (State is not (ModelRowState.Cancelled or ModelRowState.Failed))
         {
-            if (_canDownload == value)
-            {
-                return;
-            }
-            _canDownload = value;
-            Raise(nameof(CanDownload));
+            State = ModelRowState.MissingIdle;
         }
     }
 
-    private void SetField(ref string field, string value, string propertyName)
+    /// <summary>Sets whether Ollama is reachable, which gates the Download button.</summary>
+    public void SetServerReachable(bool reachable)
+    {
+        if (_serverReachable == reachable)
+        {
+            return;
+        }
+        _serverReachable = reachable;
+        Raise(nameof(CanDownload));
+    }
+
+    /// <summary>Enter the downloading state. Clears prior status and resets progress.</summary>
+    public void BeginDownload()
+    {
+        StatusDetail = "Starting…";
+        ProgressPercent = 0;
+        ProgressIsIndeterminate = true;
+        State = ModelRowState.Downloading;
+    }
+
+    /// <summary>Apply a streaming progress tick while downloading.</summary>
+    public void ApplyProgress(OllamaModelPullProgress update)
+    {
+        ArgumentNullException.ThrowIfNull(update);
+        StatusDetail = update.DisplayText;
+        if (update.Percent is { } pct)
+        {
+            ProgressIsIndeterminate = false;
+            ProgressPercent = pct;
+        }
+        else
+        {
+            ProgressIsIndeterminate = true;
+        }
+    }
+
+    /// <summary>Move to the cancelled state with a retry hint.</summary>
+    public void MarkCancelled()
+    {
+        StatusDetail = "Cancelled. You can retry.";
+        ProgressPercent = 0;
+        State = ModelRowState.Cancelled;
+    }
+
+    /// <summary>Move to the failed state with a redaction-safe error.</summary>
+    public void MarkFailed(string errorMessage)
+    {
+        StatusDetail = $"Download failed: {errorMessage}";
+        ProgressPercent = 0;
+        State = ModelRowState.Failed;
+    }
+
+    private void RaiseDerived()
+    {
+        Raise(nameof(IsInstalled));
+        Raise(nameof(IsDownloading));
+        Raise(nameof(StatusText));
+        Raise(nameof(CanDownload));
+        Raise(nameof(DownloadButtonVisibility));
+        Raise(nameof(ProgressVisibility));
+        Raise(nameof(StatusDetailVisibility));
+        Raise(nameof(MetadataVisibility));
+    }
+
+    private bool SetField(ref string field, string value, string propertyName)
     {
         if (string.Equals(field, value, StringComparison.Ordinal))
         {
-            return;
+            return false;
         }
         field = value;
         Raise(propertyName);
+        return true;
     }
 
-    private void SetField(ref bool field, bool value, string propertyName)
+    private bool SetField(ref double field, double value, string propertyName)
+    {
+        if (field.Equals(value))
+        {
+            return false;
+        }
+        field = value;
+        Raise(propertyName);
+        return true;
+    }
+
+    private bool SetField(ref bool field, bool value, string propertyName)
     {
         if (field == value)
         {
-            return;
+            return false;
         }
         field = value;
         Raise(propertyName);
+        return true;
     }
 
     private void Raise(string propertyName)
