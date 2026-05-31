@@ -4,7 +4,7 @@
 
 **Never paste your API key into any file inside this repository.**
 
-> **Status:** as of **M3.4** the Gemini connector (M3.2), the **secure key-setup UI** (M3.3), and the **cloud consent dialog** all exist. In **Settings → Online AI · Gemini** you can save a key (to Windows Credential Manager / DPAPI fallback — cleared on save, never shown again) and click **Test key**: Vayu shows a consent dialog (**Allow once / Use local instead / Cancel**, dismiss = Cancel) and makes a minimal redacted health-check call to Gemini **only** if you choose Allow once. No prompt body or key is ever logged, and consent is asked again every time. Full **planning** through the online router (Hybrid mode) is **M3.5** — cloud AI is still off by default for everyday commands.
+> **Status:** as of **M3.5** the full Online/Hybrid planning path is live. The Gemini connector (M3.2), secure key-setup UI (M3.3), and cloud consent dialog (M3.4) feed the **AI Router**: in **Settings → AI Mode** you can pick **Online Gemini** or **Hybrid** once a key is saved. Every cloud planning call asks for consent (**Allow once / Use local instead / Cancel**, dismiss = Cancel), at most once per command; **Use local instead** and **Cancel** make no cloud call. The resulting plan still flows through `AgentRuntime → PermissionService → audit`. Cloud AI remains **off by default** (the default mode is Rule-based), and no prompt body or key is ever logged. Provider registry UI polish is **M3.6**; OpenAI/Claude/DeepSeek/Kimi shells are **M3.7**.
 
 The Gemini connector lives in `Vayu.AI.Gemini`. It is only constructed when:
 
