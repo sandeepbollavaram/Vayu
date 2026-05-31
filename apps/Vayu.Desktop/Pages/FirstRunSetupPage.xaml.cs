@@ -190,19 +190,22 @@ public sealed partial class FirstRunSetupPage : Page
             return;
         }
 
+        // Only one pull at a time; cancel any straggler first.
         _activePullCts?.Cancel();
+        _activePullCts?.Dispose();
         _activePullCts = new CancellationTokenSource();
-        CancelDownloadButton.Visibility = Visibility.Visible;
-        CancelDownloadButton.IsEnabled = true;
 
         try
         {
             await _vm.PullAsync(row, _activePullCts.Token).ConfigureAwait(true);
         }
+        catch (OperationCanceledException)
+        {
+            // Row already marked Cancelled by the view model.
+        }
         finally
         {
-            CancelDownloadButton.Visibility = Visibility.Collapsed;
-            _activePullCts.Dispose();
+            _activePullCts?.Dispose();
             _activePullCts = null;
         }
     }
@@ -223,7 +226,11 @@ public sealed partial class FirstRunSetupPage : Page
 
     private void OnCancelDownloadClick(object sender, RoutedEventArgs e)
     {
+        // Per-row Cancel button (visible only while that row is downloading).
         _activePullCts?.Cancel();
-        CancelDownloadButton.IsEnabled = false;
+        if (sender is Control c)
+        {
+            c.IsEnabled = false;
+        }
     }
 }
