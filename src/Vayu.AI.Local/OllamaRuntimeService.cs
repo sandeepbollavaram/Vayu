@@ -154,11 +154,26 @@ public sealed class OllamaRuntimeService : IOllamaRuntimeService
                 {
                     continue;
                 }
+
+                var modifiedAt = TryParseTimestamp(model.ModifiedAt);
+                var family = model.Details?.Family;
+                if (string.IsNullOrWhiteSpace(family))
+                {
+                    family = null;
+                }
+
                 results.Add(new OllamaModelInfo(
                     Name: SplitFamily(model.Name),
                     Tag: model.Name,
                     SizeBytes: model.Size,
-                    IsPresent: true));
+                    IsPresent: true)
+                {
+                    Digest = string.IsNullOrWhiteSpace(model.Digest) ? null : model.Digest,
+                    ModifiedAtUtc = modifiedAt,
+                    Family = family ?? SplitFamily(model.Name),
+                    ParameterSize = NormalizeNullable(model.Details?.ParameterSize),
+                    QuantizationLevel = NormalizeNullable(model.Details?.QuantizationLevel),
+                });
             }
             return results;
         }
@@ -307,10 +322,36 @@ public sealed class OllamaRuntimeService : IOllamaRuntimeService
         return idx > 0 ? tag[..idx] : tag;
     }
 
+    private static DateTimeOffset? TryParseTimestamp(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return null;
+        }
+        return DateTimeOffset.TryParse(
+            raw,
+            System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal,
+            out var parsed)
+            ? parsed
+            : null;
+    }
+
+    private static string? NormalizeNullable(string? value)
+        => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
     private sealed record TagsResponse(
         [property: JsonPropertyName("models")] IReadOnlyList<TagModel>? Models);
 
     private sealed record TagModel(
         [property: JsonPropertyName("name")] string? Name,
-        [property: JsonPropertyName("size")] long? Size);
+        [property: JsonPropertyName("size")] long? Size,
+        [property: JsonPropertyName("digest")] string? Digest,
+        [property: JsonPropertyName("modified_at")] string? ModifiedAt,
+        [property: JsonPropertyName("details")] TagModelDetails? Details);
+
+    private sealed record TagModelDetails(
+        [property: JsonPropertyName("family")] string? Family,
+        [property: JsonPropertyName("parameter_size")] string? ParameterSize,
+        [property: JsonPropertyName("quantization_level")] string? QuantizationLevel);
 }
