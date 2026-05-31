@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Controls;
 
 using Vayu.AI.Gemini;
 using Vayu.AI.Local;
+using Vayu.AI.Online;
 
 using Vayu_Desktop.Services;
 
@@ -181,7 +182,14 @@ public sealed partial class SettingsPage : Page
     // ---- M3.3: Gemini key setup ----
 
     private async void OnGeminiKeyLoaded(object sender, RoutedEventArgs e)
-        => await RefreshGeminiKeyStatusAsync().ConfigureAwait(true);
+    {
+        // M3.6: show the registry immediately (Gemini may not be configured yet).
+        RefreshProviderRegistry(geminiConfigured: false);
+        await RefreshGeminiKeyStatusAsync().ConfigureAwait(true);
+    }
+
+    private void RefreshProviderRegistry(bool geminiConfigured)
+        => ProviderRegistryItems.ItemsSource = ProviderRegistryViewModel.BuildCards(geminiConfigured);
 
     private async Task RefreshGeminiKeyStatusAsync()
     {
@@ -213,6 +221,8 @@ public sealed partial class SettingsPage : Page
                 && _cloudConsent is not null;
             // M3.5: a key change can enable/disable Online/Hybrid modes.
             SyncPlannerGate();
+            // M3.6: reflect Gemini configured state in the provider registry grid.
+            RefreshProviderRegistry(status.IsConfigured);
         }
         catch (Exception ex)
         {
