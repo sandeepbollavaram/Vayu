@@ -1,6 +1,6 @@
 # Voice System
 
-> **Status: M4.1 — contracts only.** The voice architecture is staked out in `Vayu.Voice`; there is **no real speech recognition, no microphone capture, and no always-listening** yet. Push-to-talk is the only mode that will be usable; wake word and clap trigger are placeholders. Concrete providers and the push-to-talk UI land in M4.2+. The design below describes the full target shape.
+> **Status: M4.2 — push-to-talk UI foundation.** The voice architecture (M4.1) plus a **push-to-talk UI** now exist: the Home **Voice** card shows mic status, a Push-to-talk button, and Stop/Cancel, and drives the `VoiceSession` state machine + the Vayu Sphere. There is still **no real speech recognition, no microphone capture, and no always-listening** — `StubVoiceInputService` returns an honest "recognition arrives in M4.3" result and never fakes a transcript or runs a command. Real STT is **M4.3**; the voice→command pipeline is **M4.5**. The design below describes the full target shape.
 
 ## M4.1 contracts
 
@@ -37,7 +37,7 @@ The transcript is the *only* thing that crosses from the voice layer into the ru
 | Sub  | Scope                                                          |
 | ---- | -------------------------------------------------------------- |
 | M4.1 | **Voice architecture / contracts** (this section). No capture.|
-| M4.2 | Push-to-talk UI foundation.                                   |
+| M4.2 | ✅ Push-to-talk UI foundation — Home Voice card + Settings section + stub service. No capture, no STT, no execution. |
 | M4.3 | Local STT provider integration (Whisper.cpp first).          |
 | M4.4 | TTS provider integration (System TTS first).                 |
 | M4.5 | Voice command pipeline into `AgentRuntime`.                   |
