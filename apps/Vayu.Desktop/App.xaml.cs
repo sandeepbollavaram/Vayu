@@ -130,6 +130,12 @@ public partial class App : Application
         services.AddSingleton<ILocalAiProvider>(sp => new OllamaLocalAiProvider(
             sp.GetRequiredService<IOllamaRuntimeService>()));
 
+        // M2.6: explicit-consent model pull. The service refuses unknown tags;
+        // the wizard adds a consent dialog and per-row cancellation.
+        services.AddSingleton<IOllamaModelPullService>(sp => new OllamaModelPullService(
+            sp.GetRequiredService<HttpClient>(),
+            sp.GetRequiredService<OllamaProviderOptions>()));
+
         // --- First Run Setup Wizard (M2.5): in-memory state for now; SQLite persistence lands in M2.8 ---
         services.AddSingleton<IFirstRunSetupService>(sp => new InMemoryFirstRunSetupService(
             sp.GetRequiredService<IClock>()));
