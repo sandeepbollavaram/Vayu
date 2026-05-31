@@ -33,6 +33,7 @@ public sealed partial class SettingsPage : Page
             ExecutableStatusText.Text = _localAi.ExecutableStatusText;
             EndpointStatusText.Text = _localAi.EndpointStatusText;
             DetectionMessageText.Text = _localAi.DetectionMessage;
+            CuratedSummaryText.Text = _localAi.CuratedSummaryText;
             Loaded += OnPageLoaded;
         }
     }
@@ -63,6 +64,7 @@ public sealed partial class SettingsPage : Page
             ExecutableStatusText.Text = _localAi.ExecutableStatusText;
             EndpointStatusText.Text = _localAi.EndpointStatusText;
             DetectionMessageText.Text = _localAi.DetectionMessage;
+            CuratedSummaryText.Text = _localAi.CuratedSummaryText;
         }
         finally
         {
