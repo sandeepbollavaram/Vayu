@@ -41,15 +41,17 @@
                             <Border Width="3" Height="14" Background="{StaticResource VayuAccentCyanBrush}" />
                             <TextBlock Style="{StaticResource VayuSectionText}" Text="AI MODE" VerticalAlignment="Center" />
                         </StackPanel>
-                        <TextBlock Style="{StaticResource VayuBodyText}" Text="Offline" FontSize="20" />
-                        <TextBlock x:Name="AiModeProviderText" Style="{StaticResource VayuMutedText}" Text="Provider: rule-based parser" />
-                        <ToggleSwitch x:Name="OfflineAiToggle"
-                                      Header="Offline AI planner (Ollama)"
-                                      OffContent="Off — rule-based only"
-                                      OnContent="On — local AI plans, rule-based fallback"
-                                      Toggled="OnOfflineAiToggled" />
-                        <TextBlock x:Name="OfflineAiToggleHint" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
-                                   Text="Opt-in. The local model only proposes a plan — every action still passes through the permission engine. If the model is unavailable or unsure, Vayu falls back to the rule-based parser." />
+                        <TextBlock x:Name="AiModeProviderText" Style="{StaticResource VayuBodyText}" Text="Provider: rule-based parser" FontSize="18" />
+                        <RadioButton x:Name="ModeRuleBasedRadio" Content="Rule-based (deterministic, no model)"
+                                     GroupName="AiMode" Checked="OnAiModeChecked" Tag="rulebased" IsChecked="True" />
+                        <RadioButton x:Name="ModeOfflineRadio" Content="Offline AI (Ollama local, rule-based fallback)"
+                                     GroupName="AiMode" Checked="OnAiModeChecked" Tag="offline" IsEnabled="False" />
+                        <RadioButton x:Name="ModeOnlineRadio" Content="Online Gemini (cloud, consent each request)"
+                                     GroupName="AiMode" Checked="OnAiModeChecked" Tag="online" IsEnabled="False" />
+                        <RadioButton x:Name="ModeHybridRadio" Content="Hybrid (local first, Gemini with consent fallback)"
+                                     GroupName="AiMode" Checked="OnAiModeChecked" Tag="hybrid" IsEnabled="False" />
+                        <TextBlock x:Name="AiModeHint" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
+                                   Text="Every AI mode is opt-in. Cloud calls ask for consent every time in M3.5. The model only proposes a plan — every action still passes through the permission engine, and Vayu falls back to the rule-based parser whenever a model is unavailable, unsure, or unsafe." />
                     </StackPanel>
                 </Border>
 
