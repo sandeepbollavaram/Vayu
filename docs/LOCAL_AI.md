@@ -20,8 +20,8 @@ or runs anything.
 | M2.1 | Offline AI architecture / contracts (`LocalAiOptions`, `LocalModelCatalog`, `ILocalAiProvider`, …) | ✅ Done         |
 | M2.2 | Ollama runtime detection (`OllamaRuntimeService`, `OllamaLocalAiProvider`, PATH + winget + `/api/tags` probes) | ✅ Done         |
 | M2.3 | Local model catalog wiring — Settings → "Offline AI · Ollama" card with detection + curated catalog | ✅ Done         |
-| M2.4 | Installed-model listing refinement — size in GB, family/parameter/quantization parsing, exact-tag matching, curated-vs-unknown summary | 🛠️ In progress |
-| M2.5 | First Run Setup Wizard UI                                             | ⏳ Planned      |
+| M2.4 | Installed-model listing refinement — size in GB, family/parameter/quantization parsing, exact-tag matching, curated-vs-unknown summary | ✅ Done         |
+| M2.5 | First Run Setup Wizard UI — Welcome → Mode → Ollama → Models → Verification (read-only) | 🛠️ In progress |
 | M2.6 | Safe model pull flow (`/api/pull` with explicit consent + progress)   | ⏳ Planned      |
 | M2.7 | Local AI planner (`OllamaAiProvider` + AI Router with confidence floor) | ⏳ Planned      |
 | M2.8 | M2 polish + `v0.2.0-m2` tag                                           | ⏳ Planned      |
@@ -76,6 +76,18 @@ The Settings card now extracts richer metadata from each `/api/tags` entry witho
 - A small **curated-vs-unknown summary** sits above the row list: *"Installed curated models: 2 / 3 · 1 other model present (not in curated catalog)"*. The unknown count is informational only — unknown tags never appear as curated rows.
 
 Even with richer metadata, M2.4 still does **NOT** install anything, pull anything, or talk to the cloud. Refresh is detection-only.
+
+### M2.5 — First Run Setup Wizard UI
+
+The wizard ships as a regular nav page (`Setup` in the rail) and is also reachable from **Settings → Open First Run Setup**. It walks five steps:
+
+1. **Welcome** — context + reminder that every step is skippable.
+2. **Mode** — picker for Offline-only (active), Hybrid, and Online-only. The latter two are previewed as "coming in M3" and disabled.
+3. **Ollama Status** — endpoint, executable detection, server reachability, and a Refresh button. Reuses the same `SettingsLocalAiViewModel` as the Settings card so the two views never drift.
+4. **Model Catalog** — same curated rows as Settings (size / parameter / family / Installed-Missing chip). A "Download" button is rendered **disabled** with the label "Download (M2.6 — requires permission)" so the future flow is discoverable but inert.
+5. **Verification** — derived headline (Ready / Partially Ready / Not Ready) plus guidance for the next milestone.
+
+Wizard state lives in `InMemoryFirstRunSetupService` (Vayu.Core) for M2.5; SQLite persistence is M2.8. The wizard never installs Ollama, never pulls a model, and never makes a cloud call — those affordances arrive in M2.6 behind explicit consent.
 
 ## Supported providers
 
