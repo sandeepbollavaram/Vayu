@@ -49,13 +49,13 @@
                                      IsChecked="True"
                                      Checked="OnModeOfflineChecked" />
                         <RadioButton x:Name="ModeHybridRadio"
-                                     Content="Hybrid (offline + online fallback) — coming in M3"
+                                     Content="Hybrid (offline + online fallback) — set up in Settings"
                                      IsEnabled="False" />
                         <RadioButton x:Name="ModeOnlineRadio"
-                                     Content="Online only — coming in M3"
+                                     Content="Online Gemini — set up in Settings"
                                      IsEnabled="False" />
                         <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
-                                   Text="M2.5 ships the Offline path. Online providers (Gemini, OpenAI, Anthropic, …) and Hybrid routing land in M3." />
+                                   Text="The wizard sets up the Offline path. Online Gemini and Hybrid routing are live as of M3.5 — save a Gemini key in Settings → Online AI · Gemini, then pick Online or Hybrid in Settings → AI Mode. Cloud calls ask for consent every time, and every plan still passes through the permission engine." />
                     </StackPanel>
 
                     <!-- 3. Ollama Status -->
