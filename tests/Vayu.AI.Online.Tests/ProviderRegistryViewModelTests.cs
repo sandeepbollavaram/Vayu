@@ -32,9 +32,24 @@ public class ProviderRegistryViewModelTests
         foreach (var card in cards.Where(c => c.ProviderId != "gemini"))
         {
             Assert.False(card.IsAvailableNow);
-            Assert.Equal("Planned", card.StatusLabel);
+            Assert.StartsWith("Planned", card.StatusLabel);
             Assert.False(card.IsActionEnabled);
-            Assert.Contains("M3.7", card.ActionLabel);
+            Assert.False(card.IsConfigured);
+        }
+    }
+
+    [Fact]
+    public void ShellProviders_ShowConnectorShellPresent()
+    {
+        var cards = ProviderRegistryViewModel.BuildCards(geminiKeyConfigured: false);
+
+        foreach (var id in PlannedOnlineProviders.ShellProviderIds)
+        {
+            var card = cards.Single(c => c.ProviderId == id);
+            Assert.Contains("connector shell present", card.StatusLabel);
+            Assert.Contains("Connector shell present", card.ActionLabel);
+            Assert.False(card.IsActionEnabled);
+            Assert.False(card.IsAvailableNow);
         }
     }
 
