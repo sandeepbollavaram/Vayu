@@ -72,7 +72,8 @@ Subdivisions:
 | M2.5 | First Run Setup Wizard UI — five-step page (Welcome → Mode → Ollama → Models → Verification) reachable from the nav rail and Settings. Read-only; reuses the M2.3/M2.4 detection view model. Wizard state lives in `InMemoryFirstRunSetupService`; install/pull stay deferred to M2.6. |
 | M2.6 | Safe model pull flow — `IOllamaModelPullService` streams `POST /api/pull` for curated tags only; consent `ContentDialog` names the exact endpoint and lets the user cancel; per-row progress; `IsInstalled` only flips after a fresh `/api/tags` confirmation. No Ollama runtime install — that's a future task. |
 | M2.7 | Local AI planner — `OllamaIntentPlanner` (strict-JSON, allowlisted intents, Vayu-assigned risk) + `AiRouterIntentPlanner` (offline plan above confidence floor → rule-based fallback). Opt-in Settings toggle, default OFF. Plans still flow through AgentRuntime → PermissionService → audit. Online/Hybrid routing stays M3; typing/clicking stays M5. |
-| M2.8 | M2 polish + release — readiness-gated planner toggle (`LocalAiReadiness`), active-model selection over installed curated models (no auto-pull), README + LOCAL_AI/FIRST_RUN_SETUP sweep, `docs/M2_DEMO.md`, tag `v0.2.0-m2` after user-verified demo. |
+| M2.8 | M2 polish — readiness-gated planner toggle (`LocalAiReadiness`), active-model selection over installed curated models (no auto-pull), README + LOCAL_AI/FIRST_RUN_SETUP sweep, `docs/M2_DEMO.md`. |
+| M2.9 | M2 UI release-polish — single-state model-row state machine (`ModelRowState`), per-row progress bar + cancel, clean installed state, full glitch sweep. Tag `v0.2.0-m2` after user-verified demo. |
 
 Hard rules carried from M1:
 
