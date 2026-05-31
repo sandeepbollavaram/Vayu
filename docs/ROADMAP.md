@@ -175,7 +175,7 @@ Features:
 | Sub  | Scope                                                                                              |
 | ---- | -------------------------------------------------------------------------------------------------- |
 | M4.1 | ✅ **Voice architecture / contracts** — `Vayu.Voice`: `VoiceInteractionState`, `VoiceInputMode`, `VoiceSession`, `VoiceRecognitionResult`, `SpeechSynthesisRequest`/`Result`, `MicrophoneStatus`, `IVoiceInputService`, `ITextToSpeechService`, `IVoiceCommandService`, `VoiceEvent`, `IVoiceActivitySink`. Provider-neutral. No capture, no STT/TTS, no always-listening. See [VOICE_SYSTEM.md](VOICE_SYSTEM.md). |
-| M4.2 | Push-to-talk UI foundation. |
+| M4.2 | ✅ Push-to-talk UI foundation — Home **Voice** card (mic-status line, Push-to-talk + Stop/Cancel, current state) + Settings voice section; `StubVoiceInputService` drives the session state machine with **no microphone capture and no faked transcript** (returns "recognition arrives in M4.3"); `InMemoryVoiceActivitySink` buffers `VoiceEvent`s; `VayuSphere.SetVoiceState` maps voice state to the existing sphere animation. No STT, no always-listening, no command execution. |
 | M4.3 | Local STT provider integration (Whisper.cpp first). |
 | M4.4 | TTS provider integration (System TTS first). |
 | M4.5 | Voice command pipeline into `AgentRuntime` (voice → `CommandRequest` → planner/router → permission/audit). |
