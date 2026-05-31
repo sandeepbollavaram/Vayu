@@ -41,8 +41,14 @@
                             <TextBlock Style="{StaticResource VayuSectionText}" Text="AI MODE" VerticalAlignment="Center" />
                         </StackPanel>
                         <TextBlock Style="{StaticResource VayuBodyText}" Text="Offline" FontSize="20" />
-                        <TextBlock Style="{StaticResource VayuMutedText}" Text="Provider: rule-based parser (M1)" />
-                        <TextBlock Style="{StaticResource VayuMutedText}" Text="Next: Ollama with Gemma 3 (4B recommended, 1B for low-end hardware)." />
+                        <TextBlock x:Name="AiModeProviderText" Style="{StaticResource VayuMutedText}" Text="Provider: rule-based parser" />
+                        <ToggleSwitch x:Name="OfflineAiToggle"
+                                      Header="Offline AI planner (Ollama)"
+                                      OffContent="Off — rule-based only"
+                                      OnContent="On — local AI plans, rule-based fallback"
+                                      Toggled="OnOfflineAiToggled" />
+                        <TextBlock x:Name="OfflineAiToggleHint" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
+                                   Text="Opt-in. The local model only proposes a plan — every action still passes through the permission engine. If the model is unavailable or unsure, Vayu falls back to the rule-based parser." />
                     </StackPanel>
                 </Border>
 
