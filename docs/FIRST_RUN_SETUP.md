@@ -82,6 +82,8 @@ The Ollama Status step still reads "Vayu will not install Ollama automatically."
 
 Once a curated model is installed, the user can enable **Offline AI planner (Ollama)** from **Settings → AI Mode**. The toggle is opt-in and defaults to OFF. When ON, the AI Router asks the local model to plan each command and falls back to the rule-based parser whenever the model is unavailable, unsure, or proposes anything outside the allowlist. The model only proposes a plan — the permission engine still gates every action, and typing/clicking is still deferred to M5.
 
+As of M2.8 the toggle is **readiness-gated**: it stays disabled until Ollama is reachable and a curated model is installed, with hint text explaining what's missing. The planner runs the recommended installed model when present, otherwise the first installed curated model (`gemma3:1b`, then `llama3.2:3b`) — it never auto-pulls. If the runtime disappears while the planner is on, the next Refresh turns it off so Vayu falls back cleanly to the rule-based parser. See the [M2 demo](M2_DEMO.md) for the full walkthrough.
+
 If none of the above, the wizard shows a screen explaining what Ollama is, what it does, and what installing it means. The user must click **Install Ollama** before anything happens — the actual install/pull flow is M2.6 and requires explicit consent. The manual install link (`https://ollama.com/download/windows`) is always visible as a fallback for users who'd rather install it themselves.
 
 ### Recommended models
