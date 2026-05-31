@@ -23,7 +23,8 @@ or runs anything.
 | M2.4 | Installed-model listing refinement — size in GB, family/parameter/quantization parsing, exact-tag matching, curated-vs-unknown summary | ✅ Done         |
 | M2.5 | First Run Setup Wizard UI — Welcome → Mode → Ollama → Models → Verification (read-only) | ✅ Done         |
 | M2.6 | Safe model pull flow — explicit consent dialog + streaming `/api/pull` with per-row cancel | ✅ Done         |
-| M2.7 | Local AI planner — `OllamaIntentPlanner` + `AiRouterIntentPlanner` (offline plan → rule-based fallback); opt-in Settings toggle | 🛠️ In progress |
+| M2.7 | Local AI planner — `OllamaIntentPlanner` + `AiRouterIntentPlanner` (offline plan → rule-based fallback); opt-in Settings toggle | ✅ Done         |
+| M2.8 | M2 polish + release — readiness-gated toggle, active-model selection, docs sweep, `v0.2.0-m2` tag | 🛠️ In progress |
 | M2.7 | Local AI planner (`OllamaAiProvider` + AI Router with confidence floor) | ⏳ Planned      |
 | M2.8 | M2 polish + `v0.2.0-m2` tag                                           | ⏳ Planned      |
 
@@ -125,6 +126,15 @@ Components (Vayu.AI.Local + Vayu.AgentRuntime):
 `LocalAiPlannerOptions` carries the model tag, `MinimumConfidence` (0.70), `MaxPromptChars`, and timeout. `LocalAiPlannerState` is the live, user-flippable toggle the **Settings → AI Mode** switch writes — no restart needed.
 
 Still deferred: cloud / Hybrid routing (Gemini fallback) is **M3**; typing/clicking inside apps is **M5**. M2.7 makes no cloud calls and emits no telemetry.
+
+### M2.8 — readiness gating, active model, release prep
+
+M2.8 makes the opt-in honest and ships M2:
+
+- **Readiness gate** (`LocalAiReadiness.CanEnablePlanner`) — the **Settings → AI Mode** toggle is disabled until Ollama is reachable **and** a curated model is installed. The hint text states the reason: *"Install and start Ollama first"*, *"Download Gemma 3 4B (or another curated model) first"*, or *"Offline planner is ready. Active model: …"*. If the planner is ON and the runtime later disappears, the next Refresh flips it **off** so Vayu never keeps poking a dead model.
+- **Active model selection** (`LocalAiReadiness.SelectActiveModel`) — when enabled, the planner runs the recommended installed model (`gemma3:4b`) if present; otherwise the first installed curated model in catalog order (`gemma3:1b`, then `llama3.2:3b`). It **never auto-pulls** — selection is purely over what's already installed. The active tag is surfaced in the provider line and threaded into `LocalAiPlannerState.ActiveModelTag`, which `OllamaIntentPlanner` prefers over its configured default.
+- **Persistence** — the planner toggle and active-model choice are **process-memory only** in M2 (`LocalAiPlannerState`). Durable persistence of user AI preferences is deferred to a later milestone alongside the broader settings store; document and move on rather than overbuild before release.
+- **Release** — `v0.2.0-m2` is tagged only after a user-verified [M2 demo](M2_DEMO.md) of the full detect → list → pull → plan loop.
 
 ## Supported providers
 
