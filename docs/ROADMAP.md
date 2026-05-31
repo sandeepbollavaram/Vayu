@@ -103,7 +103,7 @@ Features:
 | Sub  | Scope                                                                                              |
 | ---- | -------------------------------------------------------------------------------------------------- |
 | M3.1 | **Online provider architecture** — contracts only in `Vayu.AI.Online`: `OnlineAiOptions`, `OnlineProviderDescriptor`/`Kind`, `OnlineProviderCatalog` (13 providers), `OnlineProviderKeySource`/`KeyStatus` (no key value), `CloudConsentRequest`/`Decision`/`ICloudConsentService`, `IOnlineAiProvider`, `OnlineAiPlanningResult`, `OnlineAiSafetyPolicy`. No cloud HTTP, no key storage. Cloud disabled by default; consent required. |
-| M3.2 | Gemini provider connector — first concrete `IOnlineAiProvider` (`Vayu.AI.Gemini`), JSON-mode planning behind consent. |
+| M3.2 | Gemini provider connector — `GeminiProvider` implements `IOnlineAiProvider`: key resolved via `SecureConfigService` (value internal-only, never surfaced), `PlanAsync` makes no HTTP call unless consent is `AllowOnce` and a key is configured, JSON-mode planning, output allowlist/risk-validated through `OnlineAiSafetyPolicy`. Tested with a fake `HttpMessageHandler` — no real key, no real network. Still disabled in the UI until key-setup (M3.3) + consent dialog (M3.4). |
 | M3.3 | Secure provider key setup UI — Windows Credential Manager first, env var, DPAPI fallback; key never shown after save. |
 | M3.4 | Cloud consent dialog — WinUI implementation of `ICloudConsentService`. |
 | M3.5 | Online AI planner + router integration — Hybrid mode (local first, cloud fallback under consent + confidence floor). |
