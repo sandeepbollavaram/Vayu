@@ -78,9 +78,12 @@ public partial class App : Application
         // --- UI navigation bridge (used by show-logs / show-settings agents) ---
         services.AddSingleton<UiNavigationService>();
 
-        // --- Automation: known-app launcher + agent ---
+        // --- Automation: known-app launcher + installed-app discovery + agent ---
         services.AddSingleton<IAppLauncher, WindowsAppLauncher>();
-        services.AddSingleton(sp => new AppLauncherAgent(sp.GetRequiredService<IAppLauncher>()));
+        services.AddSingleton<InstalledAppCatalog>();
+        services.AddSingleton(sp => new AppLauncherAgent(
+            sp.GetRequiredService<IAppLauncher>(),
+            sp.GetRequiredService<InstalledAppCatalog>()));
         services.AddSingleton(sp => new ShowLogsAgent(sp.GetRequiredService<UiNavigationService>()));
         services.AddSingleton(sp => new ShowSettingsAgent(sp.GetRequiredService<UiNavigationService>()));
 
