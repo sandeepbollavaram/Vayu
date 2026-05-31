@@ -3,59 +3,213 @@
     x:Class="Vayu_Desktop.Pages.HomePage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Vayu_Desktop.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:local="using:Vayu_Desktop.Pages"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Background="Transparent"
     mc:Ignorable="d">
 
-    <Grid Padding="24" RowSpacing="16">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Grid Padding="36,28,36,32" RowSpacing="22">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0"
-                   Text="Vayu"
-                   Style="{StaticResource TitleLargeTextBlockStyle}" />
+            <!-- ============== TOP ============== -->
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="12">
-            <Border Background="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                    CornerRadius="12" Padding="8,4">
-                <TextBlock x:Name="ModeLabel" Text="Mode: Offline" />
+                <StackPanel Grid.Column="0" Spacing="4">
+                    <TextBlock Text="VAYU" Style="{StaticResource VayuTitleText}" />
+                    <TextBlock Text="local-first AI command center · windows" Style="{StaticResource VayuSubtitleText}" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Border Style="{StaticResource VayuChip}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Ellipse Width="8" Height="8" Fill="{StaticResource VayuAccentCyanBrush}" />
+                            <TextBlock Style="{StaticResource VayuChipText}" Text="MODE · OFFLINE" />
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource VayuChipTeal}">
+                        <TextBlock Style="{StaticResource VayuChipText}" Text="PROVIDER · RULE-BASED M1" />
+                    </Border>
+                    <Border x:Name="RuntimeChip" Style="{StaticResource VayuChip}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Ellipse x:Name="RuntimeDot" Width="8" Height="8" Fill="{StaticResource VayuAccentTealBrush}" />
+                            <TextBlock x:Name="RuntimeChipText" Style="{StaticResource VayuChipText}" Text="RUNTIME · READY" />
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource VayuChipTeal}">
+                        <TextBlock Style="{StaticResource VayuChipText}" Text="PERMISSIONS · SAFE" />
+                    </Border>
+                    <Border Style="{StaticResource VayuChipViolet}">
+                        <TextBlock Style="{StaticResource VayuChipText}" Text="MEMORY · LOCAL AUDIT" />
+                    </Border>
+                </StackPanel>
+            </Grid>
+
+            <!-- ============== MAIN ============== -->
+            <Grid Grid.Row="1" ColumnSpacing="22">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="320" />
+                </Grid.ColumnDefinitions>
+
+                <!-- LEFT: sphere + console -->
+                <Border Grid.Column="0" Style="{StaticResource VayuGlassCard}" Padding="28">
+                    <Grid RowSpacing="20">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10">
+                            <Border Width="3" Height="14" Background="{StaticResource VayuAccentCyanBrush}" />
+                            <TextBlock Style="{StaticResource VayuSectionText}" Text="AI CORE" VerticalAlignment="Center" />
+                        </StackPanel>
+
+                        <Grid Grid.Row="1" Height="320">
+                            <controls:VayuSphere x:Name="Sphere" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <!-- Command input -->
+                        <Grid Grid.Row="2" ColumnSpacing="10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                     x:Name="CommandBox"
+                                     Style="{StaticResource VayuConsoleTextBox}"
+                                     PlaceholderText="Ask Vayu to open apps, run workflows, or control your desktop…"
+                                     KeyDown="CommandBox_OnKeyDown" />
+                            <Button Grid.Column="1"
+                                    Style="{StaticResource VayuAccentButton}"
+                                    Click="OnRun"
+                                    Content="RUN ›" />
+                        </Grid>
+
+                        <!-- Examples -->
+                        <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="8">
+                            <TextBlock Style="{StaticResource VayuMutedText}" Text="try" VerticalAlignment="Center" />
+                            <Button Style="{StaticResource VayuGhostButton}" Content="open notepad"  Click="OnExampleClick" Tag="open notepad" />
+                            <Button Style="{StaticResource VayuGhostButton}" Content="open vscode"   Click="OnExampleClick" Tag="open vscode" />
+                            <Button Style="{StaticResource VayuGhostButton}" Content="show logs"     Click="OnExampleClick" Tag="show logs" />
+                            <Button Style="{StaticResource VayuGhostButton}" Content="show settings" Click="OnExampleClick" Tag="show settings" />
+                        </StackPanel>
+
+                        <!-- Last result card -->
+                        <Border Grid.Row="4" x:Name="ResultCard" Style="{StaticResource VayuGlassCardElevated}">
+                            <Grid ColumnSpacing="14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <Ellipse Grid.Column="0" x:Name="ResultIndicator"
+                                         Width="10" Height="10"
+                                         Fill="{StaticResource VayuAccentCyanBrush}"
+                                         VerticalAlignment="Center" />
+
+                                <StackPanel Grid.Column="1" Spacing="2">
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <TextBlock x:Name="ResultStatus"
+                                                   Style="{StaticResource VayuSectionText}"
+                                                   Text="LAST RESULT · READY" />
+                                        <TextBlock x:Name="ResultAgent" Style="{StaticResource VayuMutedText}" Text="" />
+                                        <TextBlock x:Name="ResultRisk" Style="{StaticResource VayuMutedText}" Text="" />
+                                    </StackPanel>
+                                    <TextBlock x:Name="ResultMessage"
+                                               Style="{StaticResource VayuBodyText}"
+                                               Text="Type a command above and press Enter." />
+                                </StackPanel>
+
+                                <TextBlock Grid.Column="2"
+                                           x:Name="ResultTimestamp"
+                                           Style="{StaticResource VayuMutedText}"
+                                           VerticalAlignment="Center"
+                                           Text="" />
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- RIGHT: quick cards -->
+                <StackPanel Grid.Column="1" Spacing="14">
+                    <Border Style="{StaticResource VayuGlassCard}">
+                        <StackPanel Spacing="6">
+                            <TextBlock Style="{StaticResource VayuSectionText}" Text="LOCAL FIRST" />
+                            <TextBlock Style="{StaticResource VayuBodyText}" Text="Offline mode is active. Nothing leaves this device." />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource VayuGlassCard}">
+                        <StackPanel Spacing="6">
+                            <TextBlock Style="{StaticResource VayuSectionText}" Text="SAFE AUTOMATION" />
+                            <TextBlock Style="{StaticResource VayuBodyText}" Text="L0–L2 actions auto-allow. L3+ require explicit confirmation. L6 disabled." />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource VayuGlassCard}">
+                        <StackPanel Spacing="6">
+                            <TextBlock Style="{StaticResource VayuSectionText}" Text="PROVIDER" />
+                            <TextBlock Style="{StaticResource VayuBodyText}" Text="rule-based (M1)" />
+                            <TextBlock Style="{StaticResource VayuMutedText}" Text="Ollama + Gemma planner lands in M2." />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource VayuGlassCard}">
+                        <StackPanel Spacing="6">
+                            <TextBlock Style="{StaticResource VayuSectionText}" Text="SETUP WIZARD" />
+                            <TextBlock Style="{StaticResource VayuBodyText}" Text="First-run wizard for Ollama install, Gemma model download, and optional online provider key — coming next." />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+
+            <!-- ============== RECENT ACTIVITY ============== -->
+            <Border Grid.Row="2" Style="{StaticResource VayuGlassCard}">
+                <StackPanel Spacing="10">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Border Width="3" Height="14" Background="{StaticResource VayuAccentTealBrush}" />
+                        <TextBlock Style="{StaticResource VayuSectionText}" Text="RECENT ACTIVITY" VerticalAlignment="Center" />
+                        <TextBlock x:Name="RecentCountText" Style="{StaticResource VayuMutedText}" VerticalAlignment="Center" Text="" />
+                    </StackPanel>
+                    <ItemsControl x:Name="RecentList" ItemsSource="{x:Bind RecentRows, Mode=OneWay}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,4" ColumnSpacing="14">
+                                    <TextBlock Text="{Binding}"
+                                               FontFamily="Cascadia Mono, Consolas, Segoe UI"
+                                               FontSize="12"
+                                               Foreground="{StaticResource VayuTextSecondary}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock x:Name="RecentEmpty"
+                               Style="{StaticResource VayuMutedText}"
+                               Text="No audit rows yet. Run a command to populate the log."
+                               Visibility="Visible" />
+                </StackPanel>
             </Border>
-            <Border Background="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                    CornerRadius="12" Padding="8,4">
-                <TextBlock x:Name="ProviderLabel" Text="Provider: rule-based (M1)" />
-            </Border>
-        </StackPanel>
 
-        <Grid Grid.Row="2" ColumnSpacing="8">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <TextBox Grid.Column="0"
-                     x:Name="CommandBox"
-                     PlaceholderText="Try: open notepad"
-                     KeyDown="CommandBox_OnKeyDown" />
-            <Button Grid.Column="1"
-                    Content="Run"
-                    Style="{StaticResource AccentButtonStyle}"
-                    Click="OnRun" />
+            <!-- Footer notice -->
+            <TextBlock Grid.Row="3"
+                       Style="{StaticResource VayuMutedText}"
+                       HorizontalAlignment="Center"
+                       Text="vayu m1 · offline · audit-logged · no cloud" />
         </Grid>
-
-        <Border Grid.Row="3"
-                Background="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                CornerRadius="6"
-                Padding="12">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <TextBlock x:Name="ResultText"
-                           TextWrapping="Wrap"
-                           FontFamily="Consolas"
-                           Text="Type a command above and press Enter." />
-            </ScrollViewer>
-        </Border>
-    </Grid>
+    </ScrollViewer>
 </Page>
