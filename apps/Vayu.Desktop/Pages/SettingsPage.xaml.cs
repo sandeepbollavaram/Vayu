@@ -38,10 +38,12 @@ public sealed partial class SettingsPage : Page
             Loaded += OnPageLoaded;
         }
 
-        // M2.7: reflect and control the offline AI planner opt-in.
+        // M2.7/M2.8: reflect and control the offline AI planner opt-in.
+        // Start disabled until the first detection refresh proves readiness.
         _plannerState = App.Services?.GetService<LocalAiPlannerState>();
         if (_plannerState is not null)
         {
+            OfflineAiToggle.IsEnabled = false;
             OfflineAiToggle.IsOn = _plannerState.OfflinePlanningEnabled;
             UpdateAiModeText();
         }
@@ -53,15 +55,52 @@ public sealed partial class SettingsPage : Page
         {
             return;
         }
-        _plannerState.OfflinePlanningEnabled = OfflineAiToggle.IsOn;
+        // Never allow ON when the runtime is not ready, even if the control
+        // somehow reports IsOn (e.g. programmatic flips). Readiness wins.
+        var ready = _localAi?.PlannerReady ?? false;
+        _plannerState.OfflinePlanningEnabled = OfflineAiToggle.IsOn && ready;
         UpdateAiModeText();
     }
 
     private void UpdateAiModeText()
     {
         AiModeProviderText.Text = (_plannerState?.OfflinePlanningEnabled ?? false)
-            ? "Provider: Ollama local AI (rule-based fallback)"
+            ? $"Provider: Ollama local AI ({_localAi?.ActiveModelTag ?? "local model"}, rule-based fallback)"
             : "Provider: rule-based parser";
+    }
+
+    /// <summary>
+    /// M2.8: gate the planner toggle on runtime readiness. Disables the toggle
+    /// (with a reason) when Ollama is unreachable or no curated model is
+    /// installed, and force-disables an already-enabled planner that has lost
+    /// its runtime so Vayu cannot keep trying a dead model.
+    /// </summary>
+    private void SyncPlannerGate()
+    {
+        if (_localAi is null || _plannerState is null)
+        {
+            return;
+        }
+
+        var ready = _localAi.PlannerReady;
+        // Keep the planner's active model in sync with what's installed.
+        _plannerState.ActiveModelTag = _localAi.ActiveModelTag;
+
+        OfflineAiToggle.IsEnabled = ready;
+        OfflineAiToggleHint.Text = _localAi.PlannerReadinessText;
+
+        if (!ready && _plannerState.OfflinePlanningEnabled)
+        {
+            // Runtime went away while enabled — fail safe to OFF.
+            _plannerState.OfflinePlanningEnabled = false;
+            OfflineAiToggle.IsOn = false;
+        }
+        else
+        {
+            OfflineAiToggle.IsOn = _plannerState.OfflinePlanningEnabled;
+        }
+
+        UpdateAiModeText();
     }
 
     private async void OnPageLoaded(object sender, RoutedEventArgs e)
@@ -97,6 +136,7 @@ public sealed partial class SettingsPage : Page
             EndpointStatusText.Text = _localAi.EndpointStatusText;
             DetectionMessageText.Text = _localAi.DetectionMessage;
             CuratedSummaryText.Text = _localAi.CuratedSummaryText;
+            SyncPlannerGate();
         }
         finally
         {
