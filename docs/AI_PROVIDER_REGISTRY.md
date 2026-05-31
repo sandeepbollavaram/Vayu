@@ -103,7 +103,8 @@ The registry inherits every rule from `docs/SECURITY.md` and the [First Run Setu
 The registry exists at M1; connectors arrive one by one over later milestones.
 
 - **M1** — this document + `AiProviderKind` enum + `AiProviderDescriptor` record + `AiProviderRegistry` static catalog of 25 entries. **No HTTP. No SDKs. No provider-specific code in any other project.**
-- **M3** — first real connector: Gemini. Per the existing plan in [ROADMAP.md](ROADMAP.md). Uses the registry for ID, secret name, and display.
+- **M3.1** — the online provider *architecture* lands in `Vayu.AI.Online`: `OnlineAiOptions` (cloud off by default, consent required), `OnlineProviderDescriptor`/`OnlineProviderKind`, `OnlineProviderCatalog` (13 entries: gemini, openai, claude, deepseek, kimi, mistral, groq, cohere, perplexity, xai, openrouter, litellm, custom-openai-compatible), `OnlineProviderKeySource`/`OnlineProviderKeyStatus` (source only — **never the key value**), `CloudConsentRequest`/`CloudConsentDecision`/`ICloudConsentService`, `IOnlineAiProvider`, `OnlineAiPlanningResult`, and `OnlineAiSafetyPolicy` (allowlist + risk ≤ L1 for cloud plans). **Still no HTTP, no key storage, no cloud call.** `RecommendedFirstProvider` is `gemini` because it's implemented first — not because it's the only one.
+- **M3.2** — first real connector: Gemini (`Vayu.AI.Gemini` implements `IOnlineAiProvider`). Uses the catalog for ID, setup doc, and capabilities; plans only behind explicit consent.
 - **M4+** — additional connectors merge one PR at a time. Each PR adds:
   - implementation of `IOnlineAiProvider` (or a planner contract — TBD with the AI Router work in M2),
   - redaction patterns covering that provider's key format,
