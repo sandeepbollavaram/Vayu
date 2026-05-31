@@ -5,8 +5,21 @@ using Vayu.Core;
 
 namespace Vayu.Automation.Windows.Tests;
 
-public class AppLauncherAgentTests
+public class AppLauncherAgentTests : IDisposable
 {
+    private readonly string _tempRoot;
+
+    public AppLauncherAgentTests()
+    {
+        _tempRoot = Path.Combine(Path.GetTempPath(), $"vayu-agt-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(_tempRoot);
+    }
+
+    public void Dispose()
+    {
+        try { Directory.Delete(_tempRoot, recursive: true); } catch { /* best-effort */ }
+    }
+
     [Fact]
     public void Declares_Identity()
     {
@@ -19,32 +32,119 @@ public class AppLauncherAgentTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithKnownApp_CallsLauncher()
+    public async Task ExecuteAsync_KnownApp_CallsLauncherLaunchAsync()
     {
         var launcher = new FakeLauncher(
             answer: CommandResult.Success(message: "Launched.", agentName: "AppLauncher"));
         var agent = new AppLauncherAgent(launcher);
-        var plan = Plan(("app", "notepad"));
 
-        var result = await agent.ExecuteAsync(plan);
+        var result = await agent.ExecuteAsync(Plan(("app", "notepad")));
 
         Assert.Equal(CommandStatus.Success, result.Status);
         Assert.Equal("notepad", launcher.LastAppId);
-        Assert.Equal(1, launcher.CallCount);
+        Assert.Equal(1, launcher.LaunchAsyncCallCount);
+        Assert.Equal(0, launcher.LaunchShortcutCallCount);
     }
 
     [Fact]
-    public async Task ExecuteAsync_ForwardsLauncherFailure()
+    public async Task ExecuteAsync_UnknownApp_NoInstalledCatalog_ReturnsFailedUnknown()
     {
-        var launcher = new FakeLauncher(
-            answer: CommandResult.Failed("Unknown app.", errorCode: "UNKNOWN_APP", agentName: "AppLauncher"));
+        var launcher = new FakeLauncher();
         var agent = new AppLauncherAgent(launcher);
-        var plan = Plan(("app", "spaceship"));
 
-        var result = await agent.ExecuteAsync(plan);
+        var result = await agent.ExecuteAsync(Plan(("app", "spaceship")));
 
         Assert.Equal(CommandStatus.Failed, result.Status);
         Assert.Equal("UNKNOWN_APP", result.ErrorCode);
+        // The launcher was never called — the agent rejected before reaching it.
+        Assert.Equal(0, launcher.LaunchAsyncCallCount);
+        Assert.Equal(0, launcher.LaunchShortcutCallCount);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_UnknownApp_InstalledCatalogSingleMatch_CallsLaunchShortcut()
+    {
+        var desktop = Path.Combine(_tempRoot, "Desktop");
+        Directory.CreateDirectory(desktop);
+        File.WriteAllText(Path.Combine(desktop, "Spotify.lnk"), "fake");
+        var catalog = new InstalledAppCatalog(
+            new List<(string, string)> { (desktop, "UserDesktop") });
+        var launcher = new FakeLauncher();
+        var agent = new AppLauncherAgent(launcher, catalog);
+
+        var result = await agent.ExecuteAsync(Plan(("app", "spotify")));
+
+        Assert.Equal(CommandStatus.Success, result.Status);
+        Assert.Equal(0, launcher.LaunchAsyncCallCount);
+        Assert.Equal(1, launcher.LaunchShortcutCallCount);
+        Assert.NotNull(launcher.LastShortcut);
+        Assert.Equal("Spotify", launcher.LastShortcut!.DisplayName);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_UnknownApp_MultipleDistinctMatches_ReturnsNeedsClarification()
+    {
+        var desktop = Path.Combine(_tempRoot, "Desktop");
+        Directory.CreateDirectory(desktop);
+        File.WriteAllText(Path.Combine(desktop, "Spotify Free.lnk"), "fake");
+        File.WriteAllText(Path.Combine(desktop, "Spotify Studio.lnk"), "fake");
+        var catalog = new InstalledAppCatalog(
+            new List<(string, string)> { (desktop, "UserDesktop") });
+        var launcher = new FakeLauncher();
+        var agent = new AppLauncherAgent(launcher, catalog);
+
+        var result = await agent.ExecuteAsync(Plan(("app", "spotify")));
+
+        Assert.Equal(CommandStatus.NeedsClarification, result.Status);
+        Assert.NotNull(result.ClarificationPrompt);
+        Assert.Contains("Spotify Free", result.ClarificationPrompt);
+        Assert.Contains("Spotify Studio", result.ClarificationPrompt);
+        Assert.Equal(0, launcher.LaunchAsyncCallCount);
+        Assert.Equal(0, launcher.LaunchShortcutCallCount);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_UnknownApp_DedupesByNormalisedDisplayName()
+    {
+        var desktop = Path.Combine(_tempRoot, "Desktop");
+        var startMenu = Path.Combine(_tempRoot, "StartMenu");
+        Directory.CreateDirectory(desktop);
+        Directory.CreateDirectory(startMenu);
+        // Same app, two roots — dedup by display name should collapse to one launch.
+        File.WriteAllText(Path.Combine(desktop, "Spotify.lnk"), "fake");
+        File.WriteAllText(Path.Combine(startMenu, "Spotify.lnk"), "fake");
+        var catalog = new InstalledAppCatalog(
+            new List<(string, string)>
+            {
+                (desktop, "UserDesktop"),
+                (startMenu, "UserStartMenu"),
+            });
+        var launcher = new FakeLauncher();
+        var agent = new AppLauncherAgent(launcher, catalog);
+
+        var result = await agent.ExecuteAsync(Plan(("app", "spotify")));
+
+        Assert.Equal(CommandStatus.Success, result.Status);
+        Assert.Equal(1, launcher.LaunchShortcutCallCount);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_UnknownApp_InstalledCatalogNoMatch_ReturnsFailedUnknown()
+    {
+        var desktop = Path.Combine(_tempRoot, "Desktop");
+        Directory.CreateDirectory(desktop);
+        File.WriteAllText(Path.Combine(desktop, "Slack.lnk"), "fake");
+        var catalog = new InstalledAppCatalog(
+            new List<(string, string)> { (desktop, "UserDesktop") });
+        var launcher = new FakeLauncher();
+        var agent = new AppLauncherAgent(launcher, catalog);
+
+        var result = await agent.ExecuteAsync(Plan(("app", "spaceship")));
+
+        Assert.Equal(CommandStatus.Failed, result.Status);
+        Assert.Equal("UNKNOWN_APP", result.ErrorCode);
+        Assert.Equal(0, launcher.LaunchAsyncCallCount);
+        Assert.Equal(0, launcher.LaunchShortcutCallCount);
     }
 
     [Fact]
@@ -52,13 +152,12 @@ public class AppLauncherAgentTests
     {
         var launcher = new FakeLauncher();
         var agent = new AppLauncherAgent(launcher);
-        var plan = Plan(); // no args
 
-        var result = await agent.ExecuteAsync(plan);
+        var result = await agent.ExecuteAsync(Plan()); // no args
 
         Assert.Equal(CommandStatus.NeedsClarification, result.Status);
         Assert.False(string.IsNullOrWhiteSpace(result.ClarificationPrompt));
-        Assert.Equal(0, launcher.CallCount);
+        Assert.Equal(0, launcher.LaunchAsyncCallCount);
     }
 
     [Theory]
@@ -68,12 +167,11 @@ public class AppLauncherAgentTests
     {
         var launcher = new FakeLauncher();
         var agent = new AppLauncherAgent(launcher);
-        var plan = Plan(("app", blank));
 
-        var result = await agent.ExecuteAsync(plan);
+        var result = await agent.ExecuteAsync(Plan(("app", blank)));
 
         Assert.Equal(CommandStatus.NeedsClarification, result.Status);
-        Assert.Equal(0, launcher.CallCount);
+        Assert.Equal(0, launcher.LaunchAsyncCallCount);
     }
 
     [Fact]
@@ -114,13 +212,22 @@ public class AppLauncherAgentTests
             _answer = answer ?? CommandResult.Success(agentName: "AppLauncher");
         }
 
-        public int CallCount { get; private set; }
+        public int LaunchAsyncCallCount { get; private set; }
+        public int LaunchShortcutCallCount { get; private set; }
         public string? LastAppId { get; private set; }
+        public InstalledAppEntry? LastShortcut { get; private set; }
 
         public Task<CommandResult> LaunchAsync(string appId, CancellationToken cancellationToken = default)
         {
-            CallCount++;
+            LaunchAsyncCallCount++;
             LastAppId = appId;
+            return Task.FromResult(_answer);
+        }
+
+        public Task<CommandResult> LaunchShortcutAsync(InstalledAppEntry entry, CancellationToken cancellationToken = default)
+        {
+            LaunchShortcutCallCount++;
+            LastShortcut = entry;
             return Task.FromResult(_answer);
         }
     }
