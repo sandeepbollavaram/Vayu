@@ -31,6 +31,14 @@ public sealed class AppLauncherAgent : IAgent
     /// <summary>The argument key the parser/planner uses to identify the target app.</summary>
     public const string AppArgKey = "app";
 
+    /// <summary>
+    /// Args key set by the parser when the user asked to type/write into
+    /// the app (e.g. "open notepad and write hello"). The agent refuses
+    /// such plans in M1 — typing/clicking inside apps is M5 Advanced
+    /// Desktop Automation and will require explicit user confirmation.
+    /// </summary>
+    public const string TypingRequestedArgKey = "typing_requested";
+
     private const int MaxClarificationCandidates = 5;
 
     private readonly IAppLauncher _launcher;
@@ -67,6 +75,17 @@ public sealed class AppLauncherAgent : IAgent
         {
             return CommandResult.NeedsClarification(
                 "Which app would you like me to open?",
+                plan);
+        }
+
+        // M1 cannot type into apps. If the parser flagged a typing
+        // request, refuse the plan with a clear pointer to M5.
+        // (TODO M5: Advanced Desktop Automation — explicit confirmation required.)
+        if (plan.Args.TryGetValue(TypingRequestedArgKey, out var typingFlag) &&
+            string.Equals(typingFlag, "true", StringComparison.OrdinalIgnoreCase))
+        {
+            return CommandResult.NeedsClarification(
+                $"M1 can open {app} but typing into apps lands in M5 Advanced Desktop Automation. Try 'open {app}'.",
                 plan);
         }
 
