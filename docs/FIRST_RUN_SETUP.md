@@ -87,7 +87,7 @@ M2.4 refines that listing: each installed curated row now shows size (`3.6 GB`),
 M2.5 graduates the detection card into a five-step page available at **Setup** in the nav rail (and from a Settings card):
 
 1. **Welcome** — context + reminder that the wizard is skippable.
-2. **Mode** — Offline-only (active); Hybrid and Online-only are previewed as "coming in M3" and disabled. As of **M3.2** the Gemini connector exists (`Vayu.AI.Gemini`, consent-gated, key-safe), but cloud AI is still off by default and the Online/Hybrid modes stay disabled until the key-setup screen (M3.3) and consent dialog (M3.4) make it reachable from the app.
+2. **Mode** — Offline-only (active); Hybrid and Online-only are previewed as "coming in M3" and disabled. As of **M3.3** the Gemini connector (M3.2) and a secure key-setup card (Settings → Online AI · Gemini) both exist — you can save a Gemini key to Windows Credential Manager today. Cloud AI is still off by default and the Online/Hybrid modes stay disabled in the wizard until the consent dialog (M3.4) gates the first cloud call.
 3. **Ollama Status** — endpoint, executable, server, Refresh — shares the M2.3/M2.4 view model with Settings so the two never drift.
 4. **Model Catalog** — the curated catalog with M2.4 metadata (size/family/parameter). A Download button is rendered **disabled** ("Download (M2.6 — requires permission)") so the future affordance is visible but inert.
 5. **Verification** — Ready / Partially Ready / Not Ready verdict plus follow-up guidance.
