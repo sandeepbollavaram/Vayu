@@ -87,7 +87,7 @@ M2.4 refines that listing: each installed curated row now shows size (`3.6 GB`),
 M2.5 graduates the detection card into a five-step page available at **Setup** in the nav rail (and from a Settings card):
 
 1. **Welcome** — context + reminder that the wizard is skippable.
-2. **Mode** — Offline-only (active); Hybrid and Online-only are previewed as "coming in M3" and disabled. As of **M3.4** the Gemini connector (M3.2), the secure key-setup card (M3.3), and the cloud consent dialog all exist — you can save a Gemini key and run a consented **Test key** round-trip from Settings today (Allow once / Use local instead / Cancel). Cloud AI is still off by default for everyday commands; the Online/Hybrid modes become live once the router integration ships in M3.5.
+2. **Mode** — the wizard sets up the Offline path; **Online Gemini** and **Hybrid** are now live as of **M3.5** but are chosen in **Settings → AI Mode** (not the wizard) after you save a Gemini key in Settings → Online AI · Gemini. The default everyday mode stays **Rule-based** (cloud off). In Online/Hybrid, every cloud planning call asks for consent (Allow once / Use local instead / Cancel), at most once per command, and every plan still passes through the permission engine.
 3. **Ollama Status** — endpoint, executable, server, Refresh — shares the M2.3/M2.4 view model with Settings so the two never drift.
 4. **Model Catalog** — the curated catalog with M2.4 metadata (size/family/parameter). A Download button is rendered **disabled** ("Download (M2.6 — requires permission)") so the future affordance is visible but inert.
 5. **Verification** — Ready / Partially Ready / Not Ready verdict plus follow-up guidance.
