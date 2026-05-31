@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="Vayu_Desktop.Pages.FirstRunSetupPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:svc="using:Vayu_Desktop.Services"
+    Background="Transparent"
+    mc:Ignorable="d">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Padding="36,28,36,28" RowSpacing="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <StackPanel Grid.Row="0" Spacing="4">
+                <TextBlock Text="FIRST RUN SETUP" Style="{StaticResource VayuTitleText}" FontSize="32" />
+                <TextBlock x:Name="StepIndicatorText" Style="{StaticResource VayuSubtitleText}" Text="Step 1 of 5 · Welcome" />
+            </StackPanel>
+
+            <!-- Step content -->
+            <Border Grid.Row="1" Style="{StaticResource VayuGlassCard}">
+                <Grid>
+                    <!-- 1. Welcome -->
+                    <StackPanel x:Name="WelcomePanel" Spacing="10">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Border Width="3" Height="14" Background="{StaticResource VayuAccentCyanBrush}" />
+                            <TextBlock Style="{StaticResource VayuSectionText}" Text="WELCOME TO VAYU" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <TextBlock Style="{StaticResource VayuBodyText}" Text="Vayu is local-first. The First Run Setup checks whether your offline AI runtime is ready." />
+                        <TextBlock Style="{StaticResource VayuMutedText}" Text="This wizard does NOT install Ollama or download models in M2.5. Every step is skippable — Vayu remains usable in M1 rule-based mode without it." TextWrapping="Wrap" />
+                        <TextBlock Style="{StaticResource VayuMutedText}" Text="What you'll see next: AI mode, Ollama detection, model catalog, and a final readiness summary." TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <!-- 2. Mode -->
+                    <StackPanel x:Name="ModePanel" Spacing="10" Visibility="Collapsed">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Border Width="3" Height="14" Background="{StaticResource VayuAccentTealBrush}" />
+                            <TextBlock Style="{StaticResource VayuSectionText}" Text="PICK AN AI MODE" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <RadioButton x:Name="ModeOfflineRadio"
+                                     Content="Offline only — Ollama + Gemma (recommended)"
+                                     IsChecked="True"
+                                     Checked="OnModeOfflineChecked" />
+                        <RadioButton x:Name="ModeHybridRadio"
+                                     Content="Hybrid (offline + online fallback) — coming in M3"
+                                     IsEnabled="False" />
+                        <RadioButton x:Name="ModeOnlineRadio"
+                                     Content="Online only — coming in M3"
+                                     IsEnabled="False" />
+                        <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
+                                   Text="M2.5 ships the Offline path. Online providers (Gemini, OpenAI, Anthropic, …) and Hybrid routing land in M3." />
+                    </StackPanel>
+
+                    <!-- 3. Ollama Status -->
+                    <StackPanel x:Name="OllamaPanel" Spacing="10" Visibility="Collapsed">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
+                                <Border Width="3" Height="14" Background="{StaticResource VayuAccentVioletBrush}" />
+                                <TextBlock Style="{StaticResource VayuSectionText}" Text="OLLAMA STATUS" VerticalAlignment="Center" />
+                            </StackPanel>
+                            <Button Grid.Column="1" x:Name="OllamaRefreshButton" Content="Refresh" Click="OnOllamaRefreshClick" />
+                        </Grid>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Style="{StaticResource VayuMutedText}" Text="Endpoint:" />
+                            <TextBlock x:Name="OllamaEndpointText" Style="{StaticResource VayuBodyText}" Text="http://localhost:11434" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Style="{StaticResource VayuMutedText}" Text="Executable on PATH:" />
+                            <TextBlock x:Name="OllamaExecutableText" Style="{StaticResource VayuBodyText}" Text="Probing…" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Style="{StaticResource VayuMutedText}" Text="Server reachable:" />
+                            <TextBlock x:Name="OllamaServerText" Style="{StaticResource VayuBodyText}" Text="Probing…" />
+                        </StackPanel>
+                        <TextBlock x:Name="OllamaMessageText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap" Text="Vayu will NOT install Ollama automatically in this step. The M2.6 flow will guide it with explicit permission." />
+                    </StackPanel>
+
+                    <!-- 4. Models -->
+                    <StackPanel x:Name="ModelsPanel" Spacing="10" Visibility="Collapsed">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Border Width="3" Height="14" Background="{StaticResource VayuAccentAmberBrush}" />
+                            <TextBlock Style="{StaticResource VayuSectionText}" Text="MODEL CATALOG" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <TextBlock x:Name="ModelsSummaryText" Style="{StaticResource VayuBodyText}" Text="Installed curated models: 0 / 3" />
+                        <ItemsControl x:Name="ModelsItems">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="svc:LocalModelRow">
+                                    <Grid Padding="0,6,0,6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" Spacing="2">
+                                            <TextBlock Style="{StaticResource VayuBodyText}" Text="{x:Bind DisplayName}" />
+                                            <TextBlock Style="{StaticResource VayuMutedText}" Text="{x:Bind Description}" TextWrapping="Wrap" />
+                                            <TextBlock Style="{StaticResource VayuMutedText}" Text="{x:Bind HardwareNote}" TextWrapping="Wrap" />
+                                            <TextBlock Style="{StaticResource VayuMutedText}" Text="{x:Bind ModelTag}" />
+                                            <TextBlock Style="{StaticResource VayuMutedText}" Text="{x:Bind DisplaySize, Mode=OneWay}" />
+                                            <TextBlock Style="{StaticResource VayuMutedText}" Text="{x:Bind ParameterSize, Mode=OneWay}" />
+                                            <TextBlock Style="{StaticResource VayuMutedText}" Text="{x:Bind FamilyLabel, Mode=OneWay}" />
+                                        </StackPanel>
+                                        <Border Grid.Column="1" Style="{StaticResource VayuChip}" VerticalAlignment="Center">
+                                            <TextBlock Style="{StaticResource VayuChipText}" Text="{x:Bind StatusText, Mode=OneWay}" />
+                                        </Border>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Button x:Name="DownloadModelButton" Content="Download (M2.6 — requires permission)" IsEnabled="False" />
+                        <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
+                                   Text="Model pull is deferred to M2.6 and will ask explicit permission. Until then, install manually with 'ollama pull gemma3:4b'." />
+                    </StackPanel>
+
+                    <!-- 5. Verify -->
+                    <StackPanel x:Name="VerifyPanel" Spacing="10" Visibility="Collapsed">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Border Width="3" Height="14" Background="{StaticResource VayuAccentCyanBrush}" />
+                            <TextBlock Style="{StaticResource VayuSectionText}" Text="VERIFICATION" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <TextBlock x:Name="VerifyHeadlineText" Style="{StaticResource VayuBodyText}" FontSize="18" Text="Probing…" TextWrapping="Wrap" />
+                        <TextBlock x:Name="VerifyGuidanceText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap" Text="" />
+                        <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
+                                   Text="No installs happened during this wizard. No models were downloaded. You can revisit setup any time from Settings → Open First Run Setup." />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Status line / completed badge -->
+            <TextBlock Grid.Row="2" x:Name="CompletedStatusText" Style="{StaticResource VayuMutedText}" Text="" />
+
+            <!-- Footer buttons -->
+            <Grid Grid.Row="3" ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" x:Name="SkipButton" Content="Skip for now" Click="OnSkipClick" />
+                <Button Grid.Column="2" x:Name="BackButton" Content="Back" Click="OnBackClick" IsEnabled="False" />
+                <Button Grid.Column="3" x:Name="NextButton" Content="Continue" Click="OnNextClick" Style="{StaticResource AccentButtonStyle}" />
+            </Grid>
+        </Grid>
+    </ScrollViewer>
+</Page>
