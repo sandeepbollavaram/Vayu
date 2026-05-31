@@ -68,7 +68,7 @@ Subdivisions:
 | M2.1 | **Offline AI architecture** — contracts: `LocalAiOptions`, `LocalModelCatalog`, `LocalModelDescriptor`, `LocalAiProviderStatus`, `ILocalAiProvider`, `ILocalIntentPlanner`, `LocalAiPlanningResult`. No HTTP, no Ollama install, no model downloads. |
 | M2.2 | Ollama runtime detection — `OllamaRuntimeService` real impl (winget probe, PATH probe, `GET /api/tags` ping). |
 | M2.3 | Local model catalog wiring — Settings → "Offline AI · Ollama" card shows endpoint, executable/server detection, recommended model, and the curated catalog with Installed/Missing badges; Refresh re-runs detection (no install, no pull). |
-| M2.4 | Installed model listing refinement — per-row size, family grouping, family-only matches in the Settings card. |
+| M2.4 | Installed model listing refinement — `OllamaModelInfo` parses size + `details.family` / `parameter_size` / `quantization_level`; Settings rows show GB/parameter/family; curated-vs-unknown summary; matching stays exact-tag. |
 | M2.5 | First Run Setup Wizard UI — Mode picker → Ollama check → Gemma model picker → verify. |
 | M2.6 | Safe model pull flow — explicit consent dialog + `POST /api/pull` with progress; user can cancel. |
 | M2.7 | Local AI planner — `OllamaAiProvider` driving `ILocalIntentPlanner`, plus the AI Router (Offline/Online/Hybrid + confidence floor + rule-based fallback). |
