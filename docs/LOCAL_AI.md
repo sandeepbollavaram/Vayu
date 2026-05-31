@@ -18,9 +18,9 @@ or runs anything.
 | Sub  | Scope                                                                 | Status         |
 | ---- | --------------------------------------------------------------------- | -------------- |
 | M2.1 | Offline AI architecture / contracts (`LocalAiOptions`, `LocalModelCatalog`, `ILocalAiProvider`, …) | ✅ Done         |
-| M2.2 | Ollama runtime detection (`OllamaRuntimeService`, `OllamaLocalAiProvider`, PATH + winget + `/api/tags` probes) | 🛠️ In progress |
-| M2.3 | Local model catalog wiring (reconcile installed tags with curated catalog) | ⏳ Planned      |
-| M2.4 | Installed-model listing surfaced in Settings + wizard                 | ⏳ Planned      |
+| M2.2 | Ollama runtime detection (`OllamaRuntimeService`, `OllamaLocalAiProvider`, PATH + winget + `/api/tags` probes) | ✅ Done         |
+| M2.3 | Local model catalog wiring — Settings → "Offline AI · Ollama" card with detection + curated catalog | 🛠️ In progress |
+| M2.4 | Installed-model listing refinement (per-row size, family grouping, family-only matches) | ⏳ Planned      |
 | M2.5 | First Run Setup Wizard UI                                             | ⏳ Planned      |
 | M2.6 | Safe model pull flow (`/api/pull` with explicit consent + progress)   | ⏳ Planned      |
 | M2.7 | Local AI planner (`OllamaAiProvider` + AI Router with confidence floor) | ⏳ Planned      |
@@ -50,6 +50,20 @@ What M2.2 does **NOT** do — these belong to later sub-milestones with explicit
 - No cloud calls of any kind.
 - No telemetry, no usage reporting, no "phone home".
 - No process is ever started elevated; the winget probe is a plain `list`, never `install`.
+
+### M2.3 — Settings UI for Offline AI
+
+Vayu Desktop's Settings page now hosts an **Offline AI · Ollama** card backed by `SettingsLocalAiViewModel`. The card is read-only and shows:
+
+- The configured endpoint (`http://localhost:11434` by default).
+- Whether the Ollama executable was found on `PATH`.
+- Whether the local server is reachable (`GET /api/tags`).
+- A short, redaction-safe status message.
+- The curated `LocalModelCatalog` rendered as a list, each row with `DisplayName`, `Description`, `HardwareNote`, `ModelTag`, and an **Installed / Missing** chip reconciled against Ollama's `/api/tags` response.
+
+A **Refresh** button re-runs the same detection probes — it never installs Ollama, never pulls a model, never makes a cloud call. If detection itself throws, the UI shows "Could not probe Ollama runtime. Detection will retry on next refresh." rather than an exception dump.
+
+When Ollama is unreachable the message points the user at the planned First Run Wizard (M2.5). When Ollama is reachable but no models are installed, the message names M2.6 as the milestone that will bring guided model pull *with explicit user permission*. Until those land, Settings remains the read-only window into Vayu's offline brain.
 
 ## Supported providers
 
