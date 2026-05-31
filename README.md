@@ -47,6 +47,18 @@ It helps users control apps, run workflows, manage files, use local AI through O
 | Online  | Yes      | Any registry provider | Opt-in. Pick from Gemini, OpenAI, Claude, DeepSeek, Kimi, OpenRouter, custom OpenAI-compatible, etc. |
 | Hybrid  | Optional | Ollama first        | Local first, Gemini only when needed.     |
 
+## Offline AI status (Milestone 2)
+
+Vayu's offline brain is functional end to end as of M2:
+
+- **Ollama detection** — Settings shows whether the Ollama executable is on `PATH` and whether its local server is reachable.
+- **Curated model catalog** — Gemma 3 4B (recommended), Gemma 3 1B (low-end), and Llama 3.2 3B, each with installed/missing state, size, family, and parameter count read from Ollama's `/api/tags`.
+- **Explicit-consent model pull** — the First Run Setup wizard downloads a curated model via `ollama pull` only after a consent dialog that names the exact tag and endpoint; you can cancel mid-download. No installer runs and no cloud is contacted.
+- **Offline AI planner (opt-in)** — a local Ollama model turns commands into structured `IntentPlan`s. It is **off by default** and the Settings toggle stays disabled until Ollama is reachable and a curated model is installed.
+- **Safety pipeline intact** — the local model only *proposes* a plan. Every action still flows `AgentRuntime → PermissionService → agent → audit log`. If the model is unavailable, unsure, or proposes anything outside the allowlist, Vayu falls back to the deterministic rule-based parser.
+
+Cloud providers (Gemini and the wider registry) are **M3**, voice is **M4**, and typing/clicking inside apps is **M5** — none of these is active in M2.
+
 ## Security at a glance
 
 - API keys live in **Windows Credential Manager**, an environment variable, or DPAPI-encrypted local config — **never** in repo files.
@@ -94,11 +106,12 @@ dotnet run --project apps/Vayu.Desktop
 
 ## Ollama setup (offline mode)
 
-1. Install [Ollama](https://ollama.com).
-2. Pull a model: `ollama pull llama3.2`.
-3. In Vayu **Settings → AI**, set provider = `Ollama`, endpoint = `http://localhost:11434`, model = `llama3.2`.
+1. Install [Ollama](https://ollama.com) and start it (Vayu never installs Ollama for you).
+2. Open Vayu → **Settings → Offline AI · Ollama** and click **Refresh** to confirm the server is reachable.
+3. Open **Setup** (or Settings → Open First Run Setup) → **Model catalog** → **Download** a curated model (Gemma 3 1B is the smallest). Vayu shows a consent dialog before any download and lets you cancel.
+4. Back in **Settings → AI Mode**, flip **Offline AI planner (Ollama)** on. The toggle stays disabled until a curated model is installed and Ollama is reachable; the hint text tells you what's missing.
 
-Vayu never sends data to Ollama beyond what you type or speak. Ollama itself runs locally.
+Vayu never sends data to Ollama beyond what you type. Ollama itself runs locally, and the offline planner makes no cloud calls. See [docs/LOCAL_AI.md](docs/LOCAL_AI.md) and the [M2 demo](docs/M2_DEMO.md) for the full walkthrough.
 
 ## Online provider setup (optional)
 
