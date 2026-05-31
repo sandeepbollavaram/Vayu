@@ -49,6 +49,12 @@ public sealed partial class SettingsPage : Page
         await RunRefreshAsync().ConfigureAwait(false);
     }
 
+    private void OnOpenFirstRunSetupClick(object sender, RoutedEventArgs e)
+    {
+        var nav = App.Services?.GetService<UiNavigationService>();
+        nav?.RequestNavigate("setup");
+    }
+
     private async Task RunRefreshAsync()
     {
         if (_localAi is null)
