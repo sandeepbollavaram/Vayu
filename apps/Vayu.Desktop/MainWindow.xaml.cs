@@ -52,6 +52,7 @@ public sealed partial class MainWindow : Window
             "logs" => typeof(LogsPage),
             "settings" => typeof(SettingsPage),
             "security" => typeof(SecurityPage),
+            "setup" => typeof(FirstRunSetupPage),
             _ => typeof(HomePage),
         };
 
