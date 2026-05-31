@@ -160,7 +160,10 @@ public partial class App : Application
             sp.GetRequiredService<RuleBasedCommandParser>(),
             sp.GetRequiredService<ILocalIntentPlanner>(),
             sp.GetRequiredService<LocalAiPlannerOptions>(),
-            sp.GetRequiredService<LocalAiPlannerState>()));
+            sp.GetRequiredService<LocalAiPlannerState>(),
+            // M3.5: Online/Hybrid routing — Gemini behind the cloud consent dialog.
+            sp.GetRequiredService<GeminiProvider>(),
+            sp.GetRequiredService<ICloudConsentService>()));
         services.AddSingleton(new AgentRuntimeOptions());
         services.AddSingleton<IAgentRuntime>(sp => new AgentRuntime(
             sp.GetRequiredService<IIntentPlanner>(),
