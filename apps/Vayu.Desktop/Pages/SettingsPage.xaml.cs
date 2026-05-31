@@ -17,6 +17,7 @@ namespace Vayu_Desktop.Pages;
 public sealed partial class SettingsPage : Page
 {
     private readonly SettingsLocalAiViewModel? _localAi;
+    private readonly LocalAiPlannerState? _plannerState;
 
     public SettingsPage()
     {
@@ -36,6 +37,31 @@ public sealed partial class SettingsPage : Page
             CuratedSummaryText.Text = _localAi.CuratedSummaryText;
             Loaded += OnPageLoaded;
         }
+
+        // M2.7: reflect and control the offline AI planner opt-in.
+        _plannerState = App.Services?.GetService<LocalAiPlannerState>();
+        if (_plannerState is not null)
+        {
+            OfflineAiToggle.IsOn = _plannerState.OfflinePlanningEnabled;
+            UpdateAiModeText();
+        }
+    }
+
+    private void OnOfflineAiToggled(object sender, RoutedEventArgs e)
+    {
+        if (_plannerState is null)
+        {
+            return;
+        }
+        _plannerState.OfflinePlanningEnabled = OfflineAiToggle.IsOn;
+        UpdateAiModeText();
+    }
+
+    private void UpdateAiModeText()
+    {
+        AiModeProviderText.Text = (_plannerState?.OfflinePlanningEnabled ?? false)
+            ? "Provider: Ollama local AI (rule-based fallback)"
+            : "Provider: rule-based parser";
     }
 
     private async void OnPageLoaded(object sender, RoutedEventArgs e)
