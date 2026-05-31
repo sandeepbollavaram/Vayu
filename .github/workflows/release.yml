@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - 'v*'
 
 permissions:
   contents: write
@@ -20,10 +20,25 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Restore + Build (Release)
+      - name: Restore
+        run: dotnet restore Vayu.slnx
+
+      # Libraries and tests use Any CPU. Vayu.Desktop (WinUI 3) defines its
+      # own <Platforms>x86;x64;ARM64</Platforms> and is built separately
+      # below with -p:Platform=x64. Debug for now — Release trim/AOT for
+      # the desktop app lands with the real MSIX packaging in Milestone 7.
+      - name: Build libs and tests
+        shell: bash
         run: |
-          dotnet restore Vayu.slnx
-          dotnet build Vayu.slnx --configuration Release --no-restore
+          set -e
+          find src tests -name '*.csproj' | sort | while read csproj; do
+            echo "::group::build $csproj"
+            dotnet build "$csproj" --configuration Debug --no-restore
+            echo "::endgroup::"
+          done
+
+      - name: Build Vayu.Desktop (WinUI 3, x64)
+        run: dotnet build apps/Vayu.Desktop/Vayu.Desktop.csproj --configuration Debug --no-restore -p:Platform=x64
 
       # Placeholder — actual MSIX + installer steps land with Milestone 7.
       - name: Stub artifact (until M7)
