@@ -32,6 +32,27 @@ public class AppLauncherAgentTests : IDisposable
     }
 
     [Fact]
+    public async Task ExecuteAsync_TypingRequested_ReturnsNeedsClarification_WithoutLaunching()
+    {
+        var launcher = new FakeLauncher();
+        var agent = new AppLauncherAgent(launcher);
+
+        var plan = Plan(
+            ("app", "notepad"),
+            (AppLauncherAgent.TypingRequestedArgKey, "true"));
+
+        var result = await agent.ExecuteAsync(plan);
+
+        Assert.Equal(CommandStatus.NeedsClarification, result.Status);
+        Assert.NotNull(result.ClarificationPrompt);
+        Assert.Contains("M5", result.ClarificationPrompt);
+        Assert.Contains("notepad", result.ClarificationPrompt);
+        // Critically: even with a known app, no launch happens when typing was requested.
+        Assert.Equal(0, launcher.LaunchAsyncCallCount);
+        Assert.Equal(0, launcher.LaunchShortcutCallCount);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_KnownApp_CallsLauncherLaunchAsync()
     {
         var launcher = new FakeLauncher(
