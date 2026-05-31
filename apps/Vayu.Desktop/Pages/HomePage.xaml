@@ -16,6 +16,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <!-- ============== TOP ============== -->
@@ -178,8 +179,31 @@
                 </StackPanel>
             </Grid>
 
-            <!-- ============== RECENT ACTIVITY ============== -->
+            <!-- ============== VOICE (M4.2 push-to-talk foundation) ============== -->
             <Border Grid.Row="2" Style="{StaticResource VayuGlassCard}">
+                <StackPanel Spacing="12">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Border Width="3" Height="14" Background="{StaticResource VayuAccentVioletBrush}" />
+                        <TextBlock Style="{StaticResource VayuSectionText}" Text="VOICE" VerticalAlignment="Center" />
+                        <Border x:Name="VoiceStateBadge" Style="{StaticResource VayuChip}" VerticalAlignment="Center">
+                            <TextBlock x:Name="VoiceStateText" Style="{StaticResource VayuChipText}" Text="IDLE" />
+                        </Border>
+                    </StackPanel>
+                    <TextBlock x:Name="VoiceMicStatusText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
+                               Text="Microphone status: checking…" />
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <Button x:Name="PushToTalkButton" Content="Push to talk"
+                                Click="OnPushToTalkClick" Style="{StaticResource AccentButtonStyle}" />
+                        <Button x:Name="StopVoiceButton" Content="Stop / Cancel"
+                                Click="OnStopVoiceClick" IsEnabled="False" />
+                    </StackPanel>
+                    <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
+                               Text="M4.2 UI foundation only — no microphone is captured and no command runs yet. Real transcription arrives in M4.3; the voice→command pipeline arrives in M4.5. Voice is opt-in, never always-listening." />
+                </StackPanel>
+            </Border>
+
+            <!-- ============== RECENT ACTIVITY ============== -->
+            <Border Grid.Row="3" Style="{StaticResource VayuGlassCard}">
                 <StackPanel Spacing="10">
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <Border Width="3" Height="14" Background="{StaticResource VayuAccentTealBrush}" />
@@ -206,7 +230,7 @@
             </Border>
 
             <!-- Footer notice -->
-            <TextBlock Grid.Row="3"
+            <TextBlock Grid.Row="4"
                        Style="{StaticResource VayuMutedText}"
                        HorizontalAlignment="Center"
                        Text="vayu m1 · offline · audit-logged · no cloud" />
