@@ -4,36 +4,112 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:local="using:Vayu_Desktop.Pages"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Background="Transparent"
     mc:Ignorable="d">
 
-    <Grid Padding="24" RowSpacing="16">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Padding="36,28,36,28" RowSpacing="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0"
-                   Text="Security"
-                   Style="{StaticResource TitleLargeTextBlockStyle}" />
+            <StackPanel Grid.Row="0" Spacing="4">
+                <TextBlock Text="SECURITY" Style="{StaticResource VayuTitleText}" FontSize="32" />
+                <TextBlock Text="What Vayu can and cannot do with your data. Read every card before flipping anything on." Style="{StaticResource VayuSubtitleText}" />
+            </StackPanel>
 
-        <StackPanel Grid.Row="1" Spacing="12">
-            <TextBlock Text="Gemini API key"
-                       Style="{StaticResource BodyStrongTextBlockStyle}" />
-            <TextBlock x:Name="GeminiStatus"
-                       Text="Status: checking…"
-                       Opacity="0.8" />
-            <TextBlock Text="The Gemini key is never displayed or logged by Vayu, only its presence and source."
-                       Opacity="0.7"
-                       TextWrapping="Wrap" />
+            <Grid Grid.Row="1" ColumnSpacing="20" RowSpacing="20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-            <TextBlock Text="Local audit log"
-                       Style="{StaticResource BodyStrongTextBlockStyle}"
-                       Margin="0,12,0,0" />
-            <TextBlock x:Name="AuditPathText"
-                       Opacity="0.8"
-                       TextWrapping="Wrap" />
-        </StackPanel>
-    </Grid>
+                <!-- Secrets -->
+                <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource VayuGlassCard}">
+                    <StackPanel Spacing="10">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Border Width="3" Height="14" Background="{StaticResource VayuAccentCyanBrush}" />
+                            <TextBlock Style="{StaticResource VayuSectionText}" Text="SECRETS" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <TextBlock Style="{StaticResource VayuBodyText}" Text="API keys are never displayed after saving." />
+                        <TextBlock Style="{StaticResource VayuMutedText}" Text="Every log line, audit row, and exception passes through SecretRedactor. Patterns cover Gemini, OpenAI, Anthropic, GitHub, JWTs, PEM blocks, Bearer tokens, and generic key=value forms." />
+                    </StackPanel>
+                </Border>
+
+                <!-- Cloud AI -->
+                <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource VayuGlassCard}">
+                    <StackPanel Spacing="10">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Border Width="3" Height="14" Background="{StaticResource VayuAccentTealBrush}" />
+                            <TextBlock Style="{StaticResource VayuSectionText}" Text="CLOUD AI" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <TextBlock Style="{StaticResource VayuBodyText}" Text="Disabled by default." />
+                        <TextBlock Style="{StaticResource VayuMutedText}" Text="Vayu will not send your prompts, file contents, or window context to any online provider until you explicitly enable it AND consent to a specific cloud call." />
+                    </StackPanel>
+                </Border>
+
+                <!-- Local data -->
+                <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource VayuGlassCard}">
+                    <StackPanel Spacing="10">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Border Width="3" Height="14" Background="{StaticResource VayuAccentVioletBrush}" />
+                            <TextBlock Style="{StaticResource VayuSectionText}" Text="LOCAL DATA" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <TextBlock Style="{StaticResource VayuBodyText}" Text="Audit logs stay on this device." />
+                        <TextBlock Style="{StaticResource VayuMutedText}" FontFamily="Cascadia Mono, Consolas, Segoe UI" FontSize="12" x:Name="AuditPathText" Text="…" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Provider key status -->
+                <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource VayuGlassCard}">
+                    <StackPanel Spacing="10">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Border Width="3" Height="14" Background="{StaticResource VayuAccentBlueBrush}" />
+                            <TextBlock Style="{StaticResource VayuSectionText}" Text="PROVIDER KEY STATUS" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Style="{StaticResource VayuBodyText}" Text="Gemini" VerticalAlignment="Center" />
+                            <Border Grid.Column="1" x:Name="GeminiStatusBadge" Style="{StaticResource VayuChip}" HorizontalAlignment="Right">
+                                <TextBlock x:Name="GeminiStatusText" Style="{StaticResource VayuChipText}" Text="CHECKING…" />
+                            </Border>
+                        </Grid>
+                        <TextBlock Style="{StaticResource VayuMutedText}" Text="Vayu only reports whether a key is configured and which store holds it. The value itself is never returned to the UI." />
+                    </StackPanel>
+                </Border>
+
+                <!-- Permission model -->
+                <Border Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource VayuGlassCard}">
+                    <StackPanel Spacing="10">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Border Width="3" Height="14" Background="{StaticResource VayuAccentAmberBrush}" />
+                            <TextBlock Style="{StaticResource VayuSectionText}" Text="PERMISSION MODEL" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Border Style="{StaticResource VayuChipTeal}">
+                                <TextBlock Style="{StaticResource VayuChipText}" Text="L0–L2 · AUTO-ALLOW" />
+                            </Border>
+                            <Border Style="{StaticResource VayuChipAmber}">
+                                <TextBlock Style="{StaticResource VayuChipText}" Text="L3–L5 · CONFIRM" />
+                            </Border>
+                            <Border Style="{StaticResource VayuChipRed}">
+                                <TextBlock Style="{StaticResource VayuChipText}" Text="L6 · DISABLED" />
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Style="{StaticResource VayuMutedText}" Text="L0 observe · L1 open app/folder · L2 read window metadata · L3 type/click in app · L4 send message/email · L5 run shell · L6 admin/system (disabled outright)." />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Grid>
+    </ScrollViewer>
 </Page>
