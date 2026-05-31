@@ -1,7 +1,10 @@
+using System.Net.Http;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 
 using Vayu.AgentRuntime;
+using Vayu.AI.Local;
 using Vayu.Automation.Windows;
 using Vayu.Core;
 using Vayu.Logging;
@@ -108,6 +111,23 @@ public partial class App : Application
             sp.GetRequiredService<IClock>(),
             sp.GetRequiredService<IAuditLogService>(),
             sp.GetRequiredService<AgentRuntimeOptions>()));
+
+        // --- Vayu.AI.Local (M2): detection-only runtime + provider adapter ---
+        // Local AI defaults to disabled (LocalAiOptions.EnableLocalAi = false);
+        // probes are read-only and bounded by OllamaProviderOptions.ProbeTimeoutSeconds.
+        // Install and model pull are NOT registered here — they belong to M2.6 with explicit consent.
+        services.AddSingleton(new LocalAiOptions());
+        services.AddSingleton(new OllamaProviderOptions());
+        services.AddSingleton(sp =>
+        {
+            var options = sp.GetRequiredService<OllamaProviderOptions>();
+            return new HttpClient { BaseAddress = options.Endpoint };
+        });
+        services.AddSingleton<IOllamaRuntimeService>(sp => new OllamaRuntimeService(
+            sp.GetRequiredService<HttpClient>(),
+            sp.GetRequiredService<OllamaProviderOptions>()));
+        services.AddSingleton<ILocalAiProvider>(sp => new OllamaLocalAiProvider(
+            sp.GetRequiredService<IOllamaRuntimeService>()));
 
         return services.BuildServiceProvider();
     }
