@@ -1,6 +1,6 @@
 # Vayu
 
-**Local-first AI desktop assistant for Windows, powered by Ollama offline and Gemini online.**
+**Local-first AI desktop command center for Windows. Offline AI through Ollama/Gemma, with optional online providers such as Gemini, OpenAI, Claude, DeepSeek, Kimi, OpenRouter, and custom OpenAI-compatible endpoints.**
 
 [![CI](https://github.com/sandeepbollavaram/Vayu/actions/workflows/ci.yml/badge.svg)](https://github.com/sandeepbollavaram/Vayu/actions/workflows/ci.yml)
 [![Security](https://github.com/sandeepbollavaram/Vayu/actions/workflows/security.yml/badge.svg)](https://github.com/sandeepbollavaram/Vayu/actions/workflows/security.yml)
@@ -12,9 +12,9 @@
 
 ## What is Vayu?
 
-Vayu is an open-source, local-first AI desktop assistant for Windows.
+Vayu is an open-source, local-first AI desktop command center for Windows.
 
-It helps users control apps, run workflows, manage files, use local AI through Ollama, optionally use Gemini online, and operate developer tools through a safe permission-based agent system.
+It helps users control apps, run workflows, manage files, use local AI through Ollama (Gemma by default), optionally use an online provider of their choice — Gemini, OpenAI, Claude, DeepSeek, Kimi, OpenRouter, or a custom OpenAI-compatible endpoint — and operate developer tools through a safe permission-based agent system. See [docs/AI_PROVIDER_REGISTRY.md](docs/AI_PROVIDER_REGISTRY.md) for the full catalog.
 
 ## Core principles
 
@@ -44,7 +44,7 @@ It helps users control apps, run workflows, manage files, use local AI through O
 | Mode    | Internet | AI                  | Use case                                  |
 | ------- | -------- | ------------------- | ----------------------------------------- |
 | Offline | No       | Ollama / llama.cpp  | Default. Full privacy.                    |
-| Online  | Yes      | Gemini API          | Opt-in. Better reasoning, Gmail drafting. |
+| Online  | Yes      | Any registry provider | Opt-in. Pick from Gemini, OpenAI, Claude, DeepSeek, Kimi, OpenRouter, custom OpenAI-compatible, etc. |
 | Hybrid  | Optional | Ollama first        | Local first, Gemini only when needed.     |
 
 ## Security at a glance
@@ -100,7 +100,11 @@ dotnet run --project apps/Vayu.Desktop
 
 Vayu never sends data to Ollama beyond what you type or speak. Ollama itself runs locally.
 
-## Gemini setup (online mode)
+## Online provider setup (optional)
+
+The First Run Wizard lets you pick any provider from the [AI Provider Registry](docs/AI_PROVIDER_REGISTRY.md) — Gemini, OpenAI, Anthropic Claude, DeepSeek, Kimi, OpenRouter, or a custom OpenAI-compatible endpoint. Gemini is the first one shipped (M3); the others land incrementally. The setup shape below is the same for every direct-API provider — only the help URL changes.
+
+### Gemini (worked example)
 
 **Never paste your API key into any file in this repository.**
 
