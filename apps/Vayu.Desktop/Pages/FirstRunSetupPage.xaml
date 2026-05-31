@@ -110,16 +110,29 @@
                                             <TextBlock Style="{StaticResource VayuMutedText}" Text="{x:Bind ParameterSize, Mode=OneWay}" />
                                             <TextBlock Style="{StaticResource VayuMutedText}" Text="{x:Bind FamilyLabel, Mode=OneWay}" />
                                         </StackPanel>
-                                        <Border Grid.Column="1" Style="{StaticResource VayuChip}" VerticalAlignment="Center">
-                                            <TextBlock Style="{StaticResource VayuChipText}" Text="{x:Bind StatusText, Mode=OneWay}" />
-                                        </Border>
+                                        <StackPanel Grid.Column="1" Spacing="6" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                            <Border Style="{StaticResource VayuChip}" HorizontalAlignment="Right">
+                                                <TextBlock Style="{StaticResource VayuChipText}" Text="{x:Bind StatusText, Mode=OneWay}" />
+                                            </Border>
+                                            <Button Content="Download"
+                                                    Click="OnDownloadRowClick"
+                                                    Tag="{x:Bind ModelTag}"
+                                                    IsEnabled="{x:Bind CanDownload, Mode=OneWay}" />
+                                            <TextBlock Style="{StaticResource VayuMutedText}"
+                                                       Text="{x:Bind DownloadStatus, Mode=OneWay}"
+                                                       TextWrapping="Wrap"
+                                                       HorizontalAlignment="Right" />
+                                        </StackPanel>
                                     </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        <Button x:Name="DownloadModelButton" Content="Download (M2.6 — requires permission)" IsEnabled="False" />
                         <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
-                                   Text="Model pull is deferred to M2.6 and will ask explicit permission. Until then, install manually with 'ollama pull gemma3:4b'." />
+                                   Text="Click Download to pull a curated model via your local Ollama. Vayu shows the exact tag in a consent dialog before any bytes leave Ollama's HTTP API. Downloads can take time and disk space — Cancel is available." />
+                        <Button x:Name="CancelDownloadButton"
+                                Content="Cancel current download"
+                                Visibility="Collapsed"
+                                Click="OnCancelDownloadClick" />
                     </StackPanel>
 
                     <!-- 5. Verify -->
