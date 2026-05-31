@@ -4,6 +4,7 @@
     <ProjectReference Include="..\Vayu.Core\Vayu.Core.csproj" />
     <ProjectReference Include="..\Vayu.Security\Vayu.Security.csproj" />
     <ProjectReference Include="..\Vayu.Permissions\Vayu.Permissions.csproj" />
+    <ProjectReference Include="..\Vayu.AI.Online\Vayu.AI.Online.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -11,5 +12,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Vayu.AI.Gemini.Tests" />
+  </ItemGroup>
 
 </Project>
