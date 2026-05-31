@@ -9,6 +9,30 @@ Vayu opens a First Run Setup Wizard the first time it launches after install. Th
 - Make every step optional — Vayu must remain usable if the wizard is skipped.
 - Never install software, download models, or store keys without explicit consent.
 
+## Future setup-dashboard direction *(planning)*
+
+As Vayu grows toward production (M7) and Version 2, the first-run setup expands from "pick a model" into a **setup dashboard** that captures where Vayu stores things and how it talks to providers. It should eventually ask:
+
+- **Where to store Vayu data** (storage / data root).
+- **Logs path.**
+- **Cache path.**
+- **Local model files path.**
+- **Generated assets path.**
+- **Project / workspace path.**
+- **AI mode** — Offline / Online / Hybrid.
+- **Offline provider** — Ollama / Gemma.
+- **Online provider / API type** — from the [AI Provider Registry](AI_PROVIDER_REGISTRY.md).
+- **Custom provider endpoint** if needed (OpenAI-compatible).
+- **API keys stored securely**, preferably **Windows Credential Manager** — **no plaintext keys**.
+
+Rules for the setup dashboard:
+
+- **Every provider can be skipped.** Vayu stays usable in offline / rule-based mode.
+- **Every model install/download requires explicit permission.** No silent installs or downloads.
+- **Generated outputs default to the Vayu workspace.** Future generated assets, websites, renders, and project files are saved under the user-selected Vayu workspace/storage root unless the user chooses another path.
+
+This is forward-looking direction — the current wizard (M2.5) is the read-only-detection + consented-pull foundation it builds on.
+
 ## Flow
 
 ```
