@@ -94,6 +94,39 @@ public class RuleBasedCommandParserTests
         Assert.Equal(RuleBasedCommandParser.AppOpenIntent, plan.Intent);
         Assert.Equal(RiskLevel.L1, plan.Risk);
         Assert.Equal(expectedApp, plan.Args["app"]);
+        Assert.False(plan.Args.ContainsKey(RuleBasedCommandParser.TypingRequestedArgKey));
+    }
+
+    [Theory]
+    [InlineData("open notepad and write hello",  "notepad")]
+    [InlineData("open notepad and type hello",   "notepad")]
+    [InlineData("open notepad then write hello", "notepad")]
+    [InlineData("open notepad then type hello",  "notepad")]
+    [InlineData("open vs code and write README", "vscode")]
+    public void Open_WithTypingClause_StopsAtAppName_AndFlagsTypingRequested(string command, string expectedApp)
+    {
+        // "open notepad and write hello" must NOT collapse into the app
+        // name "notepadandwritehello". The parser strips the typing clause
+        // and flags the plan so the agent can refuse with an M5 pointer.
+        var parser = new RuleBasedCommandParser();
+
+        var plan = parser.Parse(Req(command));
+
+        Assert.Equal(RuleBasedCommandParser.AppOpenIntent, plan.Intent);
+        Assert.Equal(RiskLevel.L1, plan.Risk);
+        Assert.Equal(expectedApp, plan.Args["app"]);
+        Assert.True(plan.Args.TryGetValue(RuleBasedCommandParser.TypingRequestedArgKey, out var flag));
+        Assert.Equal("true", flag);
+    }
+
+    [Fact]
+    public void Open_WithOnlyTypingClause_AndNoAppName_ReturnsUnknown()
+    {
+        var parser = new RuleBasedCommandParser();
+
+        var plan = parser.Parse(Req("open  and write hello"));
+
+        Assert.Equal(RuleBasedCommandParser.UnknownIntent, plan.Intent);
     }
 
     [Fact]
