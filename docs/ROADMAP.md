@@ -172,6 +172,19 @@ Features:
 - Voice states surfaced on the Vayu Sphere (idle / listening / thinking / speaking).
 - Wake word ("Hey Vayu") planning + clap trigger planning behind toggles.
 
+| Sub  | Scope                                                                                              |
+| ---- | -------------------------------------------------------------------------------------------------- |
+| M4.1 | ✅ **Voice architecture / contracts** — `Vayu.Voice`: `VoiceInteractionState`, `VoiceInputMode`, `VoiceSession`, `VoiceRecognitionResult`, `SpeechSynthesisRequest`/`Result`, `MicrophoneStatus`, `IVoiceInputService`, `ITextToSpeechService`, `IVoiceCommandService`, `VoiceEvent`, `IVoiceActivitySink`. Provider-neutral. No capture, no STT/TTS, no always-listening. See [VOICE_SYSTEM.md](VOICE_SYSTEM.md). |
+| M4.2 | Push-to-talk UI foundation. |
+| M4.3 | Local STT provider integration (Whisper.cpp first). |
+| M4.4 | TTS provider integration (System TTS first). |
+| M4.5 | Voice command pipeline into `AgentRuntime` (voice → `CommandRequest` → planner/router → permission/audit). |
+| M4.6 | Vayu Sphere voice-state animation. |
+| M4.7 | Wake word / clap trigger — planning docs only. |
+| M4.8 | M4 polish + demo. |
+
+Hard rules: voice is opt-in; no mic capture without user action; no always-listening; no audio uploaded to cloud without explicit consent; no raw audio in logs; a spoken command is a `CommandRequest` that still flows through `AgentRuntime → IPermissionService → audit` — voice never bypasses the permission engine.
+
 ---
 
 ## M5 — Advanced Desktop Automation (v0.5.0)
