@@ -50,7 +50,9 @@ Vayu is not Gemini-only. The wizard offers a catalog of providers spanning offli
 - Settings UI: choose endpoint + model
 - Tests: provider mocked; router decision matrix; wizard state machine
 
-## Milestone 3 — Gemini online
+## Milestone 3 — First online provider (Gemini)
+
+> Gemini is shipped first because the contract from M1 already exists. Subsequent online providers (OpenAI, Anthropic Claude, DeepSeek, Kimi, OpenRouter, Mistral, Groq, custom OpenAI-compatible, …) follow the same shape and are added incrementally per [AI_PROVIDER_REGISTRY.md](AI_PROVIDER_REGISTRY.md) in M4+.
 
 - `GeminiAiProvider`
 - `GeminiKeySetupService` — real implementation of M1's contract (save to Windows Credential Manager, validate via redacted test call, revoke)
