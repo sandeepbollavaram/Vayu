@@ -1,6 +1,55 @@
 # Voice System
 
-Voice arrives in **Milestone 4**. This doc describes the design so the M1–M3 abstractions land in the right shape.
+> **Status: M4.1 — contracts only.** The voice architecture is staked out in `Vayu.Voice`; there is **no real speech recognition, no microphone capture, and no always-listening** yet. Push-to-talk is the only mode that will be usable; wake word and clap trigger are placeholders. Concrete providers and the push-to-talk UI land in M4.2+. The design below describes the full target shape.
+
+## M4.1 contracts
+
+| Type | Role |
+| --- | --- |
+| `VoiceInteractionState` | Idle / Listening / Transcribing / Thinking / Executing / Speaking / Error / Cancelled — drives the Sphere + activity feed. |
+| `VoiceInputMode` | PushToTalk (active) · WakeWordPlanned · ClapTriggerPlanned (placeholders; `VoiceInputModes.IsActive` gates them). |
+| `VoiceSession` | One interaction: id, state, mode, transcript (no audio), correlation id. |
+| `VoiceRecognitionResult` | STT outcome: success/transcript/confidence/error/duration/provider. |
+| `SpeechSynthesisRequest` / `SpeechSynthesisResult` | TTS request (text + voice/rate) and outcome. No secrets, no audio. |
+| `MicrophoneStatus` | Availability + permission + device name; `CanCapture` gate. Reports only — never opens the device. |
+| `IVoiceInputService` | `GetMicrophoneStatusAsync` / `StartPushToTalkAsync` / `StopAsync`. |
+| `ITextToSpeechService` | `SpeakAsync` / `StopAsync`. |
+| `IVoiceCommandService` | `StartPushToTalkCommandAsync` / `CancelAsync` — runs the full voice→command pipeline (wired in M4.5). |
+| `VoiceEvent` + `IVoiceActivitySink` | Display-only events for the Sphere voice-state animation and activity cards. |
+
+All contracts are **provider-neutral** — no Whisper / Vosk / Azure type is referenced. Public voice records carry no `byte[]` audio, no secrets.
+
+### Command path (the safety invariant)
+
+```
+voice (push-to-talk)
+  → transcript (local STT)
+    → CommandRequest { Source = "voice/..." }
+      → AI Router (rule-based / offline / online-hybrid)
+        → IPermissionService (L0–L6 gate)
+          → agent execution → audit log
+```
+
+The transcript is the *only* thing that crosses from the voice layer into the runtime — from there a spoken command is indistinguishable from a typed one (same planner, risk levels, confirmations, audit rows). Voice produces no plan of its own and executes nothing directly. Every capture is interruptible (`StopAsync` / `CancelAsync`), and a `Cancelled` session dispatches nothing.
+
+### Milestone staging
+
+| Sub  | Scope                                                          |
+| ---- | -------------------------------------------------------------- |
+| M4.1 | **Voice architecture / contracts** (this section). No capture.|
+| M4.2 | Push-to-talk UI foundation.                                   |
+| M4.3 | Local STT provider integration (Whisper.cpp first).          |
+| M4.4 | TTS provider integration (System TTS first).                 |
+| M4.5 | Voice command pipeline into `AgentRuntime`.                   |
+| M4.6 | Vayu Sphere voice-state animation.                            |
+| M4.7 | Wake word / clap trigger — planning docs only.               |
+| M4.8 | M4 polish + demo.                                             |
+
+---
+
+## Design overview (target)
+
+This doc describes the design so the M1–M3 abstractions land in the right shape.
 
 ## Inputs
 
