@@ -19,6 +19,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <StackPanel Grid.Row="0" Spacing="4">
@@ -295,6 +296,27 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- M4.2: Voice -->
+            <Border Grid.Row="6" Style="{StaticResource VayuGlassCard}">
+                <StackPanel Spacing="10">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Border Width="3" Height="14" Background="{StaticResource VayuAccentVioletBrush}" />
+                        <TextBlock Style="{StaticResource VayuSectionText}" Text="VOICE" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
+                               Text="Voice is opt-in and never always-listening. The push-to-talk control lives on the Home page." />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Border Style="{StaticResource VayuChipTeal}"><TextBlock Style="{StaticResource VayuChipText}" Text="PUSH-TO-TALK · UI READY" /></Border>
+                        <Border Style="{StaticResource VayuChip}"><TextBlock Style="{StaticResource VayuChipText}" Text="REAL STT · M4.3" /></Border>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Border Style="{StaticResource VayuChip}"><TextBlock Style="{StaticResource VayuChipText}" Text="WAKE WORD · PLANNED" /></Border>
+                        <Border Style="{StaticResource VayuChip}"><TextBlock Style="{StaticResource VayuChipText}" Text="CLAP TRIGGER · PLANNED" /></Border>
+                        <Border Style="{StaticResource VayuChipAmber}"><TextBlock Style="{StaticResource VayuChipText}" Text="ALWAYS-LISTENING · OFF" /></Border>
+                    </StackPanel>
                 </StackPanel>
             </Border>
         </Grid>
