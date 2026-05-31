@@ -7,8 +7,8 @@ Each milestone is a *shippable* state: CI green, docs current, demo-able.
 | Version | Milestone                                          | Status         |
 | ------- | -------------------------------------------------- | -------------- |
 | v0.1.0  | **M1** — Desktop Foundation                        | ✅ Released     |
-| v0.2.0  | M2 — Offline AI Layer                              | 🛠️ In progress |
-| v0.3.0  | M3 — Online Provider Layer                         | ⏳ Planned     |
+| v0.2.0  | **M2** — Offline AI Layer                          | ✅ Released     |
+| v0.3.0  | M3 — Online Provider Layer                         | 🛠️ In progress |
 | v0.4.0  | M4 — Voice Interaction                             | ⏳ Planned     |
 | v0.5.0  | M5 — Advanced Desktop Automation                   | ⏳ Planned     |
 | v0.6.0  | M6 — Workflows and Local Memory                    | ⏳ Planned     |
@@ -99,6 +99,25 @@ Features:
 - First-call consent dialog before any private context leaves the device.
 - Keys are never displayed after save; never logged; never sent to telemetry.
 - Gemini is the first concrete connector; the rest follow the same shape.
+
+| Sub  | Scope                                                                                              |
+| ---- | -------------------------------------------------------------------------------------------------- |
+| M3.1 | **Online provider architecture** — contracts only in `Vayu.AI.Online`: `OnlineAiOptions`, `OnlineProviderDescriptor`/`Kind`, `OnlineProviderCatalog` (13 providers), `OnlineProviderKeySource`/`KeyStatus` (no key value), `CloudConsentRequest`/`Decision`/`ICloudConsentService`, `IOnlineAiProvider`, `OnlineAiPlanningResult`, `OnlineAiSafetyPolicy`. No cloud HTTP, no key storage. Cloud disabled by default; consent required. |
+| M3.2 | Gemini provider connector — first concrete `IOnlineAiProvider` (`Vayu.AI.Gemini`), JSON-mode planning behind consent. |
+| M3.3 | Secure provider key setup UI — Windows Credential Manager first, env var, DPAPI fallback; key never shown after save. |
+| M3.4 | Cloud consent dialog — WinUI implementation of `ICloudConsentService`. |
+| M3.5 | Online AI planner + router integration — Hybrid mode (local first, cloud fallback under consent + confidence floor). |
+| M3.6 | Provider Registry UI polish. |
+| M3.7 | OpenAI / Claude / DeepSeek / Kimi connector shells. |
+| M3.8 | M3 release polish + tag `v0.3.0-m3`. |
+
+Hard rules carried from M1/M2:
+
+- **Cloud AI is off by default.** Online providers are opt-in; the user must explicitly configure one.
+- **Consent before private context leaves the device** (`OnlineAiOptions.RequireConsentBeforeCloudCall` defaults true).
+- API keys are never committed, never logged, never shown after saving — `OnlineProviderKeyStatus` carries only the source, never the value.
+- **Online AI produces `IntentPlan`s only.** Cloud planners never execute tools; every plan still flows through `AgentRuntime → IPermissionService → agent → audit log`, and `OnlineAiSafetyPolicy` caps cloud plans at the allowlist + risk ≤ L1 in M3.
+- Gemini is **one** optional provider (implemented first), not the only one.
 
 ---
 
