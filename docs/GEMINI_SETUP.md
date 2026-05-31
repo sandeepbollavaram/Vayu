@@ -4,7 +4,7 @@
 
 **Never paste your API key into any file inside this repository.**
 
-> **Status:** as of **M3.2** the Gemini connector exists (`Vayu.AI.Gemini.GeminiProvider`) and can plan a command into an `IntentPlan` — but only behind explicit per-call consent and only when a key is configured. It reads the key from the secret stores below; the **key-setup UI** (paste/save) is **M3.3** and the **consent dialog** is **M3.4**, so until those land Gemini is not yet reachable from the app and cloud AI stays disabled by default.
+> **Status:** as of **M3.3** the Gemini connector (`GeminiProvider`, M3.2) and the **secure key-setup UI** both exist. In **Settings → Online AI · Gemini** you can paste a key and **Save** it to Windows Credential Manager (DPAPI-encrypted fallback); the textbox clears immediately, the key is never shown again, and the status shows only *Configured / Not configured* + source. The **consent dialog** that gates the first cloud call (and enables the **Test key** button) is **M3.4**, so until that lands Gemini still makes no cloud calls and cloud AI stays disabled by default.
 
 The Gemini connector lives in `Vayu.AI.Gemini`. It is only constructed when:
 
