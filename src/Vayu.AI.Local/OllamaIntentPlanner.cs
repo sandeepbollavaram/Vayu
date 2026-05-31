@@ -44,31 +44,46 @@ public sealed class OllamaIntentPlanner : ILocalIntentPlanner
     private readonly HttpClient _httpClient;
     private readonly OllamaProviderOptions _providerOptions;
     private readonly LocalAiPlannerOptions _plannerOptions;
+    private readonly LocalAiPlannerState? _state;
 
     public OllamaIntentPlanner(
         HttpClient httpClient,
         OllamaProviderOptions? providerOptions = null,
-        LocalAiPlannerOptions? plannerOptions = null)
+        LocalAiPlannerOptions? plannerOptions = null,
+        LocalAiPlannerState? state = null)
     {
         ArgumentNullException.ThrowIfNull(httpClient);
         _httpClient = httpClient;
         _providerOptions = providerOptions ?? new OllamaProviderOptions();
         _plannerOptions = plannerOptions ?? new LocalAiPlannerOptions();
+        _state = state;
     }
 
-    /// <summary>The model tag this planner asks Ollama to run.</summary>
-    public string ModelTag => _plannerOptions.ModelTag;
+    /// <summary>
+    /// The model tag this planner asks Ollama to run. Prefers the live
+    /// <see cref="LocalAiPlannerState.ActiveModelTag"/> (set from what's
+    /// actually installed) and falls back to the configured default.
+    /// </summary>
+    public string ModelTag
+    {
+        get
+        {
+            var active = _state?.ActiveModelTag;
+            return string.IsNullOrWhiteSpace(active) ? _plannerOptions.ModelTag : active;
+        }
+    }
 
     /// <inheritdoc />
     public async Task<LocalAiPlanningResult> PlanAsync(CommandRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var planSource = $"{ProviderName}:{_plannerOptions.ModelTag}";
+        var modelTag = ModelTag;
+        var planSource = $"{ProviderName}:{modelTag}";
         var userText = (request.Text ?? string.Empty).Trim();
         if (userText.Length == 0)
         {
-            return LocalAiPlanningResult.Failed("Empty command.", ProviderName, _plannerOptions.ModelTag);
+            return LocalAiPlanningResult.Failed("Empty command.", ProviderName, modelTag);
         }
         if (userText.Length > _plannerOptions.MaxPromptChars)
         {
@@ -76,7 +91,7 @@ public sealed class OllamaIntentPlanner : ILocalIntentPlanner
         }
 
         var body = new GenerateBody(
-            Model: _plannerOptions.ModelTag,
+            Model: modelTag,
             System: SystemPrompt,
             Prompt: userText,
             Stream: false,
@@ -102,7 +117,7 @@ public sealed class OllamaIntentPlanner : ILocalIntentPlanner
                 return LocalAiPlanningResult.Failed(
                     $"Ollama returned HTTP {(int)response.StatusCode}.",
                     ProviderName,
-                    _plannerOptions.ModelTag);
+                    modelTag);
             }
 
             GenerateResponse? payload;
@@ -114,12 +129,12 @@ public sealed class OllamaIntentPlanner : ILocalIntentPlanner
             }
             catch (JsonException)
             {
-                return LocalAiPlanningResult.Failed("Ollama response was not valid JSON.", ProviderName, _plannerOptions.ModelTag);
+                return LocalAiPlanningResult.Failed("Ollama response was not valid JSON.", ProviderName, modelTag);
             }
 
             if (!OllamaPlanJsonParser.TryParse(payload?.Response, request.CorrelationId, planSource, out var plan, out var parseError))
             {
-                return LocalAiPlanningResult.Failed(parseError ?? "Model plan failed validation.", ProviderName, _plannerOptions.ModelTag);
+                return LocalAiPlanningResult.Failed(parseError ?? "Model plan failed validation.", ProviderName, modelTag);
             }
 
             if (plan!.Confidence is { } c && c < _plannerOptions.MinimumConfidence)
@@ -127,10 +142,10 @@ public sealed class OllamaIntentPlanner : ILocalIntentPlanner
                 return LocalAiPlanningResult.Failed(
                     $"Model confidence {c:0.00} below floor {_plannerOptions.MinimumConfidence:0.00}.",
                     ProviderName,
-                    _plannerOptions.ModelTag);
+                    modelTag);
             }
 
-            return LocalAiPlanningResult.Succeeded(plan, ProviderName, _plannerOptions.ModelTag);
+            return LocalAiPlanningResult.Succeeded(plan, ProviderName, modelTag);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -138,12 +153,12 @@ public sealed class OllamaIntentPlanner : ILocalIntentPlanner
         }
         catch (OperationCanceledException)
         {
-            return LocalAiPlanningResult.Failed("Local planning timed out.", ProviderName, _plannerOptions.ModelTag);
+            return LocalAiPlanningResult.Failed("Local planning timed out.", ProviderName, modelTag);
         }
 #pragma warning disable CA1031 // Any model/transport failure becomes a safe fallback, never a crash.
         catch (Exception ex)
         {
-            return LocalAiPlanningResult.Failed($"Local planning failed: {ex.Message}", ProviderName, _plannerOptions.ModelTag);
+            return LocalAiPlanningResult.Failed($"Local planning failed: {ex.Message}", ProviderName, modelTag);
         }
 #pragma warning restore CA1031
     }
