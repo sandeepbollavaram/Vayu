@@ -35,5 +35,6 @@
     <Project Path="tests/Vayu.Memory.Tests/Vayu.Memory.Tests.csproj" />
     <Project Path="tests/Vayu.Permissions.Tests/Vayu.Permissions.Tests.csproj" />
     <Project Path="tests/Vayu.Security.Tests/Vayu.Security.Tests.csproj" />
+    <Project Path="tests/Vayu.Voice.Tests/Vayu.Voice.Tests.csproj" />
   </Folder>
 </Solution>
