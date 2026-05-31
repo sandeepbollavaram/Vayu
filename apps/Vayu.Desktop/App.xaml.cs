@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 
 using Vayu.AgentRuntime;
+using Vayu.AI.Gemini;
 using Vayu.AI.Local;
 using Vayu.Automation.Windows;
 using Vayu.Core;
@@ -62,6 +63,12 @@ public partial class App : Application
         services.AddSingleton<EncryptedJsonSecretStore>();
         services.AddSingleton<WindowsCredentialSecretStore>();
         services.AddSingleton(sp => new SecureConfigService(
+            sp.GetRequiredService<WindowsCredentialSecretStore>(),
+            sp.GetRequiredService<EnvironmentSecretStore>(),
+            sp.GetRequiredService<EncryptedJsonSecretStore>()));
+
+        // M3.3: Gemini key setup (save → Credential Manager; status value-free; remove writable stores only).
+        services.AddSingleton(sp => new GeminiKeySetupService(
             sp.GetRequiredService<WindowsCredentialSecretStore>(),
             sp.GetRequiredService<EnvironmentSecretStore>(),
             sp.GetRequiredService<EncryptedJsonSecretStore>()));
