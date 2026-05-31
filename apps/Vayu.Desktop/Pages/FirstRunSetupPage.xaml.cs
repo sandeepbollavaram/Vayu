@@ -1,3 +1,5 @@
+using System.Linq;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -17,6 +19,7 @@ namespace Vayu_Desktop.Pages;
 public sealed partial class FirstRunSetupPage : Page
 {
     private readonly FirstRunSetupViewModel? _vm;
+    private CancellationTokenSource? _activePullCts;
 
     public FirstRunSetupPage()
     {
@@ -24,12 +27,13 @@ public sealed partial class FirstRunSetupPage : Page
 
         var runtime = App.Services?.GetService<IOllamaRuntimeService>();
         var setupService = App.Services?.GetService<IFirstRunSetupService>();
-        if (runtime is null || setupService is null)
+        var pullService = App.Services?.GetService<IOllamaModelPullService>();
+        if (runtime is null || setupService is null || pullService is null)
         {
             return;
         }
 
-        _vm = new FirstRunSetupViewModel(setupService, new SettingsLocalAiViewModel(runtime));
+        _vm = new FirstRunSetupViewModel(setupService, new SettingsLocalAiViewModel(runtime), pullService);
         ModelsItems.ItemsSource = _vm.Detection.Models;
 
         _vm.PropertyChanged += (_, _) => DispatcherQueue.TryEnqueue(SyncFromViewModel);
@@ -148,4 +152,78 @@ public sealed partial class FirstRunSetupPage : Page
 
     private void OnModeOfflineChecked(object sender, RoutedEventArgs e)
         => _vm?.SetMode(FirstRunSetupMode.OfflineOnly);
+
+    private async void OnDownloadRowClick(object sender, RoutedEventArgs e)
+    {
+        if (_vm is null || sender is not FrameworkElement fe || fe.Tag is not string tag)
+        {
+            return;
+        }
+        var row = _vm.Detection.Models.FirstOrDefault(m => m.ModelTag == tag);
+        if (row is null || !row.CanDownload)
+        {
+            return;
+        }
+        await StartPullWithConsentAsync(row).ConfigureAwait(false);
+    }
+
+    private async Task StartPullWithConsentAsync(LocalModelRow row)
+    {
+        if (_vm is null)
+        {
+            return;
+        }
+
+        var dialog = new ContentDialog
+        {
+            Title = $"Download {row.ModelTag} with Ollama?",
+            Content = BuildConsentBody(row),
+            PrimaryButtonText = "Download",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = this.XamlRoot,
+        };
+
+        var choice = await dialog.ShowAsync();
+        if (choice != ContentDialogResult.Primary)
+        {
+            return;
+        }
+
+        _activePullCts?.Cancel();
+        _activePullCts = new CancellationTokenSource();
+        CancelDownloadButton.Visibility = Visibility.Visible;
+        CancelDownloadButton.IsEnabled = true;
+
+        try
+        {
+            await _vm.PullAsync(row, _activePullCts.Token).ConfigureAwait(true);
+        }
+        finally
+        {
+            CancelDownloadButton.Visibility = Visibility.Collapsed;
+            _activePullCts.Dispose();
+            _activePullCts = null;
+        }
+    }
+
+    private static string BuildConsentBody(LocalModelRow row)
+    {
+        var sizeHint = string.IsNullOrEmpty(row.DisplaySize) ? "Size is not known until Ollama responds." : $"Estimated size: {row.DisplaySize}.";
+        return string.Join(System.Environment.NewLine, new[]
+        {
+            $"Vayu will ask your local Ollama to pull '{row.ModelTag}'.",
+            "This is a local download via http://localhost:11434/api/pull.",
+            "Vayu will NOT send your data to any cloud provider.",
+            "No installer runs. No system files are changed outside Ollama's model store.",
+            sizeHint,
+            "The download may take time and disk space. You can cancel at any time.",
+        });
+    }
+
+    private void OnCancelDownloadClick(object sender, RoutedEventArgs e)
+    {
+        _activePullCts?.Cancel();
+        CancelDownloadButton.IsEnabled = false;
+    }
 }
