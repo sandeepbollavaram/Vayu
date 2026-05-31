@@ -78,6 +78,10 @@ On accept, `OllamaModelPullService` streams Ollama's `POST /api/pull` and report
 
 The Ollama Status step still reads "Vayu will not install Ollama automatically." Ollama runtime install needs its own elevation prompt and is intentionally out of M2.6 scope.
 
+### M2.7 — turning the model on
+
+Once a curated model is installed, the user can enable **Offline AI planner (Ollama)** from **Settings → AI Mode**. The toggle is opt-in and defaults to OFF. When ON, the AI Router asks the local model to plan each command and falls back to the rule-based parser whenever the model is unavailable, unsure, or proposes anything outside the allowlist. The model only proposes a plan — the permission engine still gates every action, and typing/clicking is still deferred to M5.
+
 If none of the above, the wizard shows a screen explaining what Ollama is, what it does, and what installing it means. The user must click **Install Ollama** before anything happens — the actual install/pull flow is M2.6 and requires explicit consent. The manual install link (`https://ollama.com/download/windows`) is always visible as a fallback for users who'd rather install it themselves.
 
 ### Recommended models
