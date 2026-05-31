@@ -10,6 +10,7 @@ using Microsoft.UI.Xaml.Navigation;
 
 using Vayu.Core;
 using Vayu.Memory;
+using Vayu.Voice;
 using Vayu_Desktop.Controls;
 
 namespace Vayu_Desktop.Pages;
@@ -23,6 +24,11 @@ public sealed partial class HomePage : Page
     private readonly IAgentRuntime _runtime;
     private readonly IAuditLogService _audit;
 
+    // M4.2: push-to-talk UI foundation. No mic capture, no command execution.
+    private readonly IVoiceInputService? _voiceInput;
+    private readonly IVoiceActivitySink? _voiceSink;
+    private VoiceSession? _voiceSession;
+
     /// <summary>Bound to the "Recent activity" preview at the bottom of the page.</summary>
     public ObservableCollection<string> RecentRows { get; } = new();
 
@@ -31,12 +37,84 @@ public sealed partial class HomePage : Page
         InitializeComponent();
         _runtime = App.Services.GetRequiredService<IAgentRuntime>();
         _audit = App.Services.GetRequiredService<IAuditLogService>();
+        _voiceInput = App.Services.GetService<IVoiceInputService>();
+        _voiceSink = App.Services.GetService<IVoiceActivitySink>();
     }
 
     protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
         await RefreshRecentAsync().ConfigureAwait(true);
+        await RefreshMicStatusAsync().ConfigureAwait(true);
+    }
+
+    // ---- M4.2: push-to-talk foundation ----
+
+    private async Task RefreshMicStatusAsync()
+    {
+        if (_voiceInput is null)
+        {
+            VoiceMicStatusText.Text = "Voice service unavailable.";
+            PushToTalkButton.IsEnabled = false;
+            return;
+        }
+        try
+        {
+            var status = await _voiceInput.GetMicrophoneStatusAsync().ConfigureAwait(true);
+            VoiceMicStatusText.Text = $"Microphone status: {status.Message}";
+        }
+        catch
+        {
+            VoiceMicStatusText.Text = "Microphone status: unavailable.";
+        }
+    }
+
+    private async void OnPushToTalkClick(object sender, RoutedEventArgs e)
+    {
+        if (_voiceInput is null)
+        {
+            return;
+        }
+
+        _voiceSession = VoiceSession.StartPushToTalk(DateTimeOffset.UtcNow);
+        SetVoiceUi(VoiceInteractionState.Listening, "LISTENING");
+        await PublishVoiceAsync("Listening (M4.2 UI only).").ConfigureAwait(true);
+
+        // No real capture in M4.2 — the stub returns a "recognition arrives in M4.3"
+        // result. We surface that honestly and never fake a transcript or run a command.
+        var result = await _voiceInput.StartPushToTalkAsync(_voiceSession).ConfigureAwait(true);
+        VoiceMicStatusText.Text = result.Success
+            ? "Microphone status: ready."
+            : $"Microphone status: {result.ErrorMessage}";
+    }
+
+    private async void OnStopVoiceClick(object sender, RoutedEventArgs e)
+    {
+        if (_voiceInput is not null)
+        {
+            await _voiceInput.StopAsync().ConfigureAwait(true);
+        }
+        _voiceSession = _voiceSession?.Cancelled(DateTimeOffset.UtcNow);
+        SetVoiceUi(VoiceInteractionState.Idle, "IDLE");
+        await PublishVoiceAsync("Cancelled.").ConfigureAwait(true);
+    }
+
+    private void SetVoiceUi(VoiceInteractionState state, string badge)
+    {
+        VoiceStateText.Text = badge;
+        PushToTalkButton.IsEnabled = state != VoiceInteractionState.Listening;
+        StopVoiceButton.IsEnabled = state == VoiceInteractionState.Listening;
+        Sphere.SetVoiceState(state);
+    }
+
+    private async Task PublishVoiceAsync(string message)
+    {
+        if (_voiceSink is null || _voiceSession is null)
+        {
+            return;
+        }
+        await _voiceSink.PublishAsync(
+            VoiceEvent.FromState(_voiceSession, message, DateTimeOffset.UtcNow)).ConfigureAwait(true);
     }
 
     private async void OnRun(object sender, RoutedEventArgs e)
