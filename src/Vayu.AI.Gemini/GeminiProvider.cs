@@ -153,6 +153,87 @@ public sealed class GeminiProvider : IOnlineAiProvider
 #pragma warning restore CA1031
     }
 
+    /// <summary>
+    /// Sends a minimal, redacted health-check to Gemini to confirm the configured
+    /// key is accepted. M3.4: gated by the same <see cref="CloudConsentDecision.AllowOnce"/>
+    /// rule as planning — no HTTP unless the user consented and a key is configured.
+    /// </summary>
+    /// <remarks>
+    /// The request contains no private user context — a single fixed token. The
+    /// key is read at request time and never logged; HTTP error bodies are never
+    /// surfaced. Auth (401/403), rate-limit (429), and server (5xx) failures all
+    /// return a safe message rather than throwing.
+    /// </remarks>
+    public async Task<GeminiKeyTestResult> TestKeyAsync(
+        CloudConsentDecision consent,
+        CancellationToken cancellationToken = default)
+    {
+        if (consent != CloudConsentDecision.AllowOnce)
+        {
+            return GeminiKeyTestResult.Failed("Cloud test was not authorised.");
+        }
+
+        var resolution = await _keyResolver.ResolveAsync(cancellationToken).ConfigureAwait(false);
+        if (!resolution.IsConfigured || string.IsNullOrEmpty(resolution.KeyValue))
+        {
+            return GeminiKeyTestResult.Failed("No Gemini API key is configured.");
+        }
+
+        try
+        {
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            linked.CancelAfter(TimeSpan.FromSeconds(Math.Max(1, _options.TimeoutSeconds)));
+
+            using var httpRequest = BuildMinimalRequest(resolution.KeyValue!);
+            using var response = await _httpClient
+                .SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, linked.Token)
+                .ConfigureAwait(false);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return GeminiKeyTestResult.Ok();
+            }
+
+            // Map status codes to safe messages — never include the response body.
+            var code = (int)response.StatusCode;
+            return code switch
+            {
+                401 or 403 => GeminiKeyTestResult.Failed("Test failed: the key was rejected (invalid or revoked)."),
+                429 => GeminiKeyTestResult.Failed("Test failed: rate limited. Try again shortly."),
+                >= 500 => GeminiKeyTestResult.Failed("Test failed: the provider returned a server error."),
+                _ => GeminiKeyTestResult.Failed($"Test failed: provider returned HTTP {code}."),
+            };
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (OperationCanceledException)
+        {
+            return GeminiKeyTestResult.Failed("Test failed: the request timed out.");
+        }
+#pragma warning disable CA1031 // Any transport failure becomes a safe message, never a crash or key leak.
+        catch (Exception)
+        {
+            return GeminiKeyTestResult.Failed("Test failed: could not reach the provider.");
+        }
+#pragma warning restore CA1031
+    }
+
+    private HttpRequestMessage BuildMinimalRequest(string apiKey)
+    {
+        // A single fixed token — no system instruction, no user context.
+        var url = new Uri(_options.Endpoint, $"{_options.ModelName}:generateContent?key={Uri.EscapeDataString(apiKey)}");
+        var body = new GeminiRequest(
+            SystemInstruction: new Content(new[] { new Part("ping") }),
+            Contents: new[] { new Content(new[] { new Part("ping") }) },
+            GenerationConfig: new GenConfig("text/plain"));
+        return new HttpRequestMessage(HttpMethod.Post, url)
+        {
+            Content = JsonContent.Create(body, options: JsonOptions),
+        };
+    }
+
     private HttpRequestMessage BuildRequest(string prompt, string apiKey)
     {
         // Gemini auth uses the key as a query parameter. It is placed here only,
