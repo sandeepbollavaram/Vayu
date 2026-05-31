@@ -70,6 +70,14 @@ M2.5 graduates the detection card into a five-step page available at **Setup** i
 
 Persistence is in-memory via `InMemoryFirstRunSetupService` (Vayu.Core); SQLite persistence is M2.8. Install and model pull remain deferred to M2.6 with explicit consent.
 
+### M2.6 — the Model step gets a real Download button
+
+Each missing curated row in the Model step now has its own **Download** button. Clicking it shows a `ContentDialog` titled `Download <tag> with Ollama?` with the exact endpoint (`http://localhost:11434/api/pull`), a reminder about download time and disk space, the estimated size when known, and two buttons — **Download** and **Cancel**.
+
+On accept, `OllamaModelPullService` streams Ollama's `POST /api/pull` and reports progress lines onto the row (`downloading · 47%`, `verifying sha256 digest`, `success`). A top-level **Cancel current download** button appears while the pull is in flight; clicking it aborts the stream via `CancellationToken`. On completion (success, cancel, or error) the wizard re-runs detection so the Installed/Missing chips reflect Ollama's `/api/tags` rather than the pull stream.
+
+The Ollama Status step still reads "Vayu will not install Ollama automatically." Ollama runtime install needs its own elevation prompt and is intentionally out of M2.6 scope.
+
 If none of the above, the wizard shows a screen explaining what Ollama is, what it does, and what installing it means. The user must click **Install Ollama** before anything happens — the actual install/pull flow is M2.6 and requires explicit consent. The manual install link (`https://ollama.com/download/windows`) is always visible as a fallback for users who'd rather install it themselves.
 
 ### Recommended models
