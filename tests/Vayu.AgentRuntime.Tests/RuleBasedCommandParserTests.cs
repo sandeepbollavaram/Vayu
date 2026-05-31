@@ -64,7 +64,6 @@ public class RuleBasedCommandParserTests
 
     [Theory]
     [InlineData("hello there")]
-    [InlineData("open spaceship")]
     [InlineData("")]
     [InlineData("   ")]
     [InlineData("open")]
@@ -76,6 +75,25 @@ public class RuleBasedCommandParserTests
 
         Assert.Equal(RuleBasedCommandParser.UnknownIntent, plan.Intent);
         Assert.Equal(RiskLevel.L0, plan.Risk);
+    }
+
+    [Theory]
+    [InlineData("open spotify",   "spotify")]
+    [InlineData("open Slack",     "slack")]
+    [InlineData("open spaceship", "spaceship")]
+    [InlineData("open Visual Studio Code", "visualstudiocode")]
+    public void Open_AnyAppName_ProducesAppOpenAtL1(string command, string expectedApp)
+    {
+        // The parser no longer whitelists app names — the catalog/agent
+        // decides whether the app exists. Anything after "open " becomes
+        // app.open at L1.
+        var parser = new RuleBasedCommandParser();
+
+        var plan = parser.Parse(Req(command));
+
+        Assert.Equal(RuleBasedCommandParser.AppOpenIntent, plan.Intent);
+        Assert.Equal(RiskLevel.L1, plan.Risk);
+        Assert.Equal(expectedApp, plan.Args["app"]);
     }
 
     [Fact]
