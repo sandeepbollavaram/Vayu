@@ -21,8 +21,8 @@ or runs anything.
 | M2.2 | Ollama runtime detection (`OllamaRuntimeService`, `OllamaLocalAiProvider`, PATH + winget + `/api/tags` probes) | ✅ Done         |
 | M2.3 | Local model catalog wiring — Settings → "Offline AI · Ollama" card with detection + curated catalog | ✅ Done         |
 | M2.4 | Installed-model listing refinement — size in GB, family/parameter/quantization parsing, exact-tag matching, curated-vs-unknown summary | ✅ Done         |
-| M2.5 | First Run Setup Wizard UI — Welcome → Mode → Ollama → Models → Verification (read-only) | 🛠️ In progress |
-| M2.6 | Safe model pull flow (`/api/pull` with explicit consent + progress)   | ⏳ Planned      |
+| M2.5 | First Run Setup Wizard UI — Welcome → Mode → Ollama → Models → Verification (read-only) | ✅ Done         |
+| M2.6 | Safe model pull flow — explicit consent dialog + streaming `/api/pull` with per-row cancel | 🛠️ In progress |
 | M2.7 | Local AI planner (`OllamaAiProvider` + AI Router with confidence floor) | ⏳ Planned      |
 | M2.8 | M2 polish + `v0.2.0-m2` tag                                           | ⏳ Planned      |
 
@@ -88,6 +88,28 @@ The wizard ships as a regular nav page (`Setup` in the rail) and is also reachab
 5. **Verification** — derived headline (Ready / Partially Ready / Not Ready) plus guidance for the next milestone.
 
 Wizard state lives in `InMemoryFirstRunSetupService` (Vayu.Core) for M2.5; SQLite persistence is M2.8. The wizard never installs Ollama, never pulls a model, and never makes a cloud call — those affordances arrive in M2.6 behind explicit consent.
+
+### M2.6 — explicit-consent model pull
+
+The Model step's Download button is no longer a placeholder. `IOllamaModelPullService` / `OllamaModelPullService` (Vayu.AI.Local) streams `POST /api/pull` with these guarantees enforced *in code, not just in UI*:
+
+- The tag **must** exist in `LocalModelCatalog`. Anything else is rejected before the HTTP request fires.
+- The pull is over the **local** Ollama endpoint only. No cloud calls. No subprocess. No installer.
+- Streaming JSON-lines progress is surfaced through `IProgress<OllamaModelPullProgress>` and rendered on the row (`downloading · 47%`, `verifying sha256 digest`, etc.). One malformed progress line never kills the stream.
+- `CancellationToken` aborts the in-flight stream; the final emitted progress carries `IsCancelled = true`.
+- `IsInstalled` is never flipped on the basis of the pull stream alone — the wizard always re-runs `RefreshAsync` afterwards and trusts Ollama's `/api/tags` for the final word.
+
+In the wizard:
+
+1. **Consent dialog** — title `Download <tag> with Ollama?`, body names the exact endpoint (`http://localhost:11434/api/pull`), reminds the user that downloads take time and disk space, names the (optional) estimated size, and offers **Download** vs **Cancel**.
+2. **Per-row progress** — every missing curated row has its own Download button; clicking starts a single pull and disables that row.
+3. **Cancel** — a top-level **Cancel current download** button appears while the pull is in flight; clicking it aborts the stream via the same `CancellationToken` and the row reverts to a retryable state.
+4. **Refresh** — after success/cancel/error, `Detection.RefreshAsync()` re-probes Ollama so the Installed/Missing chips reflect reality.
+
+What M2.6 still does **NOT** do — these stay deferred:
+
+- **No Ollama runtime install.** The wizard's Ollama Status step still tells the user "Vayu will not install Ollama automatically." Runtime install is its own future task with an elevation prompt.
+- No cloud calls. No telemetry. No silent retries. No autosave of secrets.
 
 ## Supported providers
 
