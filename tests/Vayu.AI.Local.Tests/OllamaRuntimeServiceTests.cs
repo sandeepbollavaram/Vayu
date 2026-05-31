@@ -126,6 +126,98 @@ public class OllamaRuntimeServiceTests
     }
 
     [Fact]
+    public async Task ListLocalModelsAsync_ParsesDetailsBlock_WhenPresent()
+    {
+        const string json = """
+        {
+          "models": [
+            {
+              "name": "gemma3:4b",
+              "size": 3826793677,
+              "digest": "sha256:abcdef",
+              "modified_at": "2026-01-15T12:00:00Z",
+              "details": {
+                "family": "gemma3",
+                "parameter_size": "4B",
+                "quantization_level": "Q4_K_M"
+              }
+            }
+          ]
+        }
+        """;
+        var service = NewService(_ => JsonOk(json));
+
+        var only = Assert.Single(await service.ListLocalModelsAsync());
+
+        Assert.Equal("gemma3:4b", only.Tag);
+        Assert.Equal(3_826_793_677, only.SizeBytes);
+        Assert.Equal("sha256:abcdef", only.Digest);
+        Assert.Equal("gemma3", only.Family);
+        Assert.Equal("4B", only.ParameterSize);
+        Assert.Equal("Q4_K_M", only.QuantizationLevel);
+        Assert.Equal(new DateTimeOffset(2026, 1, 15, 12, 0, 0, TimeSpan.Zero), only.ModifiedAtUtc);
+        Assert.Equal("3.6 GB", only.DisplaySize);
+    }
+
+    [Fact]
+    public async Task ListLocalModelsAsync_DetailsMissing_DoesNotThrow()
+    {
+        // Older Ollama versions, partial responses, or hand-rolled JSON may omit "details".
+        var service = NewService(_ => JsonOk("""
+        {
+          "models": [
+            { "name": "gemma3:4b", "size": 1 }
+          ]
+        }
+        """));
+
+        var only = Assert.Single(await service.ListLocalModelsAsync());
+
+        Assert.Null(only.ParameterSize);
+        Assert.Null(only.QuantizationLevel);
+        Assert.Null(only.Digest);
+        Assert.Null(only.ModifiedAtUtc);
+        // Family falls back to the name-derived family so the UI can still group.
+        Assert.Equal("gemma3", only.Family);
+    }
+
+    [Fact]
+    public async Task ListLocalModelsAsync_MalformedTimestamp_StillSucceeds()
+    {
+        var service = NewService(_ => JsonOk("""
+        {
+          "models": [
+            { "name": "gemma3:4b", "size": 1, "modified_at": "not-a-date" }
+          ]
+        }
+        """));
+
+        var only = Assert.Single(await service.ListLocalModelsAsync());
+
+        Assert.Null(only.ModifiedAtUtc);
+        Assert.Equal("gemma3:4b", only.Tag);
+    }
+
+    [Fact]
+    public async Task ListLocalModelsAsync_UnknownTag_StillReturned()
+    {
+        // M2.4 invariant: unknown tags are passed through. The reconciliation layer
+        // (LocalModelCatalog.FindByTag) decides what's "curated" — the parser must not.
+        var service = NewService(_ => JsonOk("""
+        {
+          "models": [
+            { "name": "mistral-nemo:12b", "size": 7000000000 }
+          ]
+        }
+        """));
+
+        var only = Assert.Single(await service.ListLocalModelsAsync());
+
+        Assert.Equal("mistral-nemo:12b", only.Tag);
+        Assert.Equal("mistral-nemo", only.Family);
+    }
+
+    [Fact]
     public async Task IsInstalledAsync_False_WhenExecutableNotOnPath()
     {
         // Use a unique executable name nobody will have on PATH.
