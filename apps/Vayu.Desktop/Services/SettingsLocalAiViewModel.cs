@@ -26,6 +26,8 @@ public sealed class SettingsLocalAiViewModel : INotifyPropertyChanged
     private bool _endpointReachable;
     private string _detectionMessage = "Not yet probed.";
     private string _endpointDisplay = "http://localhost:11434";
+    private int _installedCuratedCount;
+    private int _installedUnknownCount;
 
     public SettingsLocalAiViewModel(IOllamaRuntimeService runtime)
     {
@@ -91,6 +93,50 @@ public sealed class SettingsLocalAiViewModel : INotifyPropertyChanged
         ? "Probing…"
         : ExecutableDetected ? "Detected" : "Not detected";
 
+    /// <summary>Total curated catalog size (denominator for the summary).</summary>
+    public int CuratedCatalogCount => Models.Count;
+
+    /// <summary>How many curated models are present in Ollama right now.</summary>
+    public int InstalledCuratedCount
+    {
+        get => _installedCuratedCount;
+        private set
+        {
+            if (SetField(ref _installedCuratedCount, value))
+            {
+                OnPropertyChanged(nameof(CuratedSummaryText));
+            }
+        }
+    }
+
+    /// <summary>How many installed models are outside the curated catalog (informational only).</summary>
+    public int InstalledUnknownCount
+    {
+        get => _installedUnknownCount;
+        private set
+        {
+            if (SetField(ref _installedUnknownCount, value))
+            {
+                OnPropertyChanged(nameof(CuratedSummaryText));
+            }
+        }
+    }
+
+    /// <summary>Single-line summary surfaced in the Settings card above the row list.</summary>
+    public string CuratedSummaryText
+    {
+        get
+        {
+            var curated = $"Installed curated models: {InstalledCuratedCount} / {CuratedCatalogCount}";
+            if (InstalledUnknownCount > 0)
+            {
+                var noun = InstalledUnknownCount == 1 ? "model" : "models";
+                return $"{curated} · {InstalledUnknownCount} other {noun} present (not in curated catalog)";
+            }
+            return curated;
+        }
+    }
+
     /// <summary>
     /// Re-runs Ollama detection: PATH probe, HTTP probe, and <c>/api/tags</c>
     /// reconciliation against <see cref="LocalModelCatalog"/>. Never throws —
@@ -131,20 +177,32 @@ public sealed class SettingsLocalAiViewModel : INotifyPropertyChanged
             ExecutableDetected = isExecutable;
             EndpointReachable = isReachable;
 
-            var installedTags = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var byTag = new Dictionary<string, OllamaModelInfo>(StringComparer.OrdinalIgnoreCase);
             foreach (var model in installed)
             {
                 if (!string.IsNullOrWhiteSpace(model.Tag))
                 {
-                    installedTags.Add(model.Tag);
+                    byTag[model.Tag] = model;
                 }
             }
+
+            var curatedHits = 0;
             foreach (var row in Models)
             {
-                row.IsInstalled = installedTags.Contains(row.ModelTag);
+                if (byTag.TryGetValue(row.ModelTag, out var match))
+                {
+                    row.ApplyInstalled(match);
+                    curatedHits++;
+                }
+                else
+                {
+                    row.ApplyMissing();
+                }
             }
+            InstalledCuratedCount = curatedHits;
+            InstalledUnknownCount = Math.Max(0, byTag.Count - curatedHits);
 
-            DetectionMessage = errorMessage ?? BuildMessage(isExecutable, isReachable, installedTags.Count);
+            DetectionMessage = errorMessage ?? BuildMessage(isExecutable, isReachable, byTag.Count);
             // Status text properties are derived; raise change so XAML updates.
             OnPropertyChanged(nameof(EndpointStatusText));
             OnPropertyChanged(nameof(ExecutableStatusText));
@@ -174,14 +232,15 @@ public sealed class SettingsLocalAiViewModel : INotifyPropertyChanged
         return "Ollama is not detected yet. The First Run Setup Wizard will guide installation in M2.5. No installation happens automatically.";
     }
 
-    private void SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+    private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
     {
         if (EqualityComparer<T>.Default.Equals(field, value))
         {
-            return;
+            return false;
         }
         field = value;
         OnPropertyChanged(propertyName);
+        return true;
     }
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
@@ -196,6 +255,9 @@ public sealed class SettingsLocalAiViewModel : INotifyPropertyChanged
 public sealed class LocalModelRow : INotifyPropertyChanged
 {
     private bool _isInstalled;
+    private string _displaySize = string.Empty;
+    private string _familyLabel = string.Empty;
+    private string _parameterSize = string.Empty;
 
     public LocalModelRow(LocalModelDescriptor descriptor)
     {
@@ -220,18 +282,71 @@ public sealed class LocalModelRow : INotifyPropertyChanged
     public bool IsInstalled
     {
         get => _isInstalled;
-        set
+        private set
         {
             if (_isInstalled == value)
             {
                 return;
             }
             _isInstalled = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsInstalled)));
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(StatusText)));
+            Raise(nameof(IsInstalled));
+            Raise(nameof(StatusText));
         }
     }
 
     /// <summary>Status pill text bound by the XAML row template.</summary>
     public string StatusText => IsInstalled ? "Installed" : "Missing";
+
+    /// <summary>Size string for installed models (e.g. <c>"3.6 GB"</c>); empty otherwise.</summary>
+    public string DisplaySize
+    {
+        get => _displaySize;
+        private set => SetField(ref _displaySize, value, nameof(DisplaySize));
+    }
+
+    /// <summary>Family label parsed from Ollama details (e.g. <c>"gemma3"</c>); empty when unavailable.</summary>
+    public string FamilyLabel
+    {
+        get => _familyLabel;
+        private set => SetField(ref _familyLabel, value, nameof(FamilyLabel));
+    }
+
+    /// <summary>Parameter-size label (e.g. <c>"4B"</c>); empty when unavailable.</summary>
+    public string ParameterSize
+    {
+        get => _parameterSize;
+        private set => SetField(ref _parameterSize, value, nameof(ParameterSize));
+    }
+
+    /// <summary>Apply an installed-model match. Pulls size/family/parameter-size from the runtime payload.</summary>
+    public void ApplyInstalled(OllamaModelInfo match)
+    {
+        ArgumentNullException.ThrowIfNull(match);
+        DisplaySize = match.DisplaySize;
+        FamilyLabel = match.Family ?? string.Empty;
+        ParameterSize = match.ParameterSize ?? string.Empty;
+        IsInstalled = true;
+    }
+
+    /// <summary>Reset to the "missing" state — clears all installed-only metadata.</summary>
+    public void ApplyMissing()
+    {
+        DisplaySize = string.Empty;
+        FamilyLabel = string.Empty;
+        ParameterSize = string.Empty;
+        IsInstalled = false;
+    }
+
+    private void SetField(ref string field, string value, string propertyName)
+    {
+        if (string.Equals(field, value, StringComparison.Ordinal))
+        {
+            return;
+        }
+        field = value;
+        Raise(propertyName);
+    }
+
+    private void Raise(string propertyName)
+        => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 }
