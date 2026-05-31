@@ -22,7 +22,8 @@ or runs anything.
 | M2.3 | Local model catalog wiring — Settings → "Offline AI · Ollama" card with detection + curated catalog | ✅ Done         |
 | M2.4 | Installed-model listing refinement — size in GB, family/parameter/quantization parsing, exact-tag matching, curated-vs-unknown summary | ✅ Done         |
 | M2.5 | First Run Setup Wizard UI — Welcome → Mode → Ollama → Models → Verification (read-only) | ✅ Done         |
-| M2.6 | Safe model pull flow — explicit consent dialog + streaming `/api/pull` with per-row cancel | 🛠️ In progress |
+| M2.6 | Safe model pull flow — explicit consent dialog + streaming `/api/pull` with per-row cancel | ✅ Done         |
+| M2.7 | Local AI planner — `OllamaIntentPlanner` + `AiRouterIntentPlanner` (offline plan → rule-based fallback); opt-in Settings toggle | 🛠️ In progress |
 | M2.7 | Local AI planner (`OllamaAiProvider` + AI Router with confidence floor) | ⏳ Planned      |
 | M2.8 | M2 polish + `v0.2.0-m2` tag                                           | ⏳ Planned      |
 
@@ -110,6 +111,20 @@ What M2.6 still does **NOT** do — these stay deferred:
 
 - **No Ollama runtime install.** The wizard's Ollama Status step still tells the user "Vayu will not install Ollama automatically." Runtime install is its own future task with an elevation prompt.
 - No cloud calls. No telemetry. No silent retries. No autosave of secrets.
+
+### M2.7 — local AI planning (opt-in)
+
+M2.7 lets a local Ollama model actually *plan* commands. The safety architecture is unchanged: **the model only proposes an `IntentPlan`; it never executes anything.** Every plan still flows `AgentRuntime → IPermissionService → agent → audit log`.
+
+Components (Vayu.AI.Local + Vayu.AgentRuntime):
+
+- **`OllamaIntentPlanner`** (`ILocalIntentPlanner`) — POSTs `/api/generate` with `format: "json"` and a compact system prompt, then hands the model's text to `OllamaPlanJsonParser`. Any failure (HTTP error, malformed JSON, timeout, empty command) returns a `LocalAiPlanningResult` failure rather than throwing.
+- **`OllamaPlanJsonParser`** — the trust boundary. It extracts the JSON object (even from prose-wrapped output), enforces an **intent allowlist** (`app.open`, `ui.show_logs`, `ui.show_settings`, `unknown`), validates `confidence ∈ [0,1]`, requires `args.app` for `app.open`, and **assigns the risk level itself** — the model's claimed risk is ignored. A typing request becomes the same `typing_requested` flag the rule-based parser uses, so the agent defers it to M5. The model cannot smuggle in shell/file-delete/email/admin/browser-login intents.
+- **`AiRouterIntentPlanner`** (`IIntentPlanner`) — the router `AgentRuntime` actually uses. When offline planning is **enabled** and the model returns a valid plan above the confidence floor, that plan is used (`PlanSource = ollama:<tag>`). Otherwise it falls back to the rule-based parser (`PlanSource = ollama-fallback-rule-based`). When offline planning is **disabled** (the default), it is pure rule-based (`PlanSource = rule-based`) and Ollama is never contacted. The router never throws for a normal model failure.
+
+`LocalAiPlannerOptions` carries the model tag, `MinimumConfidence` (0.70), `MaxPromptChars`, and timeout. `LocalAiPlannerState` is the live, user-flippable toggle the **Settings → AI Mode** switch writes — no restart needed.
+
+Still deferred: cloud / Hybrid routing (Gemini fallback) is **M3**; typing/clicking inside apps is **M5**. M2.7 makes no cloud calls and emits no telemetry.
 
 ## Supported providers
 
