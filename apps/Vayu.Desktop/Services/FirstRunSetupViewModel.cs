@@ -23,17 +23,21 @@ namespace Vayu_Desktop.Services;
 public sealed class FirstRunSetupViewModel : INotifyPropertyChanged
 {
     private readonly IFirstRunSetupService _setupService;
+    private readonly IOllamaModelPullService _pullService;
     private FirstRunSetupStep _currentStep = FirstRunSetupStep.Welcome;
     private FirstRunSetupMode _mode = FirstRunSetupMode.OfflineOnly;
     private bool _isCompleted;
 
     public FirstRunSetupViewModel(
         IFirstRunSetupService setupService,
-        SettingsLocalAiViewModel detection)
+        SettingsLocalAiViewModel detection,
+        IOllamaModelPullService pullService)
     {
         ArgumentNullException.ThrowIfNull(setupService);
         ArgumentNullException.ThrowIfNull(detection);
+        ArgumentNullException.ThrowIfNull(pullService);
         _setupService = setupService;
+        _pullService = pullService;
         Detection = detection;
     }
 
@@ -161,6 +165,60 @@ public sealed class FirstRunSetupViewModel : INotifyPropertyChanged
 
     /// <summary>Pick the wizard mode. M2.5 only enables Offline-only; the rest are previewed.</summary>
     public void SetMode(FirstRunSetupMode mode) => Mode = mode;
+
+    /// <summary>
+    /// Pull a curated model via Ollama, streaming progress into <paramref name="row"/>.
+    /// Caller must have shown an explicit consent dialog before invoking this method.
+    /// </summary>
+    public async Task<OllamaModelPullProgress> PullAsync(
+        LocalModelRow row,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        row.IsDownloading = true;
+        row.CanDownload = false;
+        row.DownloadStatus = "Starting…";
+
+        var progress = new Progress<OllamaModelPullProgress>(update =>
+        {
+            row.DownloadStatus = update.DisplayText;
+        });
+
+        OllamaModelPullProgress final;
+        try
+        {
+            final = await _pullService
+                .PullModelAsync(new OllamaModelPullRequest(row.ModelTag), progress, cancellationToken)
+                .ConfigureAwait(true);
+        }
+        finally
+        {
+            row.IsDownloading = false;
+        }
+
+        // Confirm completion via a fresh detection probe — we never flip
+        // IsInstalled on the basis of the pull stream alone.
+        await Detection.RefreshAsync(CancellationToken.None).ConfigureAwait(true);
+        OnPropertyChanged(nameof(VerificationHeadline));
+        OnPropertyChanged(nameof(VerificationGuidance));
+
+        if (!row.IsInstalled)
+        {
+            // Detection still says missing — keep the row visible as a Download target
+            // unless Ollama is unreachable.
+            row.CanDownload = Detection.EndpointReachable;
+            if (final.IsCancelled)
+            {
+                row.DownloadStatus = "Cancelled. You can retry.";
+            }
+            else if (final.ErrorMessage is not null)
+            {
+                row.DownloadStatus = $"Download failed: {final.ErrorMessage}";
+            }
+        }
+
+        return final;
+    }
 
     /// <summary>Re-run Ollama detection. Surface for the Ollama step's Refresh button.</summary>
     public Task RefreshAsync() => Detection.RefreshAsync();
