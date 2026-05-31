@@ -1,0 +1,77 @@
+# Vayu User Manual — Documentation Plan
+
+> **Status: planning only.** This file plans the future official end-user manual, *"What is Vayu and how to use Vayu on your desktop."* It is a documentation outline, not the manual itself — the real manual is written as features ship (largely around M7 production release and again at each version's feature-complete point).
+
+## Purpose
+
+Give a non-technical Windows user everything they need to install Vayu, set it up safely, and use it day to day — across both Vayu Version 1 (M1–M11) and Version 2 (M12–M20) capabilities.
+
+## Planned table of contents
+
+### 1. Understanding Vayu
+- What Vayu is (a local-first Windows AI desktop assistant & tool-system).
+- Why Vayu exists (privacy, control, one place to drive local + cloud AI safely).
+- The local-first desktop-assistant concept.
+- The safety model: permissions, audit logs, stop/cancel, consent.
+
+### 2. Installing & first-run setup
+- Installing Vayu (MSIX / `.exe` installer).
+- Choosing paths during setup:
+  - storage / data root
+  - Vayu **workspace** path (where generated assets, websites, renders, and projects are saved by default)
+  - logs path
+  - cache path
+  - local model files path
+  - generated assets path
+- Choosing an **AI mode**: Offline / Online / Hybrid.
+- Setting up **Ollama / Gemma** (offline).
+- Setting up **online providers** (Gemini first; others from the registry).
+- Storing keys in **Windows Credential Manager** — and why you should never keep plaintext API keys.
+- Skipping any provider; every model install/download requires explicit permission.
+
+### 3. Everyday use (Version 1)
+- Using the command box.
+- Using voice (push-to-talk, listening/thinking/speaking states).
+- Opening apps.
+- Using safe desktop automation (typing/clicking with confirmation).
+- Using workflows.
+- Using Mission Control (coordinating coding agents with approval).
+- Using the coding autopilot.
+- Creating websites / apps with Vayu.
+
+### 4. Advanced use (Version 2)
+- Using creative / image generation features.
+- Using 3D asset generation.
+- Using Blender / Unity / rendering integrations.
+- Using the visual (n8n-style) workflow builder.
+- Using the background activity dashboard ("what Vayu is doing now").
+
+### 5. Using Vayu safely
+- Permissions and risk levels (L0–L6).
+- Reading the audit log.
+- How to **stop / cancel** any action.
+- Consent dialogs for cloud calls and downloads.
+- Privacy / enterprise mode.
+
+### 6. Troubleshooting
+- Ollama not detected / not running.
+- Model download issues.
+- Provider key not accepted.
+- Permission/consent prompts.
+- Logs and where to find them.
+
+### 7. Production / server / VPS usage *(future)*
+- When and how Vayu can use **approved** server/VPS-assisted agent workflows.
+- The rule: every remote/server action must be **explicit, secure, logged, and user-approved**.
+- This is a future capability — not implemented yet.
+
+## Cross-cutting documentation rules
+
+- **Generated outputs default to the Vayu workspace.** Generated assets, websites, renders, and project files are saved under the user-selected Vayu workspace/storage root unless the user picks another path. The manual must make the active workspace path visible and easy to change.
+- **Never show secrets.** The manual must teach Credential-Manager storage and explicitly warn against plaintext keys; no screenshot or example may contain a real key.
+- **Safety first.** Every "how to use feature X" section pairs with "how to stop X" and "what gets logged."
+
+## When this becomes the real manual
+
+- A first user-facing pass lands around **M7** (production release) covering Version 1 basics.
+- It expands at **M11** (Version 1 feature-complete) and again at **M20** (Version 2 feature-complete).
