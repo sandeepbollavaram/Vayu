@@ -52,68 +52,112 @@ public sealed partial class SettingsPage : Page
             Loaded += OnPageLoaded;
         }
 
-        // M2.7/M2.8: reflect and control the offline AI planner opt-in.
-        // Start disabled until the first detection refresh proves readiness.
+        // M3.5: AI Mode selector (Rule-based / Offline / Online Gemini / Hybrid).
+        // Modes stay disabled until SyncPlannerGate proves their readiness.
         _plannerState = App.Services?.GetService<LocalAiPlannerState>();
         if (_plannerState is not null)
         {
-            OfflineAiToggle.IsEnabled = false;
-            OfflineAiToggle.IsOn = _plannerState.OfflinePlanningEnabled;
+            _plannerState.ActiveOnlineProviderId = "gemini";
+            SelectModeRadio(_plannerState.Mode);
             UpdateAiModeText();
         }
     }
 
-    private void OnOfflineAiToggled(object sender, RoutedEventArgs e)
+    private bool _suppressModeChange;
+
+    private void OnAiModeChecked(object sender, RoutedEventArgs e)
     {
-        if (_plannerState is null)
+        if (_suppressModeChange || _plannerState is null || sender is not RadioButton rb || rb.Tag is not string tag)
         {
             return;
         }
-        // Never allow ON when the runtime is not ready, even if the control
-        // somehow reports IsOn (e.g. programmatic flips). Readiness wins.
-        var ready = _localAi?.PlannerReady ?? false;
-        _plannerState.OfflinePlanningEnabled = OfflineAiToggle.IsOn && ready;
+        _plannerState.Mode = tag switch
+        {
+            "offline" => PlanningMode.Offline,
+            "online" => PlanningMode.Online,
+            "hybrid" => PlanningMode.Hybrid,
+            _ => PlanningMode.RuleBased,
+        };
         UpdateAiModeText();
+    }
+
+    private void SelectModeRadio(PlanningMode mode)
+    {
+        _suppressModeChange = true;
+        try
+        {
+            ModeRuleBasedRadio.IsChecked = mode == PlanningMode.RuleBased;
+            ModeOfflineRadio.IsChecked = mode == PlanningMode.Offline;
+            ModeOnlineRadio.IsChecked = mode == PlanningMode.Online;
+            ModeHybridRadio.IsChecked = mode == PlanningMode.Hybrid;
+        }
+        finally
+        {
+            _suppressModeChange = false;
+        }
     }
 
     private void UpdateAiModeText()
     {
-        AiModeProviderText.Text = (_plannerState?.OfflinePlanningEnabled ?? false)
-            ? $"Provider: Ollama local AI ({_localAi?.ActiveModelTag ?? "local model"}, rule-based fallback)"
-            : "Provider: rule-based parser";
+        AiModeProviderText.Text = (_plannerState?.Mode ?? PlanningMode.RuleBased) switch
+        {
+            PlanningMode.Offline => $"Provider: Ollama local AI ({_localAi?.ActiveModelTag ?? "local model"}, rule-based fallback)",
+            PlanningMode.Online => "Provider: Gemini online AI (consent each request)",
+            PlanningMode.Hybrid => "Provider: Hybrid — local first, Gemini with consent fallback",
+            _ => "Provider: rule-based parser",
+        };
     }
 
     /// <summary>
-    /// M2.8: gate the planner toggle on runtime readiness. Disables the toggle
-    /// (with a reason) when Ollama is unreachable or no curated model is
-    /// installed, and force-disables an already-enabled planner that has lost
-    /// its runtime so Vayu cannot keep trying a dead model.
+    /// M3.5: gate each AI mode on its readiness. Offline needs Ollama reachable +
+    /// a curated model; Online needs a configured Gemini key; Hybrid needs both.
+    /// If the selected mode loses its readiness, fall back to Rule-based.
     /// </summary>
-    private void SyncPlannerGate()
+    private async void SyncPlannerGate()
     {
         if (_localAi is null || _plannerState is null)
         {
             return;
         }
 
-        var ready = _localAi.PlannerReady;
-        // Keep the planner's active model in sync with what's installed.
+        var offlineReady = _localAi.PlannerReady;
         _plannerState.ActiveModelTag = _localAi.ActiveModelTag;
 
-        OfflineAiToggle.IsEnabled = ready;
-        OfflineAiToggleHint.Text = _localAi.PlannerReadinessText;
-
-        if (!ready && _plannerState.OfflinePlanningEnabled)
+        var geminiReady = false;
+        if (_geminiKeys is not null)
         {
-            // Runtime went away while enabled — fail safe to OFF.
-            _plannerState.OfflinePlanningEnabled = false;
-            OfflineAiToggle.IsOn = false;
-        }
-        else
-        {
-            OfflineAiToggle.IsOn = _plannerState.OfflinePlanningEnabled;
+            try
+            {
+                geminiReady = await _geminiKeys.IsKeyConfiguredAsync().ConfigureAwait(true);
+            }
+            catch
+            {
+                geminiReady = false;
+            }
         }
 
+        ModeOfflineRadio.IsEnabled = offlineReady;
+        ModeOnlineRadio.IsEnabled = geminiReady && _cloudConsent is not null;
+        ModeHybridRadio.IsEnabled = offlineReady && geminiReady && _cloudConsent is not null;
+
+        AiModeHint.Text = offlineReady
+            ? _localAi.PlannerReadinessText
+            : "Offline needs Ollama + a curated model; Online/Hybrid need a saved Gemini key. Cloud calls ask for consent every time.";
+
+        // If the current mode lost its prerequisites, fall back to Rule-based.
+        var mode = _plannerState.Mode;
+        var stillValid = mode switch
+        {
+            PlanningMode.Offline => offlineReady,
+            PlanningMode.Online => geminiReady && _cloudConsent is not null,
+            PlanningMode.Hybrid => offlineReady && geminiReady && _cloudConsent is not null,
+            _ => true,
+        };
+        if (!stillValid)
+        {
+            _plannerState.Mode = PlanningMode.RuleBased;
+            SelectModeRadio(PlanningMode.RuleBased);
+        }
         UpdateAiModeText();
     }
 
@@ -167,6 +211,8 @@ public sealed partial class SettingsPage : Page
             TestGeminiKeyButton.IsEnabled = status.IsConfigured
                 && _geminiProvider is not null
                 && _cloudConsent is not null;
+            // M3.5: a key change can enable/disable Online/Hybrid modes.
+            SyncPlannerGate();
         }
         catch (Exception ex)
         {
