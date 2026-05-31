@@ -17,10 +17,10 @@ or runs anything.
 
 | Sub  | Scope                                                                 | Status         |
 | ---- | --------------------------------------------------------------------- | -------------- |
-| M2.1 | Offline AI architecture / contracts (`LocalAiOptions`, `LocalModelCatalog`, `ILocalAiProvider`, …) | 🛠️ In progress |
-| M2.2 | Ollama runtime detection (`OllamaRuntimeService` real impl)           | ⏳ Planned      |
-| M2.3 | Local model catalog wiring                                            | ⏳ Planned      |
-| M2.4 | Installed-model listing (`ListLocalModelsAsync` via `/api/tags`)      | ⏳ Planned      |
+| M2.1 | Offline AI architecture / contracts (`LocalAiOptions`, `LocalModelCatalog`, `ILocalAiProvider`, …) | ✅ Done         |
+| M2.2 | Ollama runtime detection (`OllamaRuntimeService`, `OllamaLocalAiProvider`, PATH + winget + `/api/tags` probes) | 🛠️ In progress |
+| M2.3 | Local model catalog wiring (reconcile installed tags with curated catalog) | ⏳ Planned      |
+| M2.4 | Installed-model listing surfaced in Settings + wizard                 | ⏳ Planned      |
 | M2.5 | First Run Setup Wizard UI                                             | ⏳ Planned      |
 | M2.6 | Safe model pull flow (`/api/pull` with explicit consent + progress)   | ⏳ Planned      |
 | M2.7 | Local AI planner (`OllamaAiProvider` + AI Router with confidence floor) | ⏳ Planned      |
@@ -31,6 +31,25 @@ Hard rules carried from M1 and reinforced for M2:
 - **Every AI-produced plan still flows through `AgentRuntime` and the permission engine.** The local AI never invokes a tool directly.
 - Local AI is **off by default** until the user explicitly enables it in the wizard (`LocalAiOptions.EnableLocalAi` defaults to `false`).
 - Model downloads require a separate explicit consent step.
+
+### M2.2 — what detection does and what it does NOT do
+
+`OllamaRuntimeService` is a **read-only** detection layer. It answers four questions and nothing more:
+
+1. Is `ollama` (or `ollama.exe`) on `PATH`? — synchronous file probe.
+2. Does `winget list --id Ollama.Ollama` say the package is installed? — bounded sub-process probe; missing winget is non-fatal.
+3. Is `GET http://localhost:11434/api/tags` returning a success status? — bounded HTTP probe (default 5 s).
+4. Which models did `/api/tags` report, and is the recommended one (`gemma3:4b`) among them?
+
+The result is an `OllamaRuntimeStatus` snapshot the First Run Wizard renders.
+
+What M2.2 does **NOT** do — these belong to later sub-milestones with explicit consent:
+
+- No `ollama pull` / model download. (M2.6.)
+- No `winget install Ollama.Ollama`. (M2.6.)
+- No cloud calls of any kind.
+- No telemetry, no usage reporting, no "phone home".
+- No process is ever started elevated; the winget probe is a plain `list`, never `install`.
 
 ## Supported providers
 
