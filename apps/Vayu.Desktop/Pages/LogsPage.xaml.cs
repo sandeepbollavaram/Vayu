@@ -10,16 +10,29 @@ using Vayu.Memory;
 namespace Vayu_Desktop.Pages;
 
 /// <summary>
-/// Logs page: shows the most recent audit rows from
-/// <see cref="IAuditLogService"/>. All values are already redacted by
-/// the writers (<c>DefaultPermissionService</c> and <c>AgentRuntime</c>).
+/// View-model bound to one row in <see cref="LogsPage"/>'s list. Plain
+/// get/set so the XAML type-info generator can wire <c>x:Bind</c> against it.
+/// </summary>
+public sealed class AuditRow
+{
+    public string Timestamp { get; set; } = string.Empty;
+    public string Risk { get; set; } = string.Empty;
+    public string Decision { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string Command { get; set; } = string.Empty;
+    public string AgentAndError { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Audit-log console. Reads <see cref="IAuditLogService.ListRecentAsync"/>
+/// and renders each row as a card with chips. All values are already
+/// redacted by the writers — no further sanitisation in the UI.
 /// </summary>
 public sealed partial class LogsPage : Page
 {
     private readonly IAuditLogService _audit;
 
-    /// <summary>One-line rendering of each audit row, newest first.</summary>
-    public ObservableCollection<string> Rows { get; } = new();
+    public ObservableCollection<AuditRow> Rows { get; } = new();
 
     public LogsPage()
     {
@@ -40,29 +53,38 @@ public sealed partial class LogsPage : Page
 
     private async Task RefreshAsync()
     {
-        StatusLine.Text = "Loading…";
+        StatusLine.Text = "LOADING…";
         try
         {
             var entries = await _audit.ListRecentAsync(200).ConfigureAwait(true);
             Rows.Clear();
             foreach (var row in entries)
             {
-                Rows.Add(Format(row));
+                Rows.Add(new AuditRow
+                {
+                    Timestamp = row.TimestampUtc.UtcDateTime.ToString("yyyy-MM-dd HH:mm:ss"),
+                    Risk = row.RiskLevel.ToString(),
+                    Decision = row.PermissionDecision.ToString().ToUpperInvariant(),
+                    Status = row.Status.ToString().ToUpperInvariant(),
+                    Command = row.CommandText ?? string.Empty,
+                    AgentAndError = BuildAgentLine(row),
+                });
             }
-            StatusLine.Text = $"{entries.Count} row(s)";
+            StatusLine.Text = $"{entries.Count} ROW(S)";
+            EmptyState.Visibility = entries.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         }
         catch (Exception ex)
         {
-            StatusLine.Text = $"Error: {ex.GetType().Name}";
+            StatusLine.Text = $"ERROR · {ex.GetType().Name}";
+            EmptyState.Visibility = Visibility.Visible;
         }
     }
 
-    private static string Format(ActionLogEntry row)
-        => $"{row.TimestampUtc.UtcDateTime:yyyy-MM-dd HH:mm:ss} "
-         + $"{row.RiskLevel,-3} "
-         + $"{row.PermissionDecision,-22} "
-         + $"{row.Status,-19} "
-         + $"{row.AgentName ?? "-",-15} "
-         + $"{row.CommandText ?? string.Empty}"
-         + (string.IsNullOrEmpty(row.ErrorMessage) ? string.Empty : $"  err={row.ErrorMessage}");
+    private static string BuildAgentLine(ActionLogEntry row)
+    {
+        var agent = string.IsNullOrEmpty(row.AgentName) ? "-" : row.AgentName;
+        return string.IsNullOrEmpty(row.ErrorMessage)
+            ? $"agent · {agent}"
+            : $"agent · {agent}    err · {row.ErrorMessage}";
+    }
 }
