@@ -101,22 +101,9 @@ public partial class App : Application
             return registry;
         });
 
-        // --- Planner + runtime ---
-        services.AddSingleton<RuleBasedCommandParser>();
-        services.AddSingleton<IIntentPlanner>(sp => new IntentPlanner(sp.GetRequiredService<RuleBasedCommandParser>()));
-        services.AddSingleton(new AgentRuntimeOptions());
-        services.AddSingleton<IAgentRuntime>(sp => new AgentRuntime(
-            sp.GetRequiredService<IIntentPlanner>(),
-            sp.GetRequiredService<AgentRegistry>(),
-            sp.GetRequiredService<IPermissionService>(),
-            sp.GetRequiredService<IClock>(),
-            sp.GetRequiredService<IAuditLogService>(),
-            sp.GetRequiredService<AgentRuntimeOptions>()));
-
         // --- Vayu.AI.Local (M2): detection-only runtime + provider adapter ---
         // Local AI defaults to disabled (LocalAiOptions.EnableLocalAi = false);
         // probes are read-only and bounded by OllamaProviderOptions.ProbeTimeoutSeconds.
-        // Install and model pull are NOT registered here — they belong to M2.6 with explicit consent.
         services.AddSingleton(new LocalAiOptions());
         services.AddSingleton(new OllamaProviderOptions());
         services.AddSingleton(sp =>
@@ -135,6 +122,36 @@ public partial class App : Application
         services.AddSingleton<IOllamaModelPullService>(sp => new OllamaModelPullService(
             sp.GetRequiredService<HttpClient>(),
             sp.GetRequiredService<OllamaProviderOptions>()));
+
+        // --- M2.7: local AI planning (opt-in, off by default) ---
+        services.AddSingleton(new LocalAiPlannerOptions());
+        // Live, user-flippable toggle the Settings page writes and the router reads.
+        services.AddSingleton(sp => new LocalAiPlannerState(
+            sp.GetRequiredService<LocalAiPlannerOptions>().EnableOfflinePlanning));
+        services.AddSingleton<ILocalIntentPlanner>(sp => new OllamaIntentPlanner(
+            sp.GetRequiredService<HttpClient>(),
+            sp.GetRequiredService<OllamaProviderOptions>(),
+            sp.GetRequiredService<LocalAiPlannerOptions>()));
+
+        // --- Planner + runtime ---
+        // The AI Router replaces the bare IntentPlanner: it tries the local AI
+        // planner when the user has enabled offline planning, and always falls
+        // back to the rule-based parser. Every plan it returns still flows
+        // through AgentRuntime -> IPermissionService -> agent -> audit log.
+        services.AddSingleton<RuleBasedCommandParser>();
+        services.AddSingleton<IIntentPlanner>(sp => new AiRouterIntentPlanner(
+            sp.GetRequiredService<RuleBasedCommandParser>(),
+            sp.GetRequiredService<ILocalIntentPlanner>(),
+            sp.GetRequiredService<LocalAiPlannerOptions>(),
+            sp.GetRequiredService<LocalAiPlannerState>()));
+        services.AddSingleton(new AgentRuntimeOptions());
+        services.AddSingleton<IAgentRuntime>(sp => new AgentRuntime(
+            sp.GetRequiredService<IIntentPlanner>(),
+            sp.GetRequiredService<AgentRegistry>(),
+            sp.GetRequiredService<IPermissionService>(),
+            sp.GetRequiredService<IClock>(),
+            sp.GetRequiredService<IAuditLogService>(),
+            sp.GetRequiredService<AgentRuntimeOptions>()));
 
         // --- First Run Setup Wizard (M2.5): in-memory state for now; SQLite persistence lands in M2.8 ---
         services.AddSingleton<IFirstRunSetupService>(sp => new InMemoryFirstRunSetupService(
