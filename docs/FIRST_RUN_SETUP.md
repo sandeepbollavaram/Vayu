@@ -56,6 +56,8 @@ The detection itself is implemented in M2.2 by `OllamaRuntimeService.GetRuntimeS
 
 In M2.3 the same detection feeds the **Settings → Offline AI · Ollama** card via `SettingsLocalAiViewModel`. Users can already see endpoint, executable, server, and per-model installed/missing state from Settings — well before the First Run Wizard ships in M2.5. Settings exposes a **Refresh** button that re-runs detection only; install and model pull stay deferred to M2.6 with explicit consent.
 
+M2.4 refines that listing: each installed curated row now shows size (`3.6 GB`), parameter size (`4B`), and family parsed from Ollama's `/api/tags` `details` block, and the card carries a small "Installed curated models: X / 3" summary plus an unknown-models counter. The wizard will reuse the same view model fields when M2.5 lands.
+
 If none of the above, the wizard shows a screen explaining what Ollama is, what it does, and what installing it means. The user must click **Install Ollama** before anything happens — the actual install/pull flow is M2.6 and requires explicit consent. The manual install link (`https://ollama.com/download/windows`) is always visible as a fallback for users who'd rather install it themselves.
 
 ### Recommended models
