@@ -12,14 +12,17 @@ namespace Vayu.AgentRuntime;
 /// <remarks>
 /// Vocabulary:
 /// <list type="bullet">
-/// <item><c>open chrome | edge | vscode | vs code | notepad | terminal | downloads</c> → <c>app.open</c> (L1)</item>
+/// <item><c>open &lt;any app name&gt;</c> → <c>app.open</c> (L1). The catalog/agent decides whether the app actually exists.</item>
 /// <item><c>show logs</c> → <c>ui.show_logs</c> (L0)</item>
 /// <item><c>show settings</c> → <c>ui.show_settings</c> (L0)</item>
 /// <item>anything else → <c>unknown</c> (L0) — the runtime turns this into <c>NeedsClarification</c>.</item>
 /// </list>
-/// The parser is case-insensitive, trims whitespace, and normalises
-/// <c>"vs code"</c> to <c>"vscode"</c>. No I/O, no async; tests can drive
-/// it deterministically.
+/// The parser is case-insensitive, trims whitespace, and collapses
+/// internal spaces (so <c>"open vs code"</c> reaches the agent as
+/// <c>"vscode"</c>). It does NOT whitelist app names: <c>"open spotify"</c>
+/// becomes <c>app.open</c> with <c>app=spotify</c>, and the
+/// <c>AppLauncherAgent</c> resolves it against <c>KnownAppCatalog</c> and
+/// the installed-app catalog.
 /// </remarks>
 public sealed class RuleBasedCommandParser
 {
@@ -36,17 +39,6 @@ public sealed class RuleBasedCommandParser
     public const string UnknownIntent = "unknown";
 
     private const string PlanSource = "rule-based";
-
-    private static readonly ImmutableDictionary<string, string> KnownApps =
-        ImmutableDictionary.CreateRange(StringComparer.Ordinal, new[]
-        {
-            KeyValuePair.Create("chrome",    "chrome"),
-            KeyValuePair.Create("edge",      "edge"),
-            KeyValuePair.Create("vscode",    "vscode"),
-            KeyValuePair.Create("notepad",   "notepad"),
-            KeyValuePair.Create("terminal",  "terminal"),
-            KeyValuePair.Create("downloads", "downloads"),
-        });
 
     /// <summary>Parses <paramref name="request"/> into an <see cref="IntentPlan"/>.</summary>
     public IntentPlan Parse(CommandRequest request)
@@ -88,14 +80,9 @@ public sealed class RuleBasedCommandParser
             return false;
         }
 
-        // "vs code" → "vscode", "vs    code" → "vscode"
-        var collapsed = string.Concat(rest.Split(' ', StringSplitOptions.RemoveEmptyEntries));
-        if (KnownApps.TryGetValue(collapsed, out var canonical))
-        {
-            app = canonical;
-            return true;
-        }
-        return false;
+        // Collapse internal whitespace so "vs code" → "vscode".
+        app = string.Concat(rest.Split(' ', StringSplitOptions.RemoveEmptyEntries));
+        return app.Length > 0;
     }
 
     private static IntentPlan BuildPlan(
