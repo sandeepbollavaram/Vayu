@@ -14,6 +14,7 @@ namespace Vayu.AI.Local;
 public sealed class LocalAiPlannerState
 {
     private volatile bool _enabled;
+    private volatile string? _activeModelTag;
 
     public LocalAiPlannerState(bool initiallyEnabled = false)
     {
@@ -25,5 +26,18 @@ public sealed class LocalAiPlannerState
     {
         get => _enabled;
         set => _enabled = value;
+    }
+
+    /// <summary>
+    /// The installed curated model the planner should run, chosen by
+    /// <see cref="LocalAiReadiness.SelectActiveModel"/> after the last detection
+    /// refresh. <see langword="null"/> when no curated model is installed.
+    /// When set, <c>OllamaIntentPlanner</c> uses this in preference to the
+    /// static <see cref="LocalAiPlannerOptions.ModelTag"/>.
+    /// </summary>
+    public string? ActiveModelTag
+    {
+        get => _activeModelTag;
+        set => _activeModelTag = value;
     }
 }
