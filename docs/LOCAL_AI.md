@@ -9,6 +9,29 @@ Vayu's default brain is local. Online AI is a strict opt-in.
 - **No keys, no rate limits, no bills.**
 - **Works on a plane.**
 
+## Milestone staging (M2)
+
+The offline AI layer ships in safe increments. Each stage is reachable only
+after the previous one is green — Vayu never silently installs, downloads,
+or runs anything.
+
+| Sub  | Scope                                                                 | Status         |
+| ---- | --------------------------------------------------------------------- | -------------- |
+| M2.1 | Offline AI architecture / contracts (`LocalAiOptions`, `LocalModelCatalog`, `ILocalAiProvider`, …) | 🛠️ In progress |
+| M2.2 | Ollama runtime detection (`OllamaRuntimeService` real impl)           | ⏳ Planned      |
+| M2.3 | Local model catalog wiring                                            | ⏳ Planned      |
+| M2.4 | Installed-model listing (`ListLocalModelsAsync` via `/api/tags`)      | ⏳ Planned      |
+| M2.5 | First Run Setup Wizard UI                                             | ⏳ Planned      |
+| M2.6 | Safe model pull flow (`/api/pull` with explicit consent + progress)   | ⏳ Planned      |
+| M2.7 | Local AI planner (`OllamaAiProvider` + AI Router with confidence floor) | ⏳ Planned      |
+| M2.8 | M2 polish + `v0.2.0-m2` tag                                           | ⏳ Planned      |
+
+Hard rules carried from M1 and reinforced for M2:
+
+- **Every AI-produced plan still flows through `AgentRuntime` and the permission engine.** The local AI never invokes a tool directly.
+- Local AI is **off by default** until the user explicitly enables it in the wizard (`LocalAiOptions.EnableLocalAi` defaults to `false`).
+- Model downloads require a separate explicit consent step.
+
 ## Supported providers
 
 ### Ollama (recommended)
