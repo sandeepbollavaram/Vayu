@@ -62,6 +62,8 @@
     <ProjectReference Include="..\..\src\Vayu.Automation.Windows\Vayu.Automation.Windows.csproj" />
     <ProjectReference Include="..\..\src\Vayu.Logging\Vayu.Logging.csproj" />
     <ProjectReference Include="..\..\src\Vayu.AI.Local\Vayu.AI.Local.csproj" />
+    <ProjectReference Include="..\..\src\Vayu.AI.Online\Vayu.AI.Online.csproj" />
+    <ProjectReference Include="..\..\src\Vayu.AI.Gemini\Vayu.AI.Gemini.csproj" />
   </ItemGroup>
 
   <!--
