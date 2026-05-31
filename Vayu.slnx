@@ -10,6 +10,7 @@
     <Project Path="src/Vayu.AgentRuntime/Vayu.AgentRuntime.csproj" />
     <Project Path="src/Vayu.AI.Gemini/Vayu.AI.Gemini.csproj" />
     <Project Path="src/Vayu.AI.Local/Vayu.AI.Local.csproj" />
+    <Project Path="src/Vayu.AI.Online/Vayu.AI.Online.csproj" />
     <Project Path="src/Vayu.Automation.Windows/Vayu.Automation.Windows.csproj" />
     <Project Path="src/Vayu.Connectors.Files/Vayu.Connectors.Files.csproj" />
     <Project Path="src/Vayu.Connectors.GitHub/Vayu.Connectors.GitHub.csproj" />
@@ -26,6 +27,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/Vayu.AgentRuntime.Tests/Vayu.AgentRuntime.Tests.csproj" />
     <Project Path="tests/Vayu.AI.Local.Tests/Vayu.AI.Local.Tests.csproj" />
+    <Project Path="tests/Vayu.AI.Online.Tests/Vayu.AI.Online.Tests.csproj" />
     <Project Path="tests/Vayu.Automation.Windows.Tests/Vayu.Automation.Windows.Tests.csproj" />
     <Project Path="tests/Vayu.Core.Tests/Vayu.Core.Tests.csproj" />
     <Project Path="tests/Vayu.Logging.Tests/Vayu.Logging.Tests.csproj" />
