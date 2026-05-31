@@ -7,16 +7,18 @@ namespace Vayu.Automation.Windows;
 
 /// <summary>
 /// Windows implementation of <see cref="IAppLauncher"/>. Resolves the
-/// requested app through <see cref="KnownAppCatalog"/> and launches it
+/// requested app through <see cref="KnownAppCatalog"/> (or a vetted
+/// <see cref="InstalledAppEntry"/> for shortcut launches) and launches it
 /// with <see cref="Process.Start(ProcessStartInfo)"/> using
 /// <c>UseShellExecute = true</c>.
 /// </summary>
 /// <remarks>
 /// Safety properties:
 /// <list type="bullet">
-/// <item>Never accepts an arbitrary executable path — only catalog entries.</item>
+/// <item>Never accepts an arbitrary executable path through <see cref="LaunchAsync"/>.</item>
+/// <item>Shortcut launches require a catalog-issued <see cref="InstalledAppEntry"/>.</item>
 /// <item>Never elevates: the <c>Verb</c> is fixed to <c>open</c>.</item>
-/// <item>Does not pass user-supplied arguments to the launched process in M1.</item>
+/// <item>Does not pass user-supplied arguments to the launched process.</item>
 /// <item>Returns <see cref="CommandResult.Failed"/> with a stable error code on every failure; never throws.</item>
 /// </list>
 /// </remarks>
@@ -44,6 +46,34 @@ public sealed class WindowsAppLauncher : IAppLauncher
             ? Environment.ExpandEnvironmentVariables(info.LaunchTarget)
             : info.LaunchTarget;
 
+        return LaunchInternal(
+            target,
+            info.DisplayName,
+            successMessage: $"Launched {info.DisplayName}.");
+    }
+
+    /// <inheritdoc />
+    public Task<CommandResult> LaunchShortcutAsync(InstalledAppEntry entry, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (string.IsNullOrWhiteSpace(entry.ShortcutPath) || !File.Exists(entry.ShortcutPath))
+        {
+            return Task.FromResult(CommandResult.Failed(
+                $"Shortcut '{entry.DisplayName}' is no longer present at the recorded path.",
+                errorCode: "SHORTCUT_NOT_FOUND",
+                agentName: AgentName));
+        }
+
+        return LaunchInternal(
+            entry.ShortcutPath,
+            entry.DisplayName,
+            successMessage: $"Launched {entry.DisplayName}.");
+    }
+
+    private static Task<CommandResult> LaunchInternal(string target, string displayName, string successMessage)
+    {
         var startInfo = new ProcessStartInfo
         {
             FileName = target,
@@ -54,11 +84,11 @@ public sealed class WindowsAppLauncher : IAppLauncher
         try
         {
             using var process = Process.Start(startInfo);
-            // process may be null when the OS shell handles the open without
-            // returning a Process handle (typical for folder opens). That is
-            // still a successful launch.
+            // process may be null when the OS shell handles the open
+            // without returning a Process handle (typical for folder
+            // opens and shortcut redirects). That is still success.
             return Task.FromResult(CommandResult.Success(
-                message: $"Launched {info.DisplayName}.",
+                message: successMessage,
                 agentName: AgentName));
         }
         catch (OperationCanceledException)
@@ -69,7 +99,7 @@ public sealed class WindowsAppLauncher : IAppLauncher
         catch (Exception ex)
         {
             return Task.FromResult(CommandResult.Failed(
-                $"Could not launch {info.DisplayName}: {ex.GetType().Name}.",
+                $"Could not launch {displayName}: {ex.GetType().Name}.",
                 errorCode: "LAUNCH_FAILED",
                 agentName: AgentName));
         }
