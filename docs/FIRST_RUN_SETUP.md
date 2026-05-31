@@ -58,6 +58,18 @@ In M2.3 the same detection feeds the **Settings → Offline AI · Ollama** card 
 
 M2.4 refines that listing: each installed curated row now shows size (`3.6 GB`), parameter size (`4B`), and family parsed from Ollama's `/api/tags` `details` block, and the card carries a small "Installed curated models: X / 3" summary plus an unknown-models counter. The wizard will reuse the same view model fields when M2.5 lands.
 
+### M2.5 — the wizard ships (UI only)
+
+M2.5 graduates the detection card into a five-step page available at **Setup** in the nav rail (and from a Settings card):
+
+1. **Welcome** — context + reminder that the wizard is skippable.
+2. **Mode** — Offline-only (active); Hybrid and Online-only are previewed as "coming in M3" and disabled.
+3. **Ollama Status** — endpoint, executable, server, Refresh — shares the M2.3/M2.4 view model with Settings so the two never drift.
+4. **Model Catalog** — the curated catalog with M2.4 metadata (size/family/parameter). A Download button is rendered **disabled** ("Download (M2.6 — requires permission)") so the future affordance is visible but inert.
+5. **Verification** — Ready / Partially Ready / Not Ready verdict plus follow-up guidance.
+
+Persistence is in-memory via `InMemoryFirstRunSetupService` (Vayu.Core); SQLite persistence is M2.8. Install and model pull remain deferred to M2.6 with explicit consent.
+
 If none of the above, the wizard shows a screen explaining what Ollama is, what it does, and what installing it means. The user must click **Install Ollama** before anything happens — the actual install/pull flow is M2.6 and requires explicit consent. The manual install link (`https://ollama.com/download/windows`) is always visible as a fallback for users who'd rather install it themselves.
 
 ### Recommended models
