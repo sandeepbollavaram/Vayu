@@ -14,6 +14,7 @@ using Vayu.Logging;
 using Vayu.Memory;
 using Vayu.Permissions;
 using Vayu.Security;
+using Vayu.Voice;
 
 using Vayu_Desktop.Agents;
 using Vayu_Desktop.Services;
@@ -172,6 +173,10 @@ public partial class App : Application
             sp.GetRequiredService<IClock>(),
             sp.GetRequiredService<IAuditLogService>(),
             sp.GetRequiredService<AgentRuntimeOptions>()));
+
+        // --- M4.2: voice push-to-talk UI foundation (stub — no mic capture, no STT) ---
+        services.AddSingleton<IVoiceInputService, StubVoiceInputService>();
+        services.AddSingleton<IVoiceActivitySink>(_ => new InMemoryVoiceActivitySink());
 
         // --- First Run Setup Wizard (M2.5): in-memory state for now; SQLite persistence lands in M2.8 ---
         services.AddSingleton<IFirstRunSetupService>(sp => new InMemoryFirstRunSetupService(
