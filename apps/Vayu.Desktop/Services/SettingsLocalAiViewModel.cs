@@ -28,6 +28,8 @@ public sealed class SettingsLocalAiViewModel : INotifyPropertyChanged
     private string _endpointDisplay = "http://localhost:11434";
     private int _installedCuratedCount;
     private int _installedUnknownCount;
+    private string? _activeModelTag;
+    private bool _plannerReady;
 
     public SettingsLocalAiViewModel(IOllamaRuntimeService runtime)
     {
@@ -122,6 +124,40 @@ public sealed class SettingsLocalAiViewModel : INotifyPropertyChanged
         }
     }
 
+    /// <summary>
+    /// The installed curated model the offline planner would use, chosen by
+    /// <see cref="LocalAiReadiness.SelectActiveModel"/>. <see langword="null"/>
+    /// when no curated model is installed.
+    /// </summary>
+    public string? ActiveModelTag
+    {
+        get => _activeModelTag;
+        private set
+        {
+            if (SetField(ref _activeModelTag, value))
+            {
+                OnPropertyChanged(nameof(PlannerReadinessText));
+            }
+        }
+    }
+
+    /// <summary>True when the offline planner toggle may be enabled (Ollama reachable + a curated model installed).</summary>
+    public bool PlannerReady
+    {
+        get => _plannerReady;
+        private set
+        {
+            if (SetField(ref _plannerReady, value))
+            {
+                OnPropertyChanged(nameof(PlannerReadinessText));
+            }
+        }
+    }
+
+    /// <summary>User-facing readiness hint for the AI Mode toggle.</summary>
+    public string PlannerReadinessText
+        => LocalAiReadiness.DescribeReadiness(EndpointReachable, ActiveModelTag);
+
     /// <summary>Single-line summary surfaced in the Settings card above the row list.</summary>
     public string CuratedSummaryText
     {
@@ -207,6 +243,10 @@ public sealed class SettingsLocalAiViewModel : INotifyPropertyChanged
             }
             InstalledCuratedCount = curatedHits;
             InstalledUnknownCount = Math.Max(0, byTag.Count - curatedHits);
+
+            // M2.8: pick the active planner model and recompute readiness.
+            ActiveModelTag = LocalAiReadiness.SelectActiveModel(byTag.Keys);
+            PlannerReady = LocalAiReadiness.CanEnablePlanner(isReachable, ActiveModelTag);
 
             DetectionMessage = errorMessage ?? BuildMessage(isExecutable, isReachable, byTag.Count);
             // Status text properties are derived; raise change so XAML updates.
