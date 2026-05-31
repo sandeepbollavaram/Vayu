@@ -15,6 +15,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <StackPanel Grid.Row="0" Spacing="4">
@@ -166,6 +167,28 @@
                         </ItemsControl>
                     </StackPanel>
                 </StackPanel>
+            </Border>
+
+            <!-- M2.5: First Run Setup launcher -->
+            <Border Grid.Row="3" Style="{StaticResource VayuGlassCard}">
+                <Grid ColumnSpacing="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Spacing="6">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Border Width="3" Height="14" Background="{StaticResource VayuAccentTealBrush}" />
+                            <TextBlock Style="{StaticResource VayuSectionText}" Text="FIRST RUN SETUP" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <TextBlock Style="{StaticResource VayuBodyText}" Text="Open the guided setup wizard." />
+                        <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
+                                   Text="Walks through AI mode, Ollama detection, model catalog, and a readiness verdict. M2.5 is read-only — no installs, no model downloads. M2.6 will add guided install/pull behind explicit consent." />
+                    </StackPanel>
+                    <Button Grid.Column="1" x:Name="OpenFirstRunSetupButton" Content="Open First Run Setup"
+                            VerticalAlignment="Center" Click="OnOpenFirstRunSetupClick"
+                            Style="{StaticResource AccentButtonStyle}" />
+                </Grid>
             </Border>
         </Grid>
     </ScrollViewer>
