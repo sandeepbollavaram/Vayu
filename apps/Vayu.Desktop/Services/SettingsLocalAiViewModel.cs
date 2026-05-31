@@ -198,6 +198,12 @@ public sealed class SettingsLocalAiViewModel : INotifyPropertyChanged
                 {
                     row.ApplyMissing();
                 }
+                // Download is offered only when the server can answer pull requests.
+                // A pull in flight is owned by the wizard's PullAsync helper.
+                if (!row.IsDownloading)
+                {
+                    row.CanDownload = isReachable && !row.IsInstalled;
+                }
             }
             InstalledCuratedCount = curatedHits;
             InstalledUnknownCount = Math.Max(0, byTag.Count - curatedHits);
@@ -258,6 +264,9 @@ public sealed class LocalModelRow : INotifyPropertyChanged
     private string _displaySize = string.Empty;
     private string _familyLabel = string.Empty;
     private string _parameterSize = string.Empty;
+    private bool _isDownloading;
+    private string _downloadStatus = string.Empty;
+    private bool _canDownload;
 
     public LocalModelRow(LocalModelDescriptor descriptor)
     {
@@ -326,6 +335,8 @@ public sealed class LocalModelRow : INotifyPropertyChanged
         FamilyLabel = match.Family ?? string.Empty;
         ParameterSize = match.ParameterSize ?? string.Empty;
         IsInstalled = true;
+        CanDownload = false;
+        DownloadStatus = string.Empty;
     }
 
     /// <summary>Reset to the "missing" state — clears all installed-only metadata.</summary>
@@ -337,9 +348,48 @@ public sealed class LocalModelRow : INotifyPropertyChanged
         IsInstalled = false;
     }
 
+    /// <summary>True while an M2.6 pull is in flight for this row.</summary>
+    public bool IsDownloading
+    {
+        get => _isDownloading;
+        set => SetField(ref _isDownloading, value, nameof(IsDownloading));
+    }
+
+    /// <summary>Per-row download status (Ollama's <c>downloading</c> line, percent, or final error/cancelled).</summary>
+    public string DownloadStatus
+    {
+        get => _downloadStatus;
+        set => SetField(ref _downloadStatus, value, nameof(DownloadStatus));
+    }
+
+    /// <summary>True when the Download affordance should be enabled (missing + Ollama reachable + not already downloading).</summary>
+    public bool CanDownload
+    {
+        get => _canDownload;
+        set
+        {
+            if (_canDownload == value)
+            {
+                return;
+            }
+            _canDownload = value;
+            Raise(nameof(CanDownload));
+        }
+    }
+
     private void SetField(ref string field, string value, string propertyName)
     {
         if (string.Equals(field, value, StringComparison.Ordinal))
+        {
+            return;
+        }
+        field = value;
+        Raise(propertyName);
+    }
+
+    private void SetField(ref bool field, bool value, string propertyName)
+    {
+        if (field == value)
         {
             return;
         }
