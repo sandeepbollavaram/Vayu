@@ -175,14 +175,9 @@ public sealed class FirstRunSetupViewModel : INotifyPropertyChanged
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(row);
-        row.IsDownloading = true;
-        row.CanDownload = false;
-        row.DownloadStatus = "Starting…";
+        row.BeginDownload();
 
-        var progress = new Progress<OllamaModelPullProgress>(update =>
-        {
-            row.DownloadStatus = update.DisplayText;
-        });
+        var progress = new Progress<OllamaModelPullProgress>(row.ApplyProgress);
 
         OllamaModelPullProgress final;
         try
@@ -191,31 +186,28 @@ public sealed class FirstRunSetupViewModel : INotifyPropertyChanged
                 .PullModelAsync(new OllamaModelPullRequest(row.ModelTag), progress, cancellationToken)
                 .ConfigureAwait(true);
         }
-        finally
+        catch (OperationCanceledException)
         {
-            row.IsDownloading = false;
+            row.MarkCancelled();
+            throw;
         }
 
-        // Confirm completion via a fresh detection probe — we never flip
-        // IsInstalled on the basis of the pull stream alone.
+        // Mark a terminal pre-refresh state so the row never sits in Downloading
+        // if detection lags. The post-pull refresh below has the final word on
+        // Installed — we never flip Installed on the pull stream alone.
+        if (final.IsCancelled)
+        {
+            row.MarkCancelled();
+        }
+        else if (final.ErrorMessage is not null)
+        {
+            row.MarkFailed(final.ErrorMessage);
+        }
+
+        // Confirm completion via a fresh detection probe.
         await Detection.RefreshAsync(CancellationToken.None).ConfigureAwait(true);
         OnPropertyChanged(nameof(VerificationHeadline));
         OnPropertyChanged(nameof(VerificationGuidance));
-
-        if (!row.IsInstalled)
-        {
-            // Detection still says missing — keep the row visible as a Download target
-            // unless Ollama is unreachable.
-            row.CanDownload = Detection.EndpointReachable;
-            if (final.IsCancelled)
-            {
-                row.DownloadStatus = "Cancelled. You can retry.";
-            }
-            else if (final.ErrorMessage is not null)
-            {
-                row.DownloadStatus = $"Download failed: {final.ErrorMessage}";
-            }
-        }
 
         return final;
     }
