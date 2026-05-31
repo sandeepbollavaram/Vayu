@@ -7,6 +7,7 @@ using Vayu.AgentRuntime;
 using Vayu.AI.Local;
 using Vayu.Automation.Windows;
 using Vayu.Core;
+using Vayu.Core.Setup;
 using Vayu.Logging;
 using Vayu.Memory;
 using Vayu.Permissions;
@@ -128,6 +129,10 @@ public partial class App : Application
             sp.GetRequiredService<OllamaProviderOptions>()));
         services.AddSingleton<ILocalAiProvider>(sp => new OllamaLocalAiProvider(
             sp.GetRequiredService<IOllamaRuntimeService>()));
+
+        // --- First Run Setup Wizard (M2.5): in-memory state for now; SQLite persistence lands in M2.8 ---
+        services.AddSingleton<IFirstRunSetupService>(sp => new InMemoryFirstRunSetupService(
+            sp.GetRequiredService<IClock>()));
 
         return services.BuildServiceProvider();
     }
