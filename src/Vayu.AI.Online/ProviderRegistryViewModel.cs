@@ -48,15 +48,18 @@ public static class ProviderRegistryViewModel
                 IsActionEnabled: false); // setup happens in the dedicated Gemini key card
         }
 
+        // M3.7: providers with a connector shell are still "Planned" (not working),
+        // but we surface that the shell is present so the multi-provider story is honest.
+        var hasShell = PlannedOnlineProviders.HasShell(d.ProviderId);
         return new ProviderCardViewModel(
             ProviderId: d.ProviderId,
             DisplayName: d.DisplayName,
             KindLabel: KindLabel(d.Kind),
             CapabilityLabels: capabilities,
-            StatusLabel: "Planned",
+            StatusLabel: hasShell ? "Planned · connector shell present" : "Planned",
             IsAvailableNow: false,
             IsConfigured: false,
-            ActionLabel: "Coming in M3.7+",
+            ActionLabel: hasShell ? "Connector shell present — implementation later" : "Planned",
             IsActionEnabled: false);
     }
 
