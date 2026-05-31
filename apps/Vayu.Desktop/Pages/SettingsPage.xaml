@@ -232,8 +232,8 @@
                                 Click="OnSaveGeminiKeyClick" Style="{StaticResource AccentButtonStyle}" />
                         <Button x:Name="RemoveGeminiKeyButton" Content="Remove key"
                                 Click="OnRemoveGeminiKeyClick" IsEnabled="False" />
-                        <Button x:Name="TestGeminiKeyButton" Content="Test key (M3.4)"
-                                IsEnabled="False" />
+                        <Button x:Name="TestGeminiKeyButton" Content="Test key"
+                                Click="OnTestGeminiKeyClick" IsEnabled="False" />
                     </StackPanel>
 
                     <TextBlock x:Name="GeminiKeyMessageText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap" Text="" />
