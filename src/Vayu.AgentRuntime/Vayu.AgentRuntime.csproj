@@ -6,6 +6,7 @@
     <ProjectReference Include="..\Vayu.Logging\Vayu.Logging.csproj" />
     <ProjectReference Include="..\Vayu.Memory\Vayu.Memory.csproj" />
     <ProjectReference Include="..\Vayu.Security\Vayu.Security.csproj" />
+    <ProjectReference Include="..\Vayu.AI.Local\Vayu.AI.Local.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
