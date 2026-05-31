@@ -5,12 +5,14 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:svc="using:Vayu_Desktop.Services"
     Background="Transparent"
     mc:Ignorable="d">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <Grid Padding="36,28,36,28" RowSpacing="20">
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
@@ -97,6 +99,68 @@
                     </StackPanel>
                 </Border>
             </Grid>
+
+            <!-- M2.3: Offline AI status card -->
+            <Border Grid.Row="2" Style="{StaticResource VayuGlassCard}">
+                <StackPanel Spacing="14">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
+                            <Border Width="3" Height="14" Background="{StaticResource VayuAccentCyanBrush}" />
+                            <TextBlock Style="{StaticResource VayuSectionText}" Text="OFFLINE AI · OLLAMA" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <Button Grid.Column="1"
+                                x:Name="RefreshOfflineAiButton"
+                                Content="Refresh"
+                                Click="OnRefreshOfflineAiClick" />
+                    </Grid>
+
+                    <StackPanel Spacing="6">
+                        <TextBlock Style="{StaticResource VayuMutedText}" Text="Local AI is OFF by default. Detection is read-only — no installs, no model downloads." />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Style="{StaticResource VayuMutedText}" Text="Endpoint:" />
+                            <TextBlock x:Name="EndpointDisplayText" Style="{StaticResource VayuBodyText}" Text="http://localhost:11434" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Style="{StaticResource VayuMutedText}" Text="Executable on PATH:" />
+                            <TextBlock x:Name="ExecutableStatusText" Style="{StaticResource VayuBodyText}" Text="Not yet probed" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Style="{StaticResource VayuMutedText}" Text="Server reachable:" />
+                            <TextBlock x:Name="EndpointStatusText" Style="{StaticResource VayuBodyText}" Text="Not yet probed" />
+                        </StackPanel>
+                        <TextBlock x:Name="DetectionMessageText" Style="{StaticResource VayuMutedText}" Text="Click Refresh to probe the local Ollama runtime." TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <StackPanel Spacing="6">
+                        <TextBlock Style="{StaticResource VayuMutedText}" Text="Curated model catalog — install/missing reflects Ollama's /api/tags response." />
+                        <ItemsControl x:Name="ModelsItems">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="svc:LocalModelRow">
+                                    <Grid Padding="0,6,0,6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" Spacing="2">
+                                            <TextBlock Style="{StaticResource VayuBodyText}" Text="{x:Bind DisplayName}" />
+                                            <TextBlock Style="{StaticResource VayuMutedText}" Text="{x:Bind Description}" TextWrapping="Wrap" />
+                                            <TextBlock Style="{StaticResource VayuMutedText}" Text="{x:Bind HardwareNote}" TextWrapping="Wrap" />
+                                            <TextBlock Style="{StaticResource VayuMutedText}" Text="{x:Bind ModelTag}" />
+                                        </StackPanel>
+                                        <Border Grid.Column="1" Style="{StaticResource VayuChip}" VerticalAlignment="Center">
+                                            <TextBlock Style="{StaticResource VayuChipText}" Text="{x:Bind StatusText, Mode=OneWay}" />
+                                        </Border>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
         </Grid>
     </ScrollViewer>
 </Page>
