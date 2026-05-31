@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
+using Vayu.AI.Gemini;
 using Vayu.AI.Local;
 
 using Vayu_Desktop.Services;
@@ -18,10 +19,18 @@ public sealed partial class SettingsPage : Page
 {
     private readonly SettingsLocalAiViewModel? _localAi;
     private readonly LocalAiPlannerState? _plannerState;
+    private readonly GeminiKeySetupService? _geminiKeys;
 
     public SettingsPage()
     {
         InitializeComponent();
+
+        // M3.3: Gemini key setup. Available when the secret stores are wired.
+        _geminiKeys = App.Services?.GetService<GeminiKeySetupService>();
+        if (_geminiKeys is not null)
+        {
+            Loaded += OnGeminiKeyLoaded;
+        }
 
         // Resolve through DI when available. App.Services is set in OnLaunched;
         // unit-tests can construct the page in isolation without DI.
@@ -118,6 +127,113 @@ public sealed partial class SettingsPage : Page
     {
         var nav = App.Services?.GetService<UiNavigationService>();
         nav?.RequestNavigate("setup");
+    }
+
+    // ---- M3.3: Gemini key setup ----
+
+    private async void OnGeminiKeyLoaded(object sender, RoutedEventArgs e)
+        => await RefreshGeminiKeyStatusAsync().ConfigureAwait(true);
+
+    private async Task RefreshGeminiKeyStatusAsync()
+    {
+        if (_geminiKeys is null)
+        {
+            return;
+        }
+        try
+        {
+            var status = await _geminiKeys.GetKeyStatusAsync().ConfigureAwait(true);
+            var canRemove = await _geminiKeys.CanRemoveKeyAsync().ConfigureAwait(true);
+
+            if (status.IsConfigured)
+            {
+                GeminiKeyStatusText.Text = $"CONFIGURED · {SourceLabel(status.Source)}";
+                ApplyChipStyle(GeminiKeyStatusBadge, "VayuChipTeal");
+            }
+            else
+            {
+                GeminiKeyStatusText.Text = "NOT CONFIGURED";
+                ApplyChipStyle(GeminiKeyStatusBadge, "VayuChipAmber");
+            }
+
+            RemoveGeminiKeyButton.IsEnabled = canRemove;
+        }
+        catch (Exception ex)
+        {
+            GeminiKeyStatusText.Text = $"CHECK FAILED · {ex.GetType().Name.ToUpperInvariant()}";
+            ApplyChipStyle(GeminiKeyStatusBadge, "VayuChipRed");
+        }
+    }
+
+    private async void OnSaveGeminiKeyClick(object sender, RoutedEventArgs e)
+    {
+        if (_geminiKeys is null)
+        {
+            return;
+        }
+
+        var key = GeminiKeyInput.Password;
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            GeminiKeyMessageText.Text = "Enter a key first.";
+            return;
+        }
+
+        SaveGeminiKeyButton.IsEnabled = false;
+        try
+        {
+            await _geminiKeys.SaveKeyAsync(key).ConfigureAwait(true);
+            // Clear the secret from the UI immediately; it is never shown again.
+            GeminiKeyInput.Password = string.Empty;
+            GeminiKeyMessageText.Text = "Saved securely. Your key is never shown after saving.";
+            await RefreshGeminiKeyStatusAsync().ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            // The exception message is redaction-safe (no key value).
+            GeminiKeyInput.Password = string.Empty;
+            GeminiKeyMessageText.Text = $"Could not save the key: {ex.Message}";
+        }
+        finally
+        {
+            SaveGeminiKeyButton.IsEnabled = true;
+        }
+    }
+
+    private async void OnRemoveGeminiKeyClick(object sender, RoutedEventArgs e)
+    {
+        if (_geminiKeys is null)
+        {
+            return;
+        }
+        RemoveGeminiKeyButton.IsEnabled = false;
+        try
+        {
+            await _geminiKeys.RemoveKeyAsync().ConfigureAwait(true);
+            GeminiKeyMessageText.Text = "Key removed.";
+            await RefreshGeminiKeyStatusAsync().ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            GeminiKeyMessageText.Text = $"Could not remove the key: {ex.Message}";
+            RemoveGeminiKeyButton.IsEnabled = true;
+        }
+    }
+
+    private static string SourceLabel(Vayu.AI.Online.OnlineProviderKeySource source) => source switch
+    {
+        Vayu.AI.Online.OnlineProviderKeySource.WindowsCredentialManager => "WINDOWS CREDENTIAL MANAGER",
+        Vayu.AI.Online.OnlineProviderKeySource.EnvironmentVariable => "ENVIRONMENT VARIABLE",
+        Vayu.AI.Online.OnlineProviderKeySource.DpapiEncryptedConfig => "DPAPI CONFIG",
+        _ => "NOT CONFIGURED",
+    };
+
+    private static void ApplyChipStyle(Border badge, string styleKey)
+    {
+        if (Application.Current.Resources[styleKey] is Style style)
+        {
+            badge.Style = style;
+        }
     }
 
     private async Task RunRefreshAsync()
