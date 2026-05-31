@@ -2,19 +2,57 @@
 
 Each milestone is a *shippable* state: CI green, docs current, demo-able.
 
+## Product strategy: two major versions
+
+Vayu ships as **two major product versions**, not one major version per milestone:
+
+- **Vayu Version 1 = M1 – M11** — a production-ready, local-first Windows AI desktop assistant and tool-system foundation: desktop foundation, offline AI, online providers, voice, desktop automation, workflows + memory, production release, intelligence, mission control, autonomous workbench, and the coding-autopilot / website-app-builder foundation.
+- **Vayu Version 2 = M12 – M20** — an advanced creative, 3D, agentic-workflow, rendering, advanced-provider, and OS-like desktop-companion ecosystem: creative AI, 3D asset generation, Blender, Unity, rendering pipelines, NVIDIA/advanced providers, n8n-style visual workflow builder, background agent runtime + live activity dashboard, and the Vayu OS / Desktop Companion layer.
+
+**Development tags** are still per-milestone (one shippable state each):
+
+| Dev tag       | Milestone                          |
+| ------------- | ---------------------------------- |
+| `v0.1.0-m1`   | M1 Desktop Foundation              |
+| `v0.2.0-m2`   | M2 Offline AI Layer                |
+| `v0.3.0-m3`   | M3 Online Provider Layer           |
+| `v0.4.0-m4`   | M4 Voice Interaction               |
+| `v0.5.0-m5`   | M5 Advanced Desktop Automation     |
+| `v0.6.0-m6`   | M6 Workflows and Local Memory      |
+| …             | one `v0.x.0-mN` tag per milestone  |
+
+**Production targets:**
+
+- `v1.0.0` — the public production release, cut after **M7 / M8** readiness depending on the quality gate (not automatically at M7).
+- **Version 1 feature-complete** target — after **M11**.
+- **Version 2 feature-complete** target — after **M20**.
+
+> **Aggressive execution target (not a delivery commitment).** The author is currently targeting completion of the full **M1–M20** system in roughly **3 months**, working about **15 hours/day**, using Opus / Claude Code for implementation, ChatGPT for prompting, Kairo for continuity, and manual testing. This is a stretch goal recorded for planning — schedule and scope may change, and quality/safety gates take precedence over the timeline.
+
 ## Milestone status
 
-| Version | Milestone                                          | Status         |
-| ------- | -------------------------------------------------- | -------------- |
-| v0.1.0  | **M1** — Desktop Foundation                        | ✅ Released     |
-| v0.2.0  | **M2** — Offline AI Layer                          | ✅ Released     |
-| v0.3.0  | M3 — Online Provider Layer                         | 🛠️ In progress |
-| v0.4.0  | M4 — Voice Interaction                             | ⏳ Planned     |
-| v0.5.0  | M5 — Advanced Desktop Automation                   | ⏳ Planned     |
-| v0.6.0  | M6 — Workflows and Local Memory                    | ⏳ Planned     |
-| v1.0.0  | M7 — Production Release                            | ⏳ Planned     |
-| v2.0.0  | M8 + M9 — Intelligence Layer + Mission Control     | ⏳ Planned     |
-| v3.0.0  | M10 – M13 — Autonomous Workbench + Companion OS    | ⏳ Planned     |
+| Milestone                                            | Version | Status         |
+| ---------------------------------------------------- | ------- | -------------- |
+| **M1** — Desktop Foundation                          | V1      | ✅ Released (`v0.1.0-m1`) |
+| **M2** — Offline AI Layer                            | V1      | ✅ Released (`v0.2.0-m2`) |
+| **M3** — Online Provider Layer                       | V1      | 🛠️ In progress |
+| **M4** — Voice Interaction                           | V1      | ⏳ Planned     |
+| **M5** — Advanced Desktop Automation                 | V1      | ⏳ Planned     |
+| **M6** — Workflows and Local Memory                  | V1      | ⏳ Planned     |
+| **M7** — Production Release                           | V1      | ⏳ Planned     |
+| **M8** — Vayu Intelligence Layer                     | V1      | ⏳ Planned     |
+| **M9** — Vayu Mission Control                        | V1      | ⏳ Planned     |
+| **M10** — Autonomous Workbench                       | V1      | ⏳ Planned     |
+| **M11** — Coding Autopilot & Website/App Builder     | V1      | ⏳ Planned     |
+| **M12** — Creative AI Generation Layer               | V2      | ⏳ Planned     |
+| **M13** — 3D Asset Generation Layer                  | V2      | ⏳ Planned     |
+| **M14** — Blender Integration Layer                  | V2      | ⏳ Planned     |
+| **M15** — Unity Integration Layer                    | V2      | ⏳ Planned     |
+| **M16** — Rendering and Asset Pipeline Layer         | V2      | ⏳ Planned     |
+| **M17** — NVIDIA and Advanced Provider Ecosystem     | V2      | ⏳ Planned     |
+| **M18** — Visual Workflow Builder (n8n-style)        | V2      | ⏳ Planned     |
+| **M19** — Background Agent Runtime + Live Activity    | V2      | ⏳ Planned     |
+| **M20** — Vayu OS / Desktop Companion Ecosystem      | V2      | ⏳ Planned     |
 
 ## Multi-milestone product features
 
@@ -57,7 +95,7 @@ Shipped:
 
 ---
 
-## 🛠️ M2 — Offline AI Layer (v0.2.0, active)
+## ✅ M2 — Offline AI Layer (v0.2.0-m2, released)
 
 **Goal**: make Vayu plan and respond intelligently without internet using a local model (Ollama + Gemma by default).
 
@@ -102,8 +140,8 @@ Features:
 
 | Sub  | Scope                                                                                              |
 | ---- | -------------------------------------------------------------------------------------------------- |
-| M3.1 | **Online provider architecture** — contracts only in `Vayu.AI.Online`: `OnlineAiOptions`, `OnlineProviderDescriptor`/`Kind`, `OnlineProviderCatalog` (13 providers), `OnlineProviderKeySource`/`KeyStatus` (no key value), `CloudConsentRequest`/`Decision`/`ICloudConsentService`, `IOnlineAiProvider`, `OnlineAiPlanningResult`, `OnlineAiSafetyPolicy`. No cloud HTTP, no key storage. Cloud disabled by default; consent required. |
-| M3.2 | Gemini provider connector — `GeminiProvider` implements `IOnlineAiProvider`: key resolved via `SecureConfigService` (value internal-only, never surfaced), `PlanAsync` makes no HTTP call unless consent is `AllowOnce` and a key is configured, JSON-mode planning, output allowlist/risk-validated through `OnlineAiSafetyPolicy`. Tested with a fake `HttpMessageHandler` — no real key, no real network. Still disabled in the UI until key-setup (M3.3) + consent dialog (M3.4). |
+| M3.1 | ✅ **Online provider architecture** — contracts only in `Vayu.AI.Online`: `OnlineAiOptions`, `OnlineProviderDescriptor`/`Kind`, `OnlineProviderCatalog` (13 providers), `OnlineProviderKeySource`/`KeyStatus` (no key value), `CloudConsentRequest`/`Decision`/`ICloudConsentService`, `IOnlineAiProvider`, `OnlineAiPlanningResult`, `OnlineAiSafetyPolicy`. No cloud HTTP, no key storage. Cloud disabled by default; consent required. |
+| M3.2 | ✅ Gemini provider connector — `GeminiProvider` implements `IOnlineAiProvider`: key resolved via `SecureConfigService` (value internal-only, never surfaced), `PlanAsync` makes no HTTP call unless consent is `AllowOnce` and a key is configured, JSON-mode planning, output allowlist/risk-validated through `OnlineAiSafetyPolicy`. Tested with a fake `HttpMessageHandler` — no real key, no real network. Still disabled in the UI until key-setup (M3.3) + consent dialog (M3.4). |
 | M3.3 | Secure provider key setup UI — Windows Credential Manager first, env var, DPAPI fallback; key never shown after save. |
 | M3.4 | Cloud consent dialog — WinUI implementation of `ICloudConsentService`. |
 | M3.5 | Online AI planner + router integration — Hybrid mode (local first, cloud fallback under consent + confidence floor). |
@@ -169,23 +207,22 @@ Carries the Kairo memory-design rules: no auto-train, no auto-upload, redact-bef
 
 ---
 
-## M7 — Production Release Layer (v1.0.0)
+## M7 — Production Release Layer
 
-**Goal**: ship Vayu publicly as a production Windows app.
+**Goal**: ship Vayu publicly as a real Windows product.
 
 Features:
 
-- MSIX packaging (signed in a follow-up).
-- Normal `.exe` installer (Inno Setup).
-- Release workflow producing both artifacts + `SHA256SUMS.txt`.
-- Release-notes generation from milestones.
-- Manual test checklist, security checklist, crash-safe logging.
-- Installer docs + first demo video.
-- **v1.0.0**. Code signing + auto-update channel land in v1.x.
+- MSIX package + normal `.exe` installer.
+- GitHub release workflow + checksums + release notes.
+- Manual test checklist + security checklist + crash-safe logging.
+- Installer docs + demo video.
+- **v1.0.0 production release** (cut after M7/M8 readiness — see the quality gate).
+- Code signing + auto-update land in v1.x.
 
 ---
 
-## M8 — Vayu Intelligence Layer (v2.0.0, part 1)
+## M8 — Vayu Intelligence Layer
 
 **Goal**: make Vayu locally intelligent.
 
@@ -194,113 +231,228 @@ Features:
 - Local personal context graph.
 - Error memory + fix recall.
 - Project memory + workflow memory.
-- Local semantic search.
-- Desktop timeline.
-- Smart suggestions on the Home page.
-- Local embeddings (Ollama embedding model or equivalent — runs locally).
-- **No automatic training on user data.** **No cloud upload without consent.**
+- Local semantic search + desktop timeline.
+- Smart suggestions.
+- Local embeddings (runs locally).
+- **No automatic training on user data. No cloud upload without consent.**
 
 ---
 
-## M9 — Vayu Mission Control (v2.0.0, part 2)
+## M9 — Vayu Mission Control
 
-**Goal**: let Vayu coordinate other AI agents (Claude Code, Codex, Cursor, Gemini CLI, local/API agents).
+**Goal**: let Vayu coordinate other AI agents and sub-agents.
 
-Pilots:
-
-- ClaudePilot · CodexPilot · CursorPilot · GeminiPilot · CodePilot · BuildPilot · MemoryPilot · SecurityPilot.
+Pilots: ClaudePilot · CodexPilot · CursorPilot · GeminiPilot · HermesPilot · CodePilot · BuildPilot · MemoryPilot · SecurityPilot.
 
 Features:
 
 - Agent task queue with per-agent locks.
 - Prompt preview + explicit approval before any prompt leaves Vayu.
-- Multi-agent audit timeline (every cross-agent call lands in the existing audit log).
-- Reads Kairo continuation briefs when they're present on disk.
-- Never secretly controls another AI agent.
+- Multi-agent audit timeline + Kairo continuation-brief support.
+- Vayu can open VS Code / Claude Code / Codex / Hermes-style agents and prepare prompts **only with user permission**.
+- No secret prompt sending. No hidden control.
 
 ---
 
-## M10 — Autonomous Workbench (v3.0.0, part 1)
+## M10 — Autonomous Workbench
 
-**Goal**: let Vayu safely plan and execute multi-step project work.
+**Goal**: let Vayu safely plan and execute multi-step work.
 
 Features:
 
-- Task planning with explicit steps.
-- Step-by-step execution with human approval checkpoints at every L3+ action.
-- Build/test/fix loop.
-- Rollback plan + stop button + risk display.
-- Before/after summary before any commit.
-- "Commit only after approval" gate — Vayu never commits autonomously.
+- Task planning + step-by-step execution.
+- Build/test/fix loop with human approval checkpoints.
+- Rollback plan + stop button + risk display + before/after summary.
+- Commit only after approval — Vayu never commits autonomously.
+- Project work runs through permission gates; can run locally or on **approved** VPS/server environments later.
+- This is the foundation required before coding autopilot and the creative/3D features.
 
 ---
 
-## M11 — True 3D Interactive Vayu Sphere (v3.0.0, part 2)
+## M11 — Coding Autopilot and Website/App Builder *(closes Version 1)*
 
-**Goal**: replace the M1 lightweight XAML sphere with a true interactive AI-core visualisation.
+**Goal**: let the user prompt or talk to Vayu to create code projects, websites, and apps safely.
 
 Features:
 
-- Real 3D / particle sphere.
-- Wind-shaped V inside the orb (matches the Vayu icon identity).
-- Rotating particle ring.
-- Voice-reactive amplitude.
-- Typing-reactive pulse.
-- Processing animation + success/error states.
-- GPU-safe rendering.
+- "Create a website for my startup" / "Create a landing page" / "Create a dashboard".
+- Create project folder/files, choose a framework template, write code.
+- Run dev server, open preview, inspect build errors, fix errors **with approval**.
+- Show the result, review whether the site/app looks good or bad, suggest improvements, apply approved changes.
+- Generate README / deployment notes.
+- All file creation/editing audited; commits only after approval; no secret files created accidentally.
+- Can coordinate local coding agents and **approved** VPS/server agents later.
 
-Tech evaluated first: Win2D · Composition API · SwapChainPanel · DirectX · WebView2 canvas (only if necessary). Whatever ships, it must keep the M1 storyboards' "no heavy dependencies" promise.
+Example — *"Vayu, create a landing page for Flexdee."* → Vayu (1) asks for the project location, (2) creates files, (3) writes code, (4) runs the app, (5) opens the preview, (6) reviews the page, (7) suggests design improvements, (8) applies approved changes, (9) logs every step.
+
+> **Version 1 target — M1–M11 together form Vayu Version 1:** a production-ready, local-first Windows AI desktop assistant and tool-system foundation with offline AI, online-provider safety, voice, desktop automation, workflows, memory, mission control, autonomous workbench, and the coding/website autopilot foundation.
 
 ---
 
-## M12 — Plugin and Skill Ecosystem (v3.0.0, part 3)
+# Vayu Version 2 — M12 – M20
 
-**Goal**: let others extend Vayu safely.
+> Advanced creative, 3D, agentic-workflow, rendering, advanced-provider, and desktop-companion ecosystem. **Everything below stays permission-gated, audit-logged, cancelable, and user-approved** — the M1–M10 safety model carries forward unchanged. Cloud/provider calls require consent; provider keys live in Windows Credential Manager (no plaintext).
+
+## M12 — Creative AI Generation Layer
+
+**Goal**: let Vayu generate and review images, icons, UI references, and creative assets.
 
 Features:
 
-- Plugin system with manifest declaration.
-- Local skill files.
-- Community agents.
-- Workflow templates.
-- Provider plugins (third parties can add registry entries).
-- Desktop automation plugins.
-- Permission declaration per skill — plugins inherit the L0–L6 model and the permission engine still gates every side effect.
-- Skill marketplace as a follow-up.
+- Image-generation provider registry + prompt-to-image workflows.
+- App-icon, UI-reference, and social-graphic generation.
+- Generated-asset library; compare outputs; review quality; say what's good/bad; suggest prompt improvements; regenerate after approval.
+- Generated files saved under the selected Vayu workspace.
+- Cloud calls require consent; provider keys stored securely.
+
+Potential providers later (where available): OpenAI image models · Gemini image models · Stability AI · Replicate · Hugging Face · fal.ai · Leonardo · RunPod · custom providers.
 
 ---
 
-## M13 — Vayu OS Layer / Desktop Companion Ecosystem (v3.0.0, part 4)
+## M13 — 3D Asset Generation Layer
 
-**Goal**: make Vayu feel like an AI layer over Windows.
+**Goal**: let Vayu generate and manage 3D assets.
 
 Features:
 
-- Always-available desktop command bar.
-- Global hotkey overlay.
-- Floating mini sphere.
-- Context-aware desktop assistant.
-- Project-aware workspace launcher.
-- Personal automation dashboard.
-- Cross-app workflow control.
-- Local knowledge hub.
-- Agent console (Mission Control surface).
-- Trust Center pro.
-- Developer Control Center.
-- Enterprise / privacy mode.
+- Text-to-3D and image-to-3D workflows; 3D-model provider registry.
+- Asset preview; file-format handling (GLB / FBX / OBJ / USDZ planning).
+- Generated-asset library + metadata index.
+- Quality review (polycount / material / texture notes); regenerate/improve workflow.
+- Save to the selected Vayu workspace; all provider calls consent-gated.
+
+Potential future providers (where available): NVIDIA visual/3D models · Meshy · Tripo AI · Luma AI · Rodin · CSM · Replicate 3D models · custom provider endpoints.
+
+---
+
+## M14 — Blender Integration Layer
+
+**Goal**: let Vayu work with Blender safely. **Pilot: BlenderPilot.**
+
+Features:
+
+- Detect Blender install; open Blender; create/open project.
+- Import generated 3D models; run Blender Python scripts **with approval**.
+- Cleanup mesh; assign materials; basic lighting/camera; render preview; export assets.
+- Save output to the Vayu workspace.
+- Every script/action is shown before execution. No hidden Blender scripting.
+
+---
+
+## M15 — Unity Integration Layer
+
+**Goal**: let Vayu work with Unity projects safely. **Pilot: UnityPilot.**
+
+Features:
+
+- Detect Unity Hub / Unity Editor; open Unity project.
+- Import generated assets; create scene; assign materials; organize folders.
+- Run editor scripts **with approval**; generate basic C# scripts; build/run a preview scene; export a package.
+- Every action audited. No hidden project modification.
+
+---
+
+## M16 — Rendering and Asset Pipeline Layer
+
+**Goal**: let Vayu coordinate rendering and asset pipelines.
+
+Pilots: RenderPilot · AssetPilot · ScenePilot · TexturePilot.
+
+Features:
+
+- Render job queue + preview renders.
+- Image/3D/Blender/Unity asset handoff; local asset library.
+- File-conversion planning; compression/optimization; export profiles.
+- Progress dashboard + cancel/stop control.
+- All generated outputs stored under the selected Vayu workspace.
+
+---
+
+## M17 — NVIDIA and Advanced Provider Ecosystem
+
+**Goal**: add advanced provider integrations after the creative/coding foundation is ready.
+
+Features:
+
+- NVIDIA provider support **where available through current NVIDIA provider catalogs/APIs**; NVIDIA Build / NIM catalog integration where practical.
+- Image/vision/model APIs; 3D/visual provider discovery where available.
+- Provider capability registry; cost/usage warnings; provider-specific consent.
+- API keys in Windows Credential Manager; no plaintext keys; no cloud call without user approval.
+- Provider plugins.
+
+> No specific NVIDIA 3D API is promised to be free or always available — availability depends on current NVIDIA provider catalogs/APIs.
+
+---
+
+## M18 — Visual Workflow Builder and n8n-style Automation
+
+**Goal**: let users build workflows visually — a local-first desktop automation system.
+
+Features:
+
+- Workflow graph builder; triggers; manual approval steps.
+- App actions; AI-provider steps; file steps; image/3D generation steps; Blender/Unity steps.
+- Condition branches; retry/error handling; audit trail.
+- Reusable templates; workflow import/export.
+- Every risky step is permission-gated.
+
+Positioning: Vayu becomes **n8n-style automation for the Windows desktop + AI agents** — but local-first, permission-gated, and personal.
+
+---
+
+## M19 — Background Agent Runtime and Live Activity Dashboard
+
+**Goal**: show what Vayu and its agents are doing in real time.
+
+Features:
+
+- Right-side live activity cards; background task queue.
+- Running-agent cards; model-call cards; workflow-progress cards.
+- Downloads / renders / builds / tests status; stop/cancel buttons.
+- Agent logs; failure/retry cards; notification center.
+- "What Vayu is doing now" feed; activity timeline connected to the audit log.
+
+This is where the right-side dashboard cards become a real mission-control surface.
+
+---
+
+## M20 — Vayu OS / Desktop Companion Ecosystem *(closes Version 2)*
+
+**Goal**: make Vayu feel like an AI operating layer over Windows.
+
+Features:
+
+- Always-available command bar; global hotkey overlay; floating mini Vayu Sphere.
+- Context-aware desktop assistant; project-aware workspace launcher; personal automation dashboard.
+- Cross-app workflow control; local knowledge hub; agent console.
+- Trust Center pro; Developer Control Center; enterprise/privacy mode.
+- Plugin-marketplace preparation; complete desktop-companion experience.
+
+> **Version 2 target — M12–M20 together form Vayu Version 2:** a full creative, 3D, agentic-workflow, rendering, advanced-provider, and desktop-companion ecosystem.
+
+---
+
+## Post-M10 safety rule
+
+Every advanced-automation milestone (M11–M20) inherits the same non-negotiable safety model: **permission-gated, audit-logged, cancelable, and user-approved.** No hidden automation, no silent clicking/typing, no secret reading, no cloud call or model download without explicit consent. Future server/VPS-assisted agent workflows are allowed **only** with explicit approval, secure execution, and audit logs.
 
 ---
 
 ## Release mapping
 
-| Tag      | Milestone(s)                                                | Theme                                     |
-| -------- | ----------------------------------------------------------- | ----------------------------------------- |
-| `v0.1.0` | M1                                                          | Desktop Foundation (released)             |
-| `v0.2.0` | M2                                                          | Offline AI Layer                          |
-| `v0.3.0` | M3                                                          | Online Provider Layer                     |
-| `v0.4.0` | M4                                                          | Voice Interaction                         |
-| `v0.5.0` | M5                                                          | Advanced Desktop Automation               |
-| `v0.6.0` | M6                                                          | Memory and Workflows                      |
-| `v1.0.0` | M7                                                          | Production Release                        |
-| `v2.0.0` | M8 + M9                                                     | Intelligence Layer + Mission Control      |
-| `v3.0.0` | M10 + M11 + M12 + M13                                       | Autonomous Workbench + Companion OS       |
+| Tag         | Milestone | Version | Theme                                       |
+| ----------- | --------- | ------- | ------------------------------------------- |
+| `v0.1.0-m1` | M1        | V1      | Desktop Foundation (released)               |
+| `v0.2.0-m2` | M2        | V1      | Offline AI Layer (released)                 |
+| `v0.3.0-m3` | M3        | V1      | Online Provider Layer                       |
+| `v0.4.0-m4` | M4        | V1      | Voice Interaction                           |
+| `v0.5.0-m5` | M5        | V1      | Advanced Desktop Automation                 |
+| `v0.6.0-m6` | M6        | V1      | Workflows and Local Memory                  |
+| `v0.7.0-m7` | M7        | V1      | Production Release infra → **v1.0.0** gate  |
+| `v0.8.0-m8` | M8        | V1      | Intelligence Layer                          |
+| `v0.9.0-m9` | M9        | V1      | Mission Control                             |
+| `v0.10.0-m10` | M10     | V1      | Autonomous Workbench                        |
+| `v0.11.0-m11` | M11     | V1      | Coding Autopilot & Website/App Builder — **Version 1 feature-complete** |
+| `v0.12.0-m12` … `v0.20.0-m20` | M12–M20 | V2 | Creative → 3D → Blender → Unity → Rendering → NVIDIA/Advanced Providers → Visual Workflows → Background Agents → Vayu OS — **Version 2 feature-complete after M20** |
+
+> `v1.0.0` is the **public production release**, cut after M7/M8 readiness depending on the quality gate — it is not tied automatically to a single milestone tag.
