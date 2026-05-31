@@ -5,16 +5,19 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Width="320"
+    Height="320"
     mc:Ignorable="d">
 
     <!--
-        Vayu Sphere — lightweight 2D rendering of the Vayu icon identity:
-        a glowing cyan/teal orb with a flowing "V" wind inside, ringed by
-        a dotted particle halo. Pure XAML + Storyboards; no asset, no
-        external dependency.
+        Vayu Sphere — bounded 320×320 visualisation that mirrors the Vayu
+        icon identity: a glowing teal/cyan orb with a stacked wind "V"
+        inside, ringed by a tight dotted particle halo. Pure XAML +
+        Storyboards; no Viewbox, so the dot ring can't escape the control
+        bounds.
 
-        TODO (M4+): replace with a voice-reactive particle / 3D
-        visualization driven by microphone amplitude and STT state.
+        TODO (M11): replace with a true 3D / particle voice-reactive
+        Vayu Sphere driven by microphone amplitude and STT state.
     -->
 
     <UserControl.Resources>
@@ -27,140 +30,150 @@
                              From="360" To="0" Duration="0:0:24" />
             <DoubleAnimation Storyboard.TargetName="PulseScale"
                              Storyboard.TargetProperty="ScaleX"
-                             From="0.94" To="1.08" Duration="0:0:2.8"
+                             From="0.94" To="1.06" Duration="0:0:2.8"
                              AutoReverse="True" />
             <DoubleAnimation Storyboard.TargetName="PulseScale"
                              Storyboard.TargetProperty="ScaleY"
-                             From="0.94" To="1.08" Duration="0:0:2.8"
+                             From="0.94" To="1.06" Duration="0:0:2.8"
                              AutoReverse="True" />
             <DoubleAnimation Storyboard.TargetName="WindInner"
                              Storyboard.TargetProperty="Opacity"
-                             From="0.65" To="1.0" Duration="0:0:2.8"
+                             From="0.7" To="1.0" Duration="0:0:2.8"
                              AutoReverse="True" />
-            <DoubleAnimation Storyboard.TargetName="WindOuter"
+            <DoubleAnimation Storyboard.TargetName="WindMid"
                              Storyboard.TargetProperty="Opacity"
-                             From="0.45" To="0.85" Duration="0:0:3.4"
+                             From="0.55" To="0.95" Duration="0:0:3.2"
                              AutoReverse="True" />
         </Storyboard>
 
         <Storyboard x:Name="ProcessingStoryboard">
             <DoubleAnimation Storyboard.TargetName="PulseScale"
                              Storyboard.TargetProperty="ScaleX"
-                             From="1.0" To="1.22" Duration="0:0:0.32"
+                             From="1.0" To="1.18" Duration="0:0:0.32"
                              AutoReverse="True" RepeatBehavior="3x" />
             <DoubleAnimation Storyboard.TargetName="PulseScale"
                              Storyboard.TargetProperty="ScaleY"
-                             From="1.0" To="1.22" Duration="0:0:0.32"
+                             From="1.0" To="1.18" Duration="0:0:0.32"
                              AutoReverse="True" RepeatBehavior="3x" />
             <DoubleAnimation Storyboard.TargetName="ProcessingRing"
                              Storyboard.TargetProperty="Opacity"
-                             From="0" To="0.9" Duration="0:0:0.25"
+                             From="0" To="0.85" Duration="0:0:0.25"
                              AutoReverse="True" RepeatBehavior="3x" />
         </Storyboard>
 
         <Storyboard x:Name="FlashStoryboard">
             <DoubleAnimation Storyboard.TargetName="StatusFlash"
                              Storyboard.TargetProperty="Opacity"
-                             From="0.0" To="0.85" Duration="0:0:0.2"
+                             From="0.0" To="0.8" Duration="0:0:0.22"
                              AutoReverse="True" />
             <DoubleAnimation Storyboard.TargetName="StatusFlashScale"
                              Storyboard.TargetProperty="ScaleX"
-                             From="0.85" To="1.15" Duration="0:0:0.4" />
+                             From="0.85" To="1.1" Duration="0:0:0.44" />
             <DoubleAnimation Storyboard.TargetName="StatusFlashScale"
                              Storyboard.TargetProperty="ScaleY"
-                             From="0.85" To="1.15" Duration="0:0:0.4" />
+                             From="0.85" To="1.1" Duration="0:0:0.44" />
         </Storyboard>
     </UserControl.Resources>
 
-    <Viewbox Stretch="Uniform">
-        <Grid Width="360" Height="360" RenderTransformOrigin="0.5,0.5">
+    <!-- Outer Grid is the fixed visual frame; nothing can render outside it. -->
+    <Grid Width="320" Height="320">
 
-            <!-- Dotted particle ring (the bead halo from the icon) -->
-            <Canvas x:Name="DotRingCanvas" Width="360" Height="360"
-                    RenderTransformOrigin="0.5,0.5">
-                <Canvas.RenderTransform>
-                    <RotateTransform x:Name="DotRingRotate" Angle="0" CenterX="180" CenterY="180" />
-                </Canvas.RenderTransform>
-            </Canvas>
+        <!-- Dotted particle ring — tightly hugging the orb (radius 135 inside the 320 frame). -->
+        <Canvas x:Name="DotRingCanvas"
+                Width="320" Height="320"
+                RenderTransformOrigin="0.5,0.5">
+            <Canvas.RenderTransform>
+                <RotateTransform x:Name="DotRingRotate" Angle="0" CenterX="160" CenterY="160" />
+            </Canvas.RenderTransform>
+        </Canvas>
 
-            <!-- Faint outer tick ring (rotates opposite) -->
-            <Ellipse Width="318" Height="318"
-                     Stroke="{StaticResource VayuAccentCyanBrush}"
-                     StrokeThickness="0.6"
-                     Opacity="0.20"
-                     RenderTransformOrigin="0.5,0.5">
-                <Ellipse.RenderTransform>
-                    <RotateTransform x:Name="OuterRingRotate" Angle="0" />
-                </Ellipse.RenderTransform>
-            </Ellipse>
+        <!-- Faint outer tick ring (rotates opposite, contained inside the 320 frame). -->
+        <Ellipse Width="296" Height="296"
+                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                 Stroke="{StaticResource VayuAccentCyanBrush}"
+                 StrokeThickness="0.5"
+                 Opacity="0.18"
+                 RenderTransformOrigin="0.5,0.5">
+            <Ellipse.RenderTransform>
+                <RotateTransform x:Name="OuterRingRotate" Angle="0" />
+            </Ellipse.RenderTransform>
+        </Ellipse>
 
-            <!-- Pulse halo behind core -->
-            <Ellipse x:Name="PulseHalo" Width="240" Height="240"
-                     Fill="{StaticResource VayuPulseHaloBrush}"
-                     Opacity="0.55"
-                     RenderTransformOrigin="0.5,0.5">
-                <Ellipse.RenderTransform>
-                    <ScaleTransform x:Name="PulseScale" ScaleX="1" ScaleY="1" />
-                </Ellipse.RenderTransform>
-            </Ellipse>
+        <!-- Pulse halo behind core. -->
+        <Ellipse x:Name="PulseHalo"
+                 Width="220" Height="220"
+                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                 Fill="{StaticResource VayuPulseHaloBrush}"
+                 Opacity="0.55"
+                 RenderTransformOrigin="0.5,0.5">
+            <Ellipse.RenderTransform>
+                <ScaleTransform x:Name="PulseScale" ScaleX="1" ScaleY="1" />
+            </Ellipse.RenderTransform>
+        </Ellipse>
 
-            <!-- Processing accent ring (hidden by default) -->
-            <Ellipse x:Name="ProcessingRing" Width="220" Height="220"
-                     Stroke="{StaticResource VayuAccentBlueBrush}"
-                     StrokeThickness="3"
-                     Opacity="0" />
+        <!-- Processing accent ring (hidden by default). -->
+        <Ellipse x:Name="ProcessingRing"
+                 Width="210" Height="210"
+                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                 Stroke="{StaticResource VayuAccentBlueBrush}"
+                 StrokeThickness="3"
+                 Opacity="0" />
 
-            <!-- Core orb (gradient mirrors the icon: bright top, teal mid, deep blue rim) -->
-            <Ellipse Width="210" Height="210"
-                     Fill="{StaticResource VayuCoreGlowBrush}" />
+        <!-- Core orb — radial gradient teal -> deep blue, matches the Vayu icon. -->
+        <Ellipse Width="200" Height="200"
+                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                 Fill="{StaticResource VayuCoreGlowBrush}" />
 
-            <!-- Wind 'V' shape inside the orb (outer flowing curve) -->
-            <Viewbox Width="180" Height="180">
-                <Canvas Width="200" Height="200">
-                    <Path x:Name="WindOuter"
-                          Stroke="#FFB6F4FF"
-                          StrokeThickness="3"
-                          StrokeStartLineCap="Round"
-                          StrokeEndLineCap="Round"
-                          Opacity="0.6"
-                          Data="M 30,70 C 55,110 75,110 100,90 C 125,70 145,110 170,70" />
-                    <Path x:Name="WindMid"
-                          Stroke="#FF9FF0E8"
-                          StrokeThickness="3"
-                          StrokeStartLineCap="Round"
-                          StrokeEndLineCap="Round"
-                          Opacity="0.85"
-                          Data="M 35,100 C 60,150 85,150 105,125 C 125,100 145,150 170,110" />
-                    <Path x:Name="WindInner"
-                          Stroke="#FFFFFFFF"
-                          StrokeThickness="3.5"
-                          StrokeStartLineCap="Round"
-                          StrokeEndLineCap="Round"
-                          Opacity="0.95"
-                          Data="M 40,130 C 65,180 90,180 105,150 C 120,120 145,170 165,140" />
-                </Canvas>
-            </Viewbox>
+        <!-- Wind 'V' shape — three layered Bezier curves inside the orb. -->
+        <Canvas Width="200" Height="200"
+                HorizontalAlignment="Center" VerticalAlignment="Center">
+            <!-- Outer broad V (softest). -->
+            <Path x:Name="WindOuter"
+                  Stroke="#B6F4FF"
+                  StrokeThickness="3"
+                  StrokeStartLineCap="Round"
+                  StrokeEndLineCap="Round"
+                  Opacity="0.55"
+                  Data="M 30,55 C 35,120 75,150 100,150 C 125,150 165,120 170,55" />
+            <!-- Mid V. -->
+            <Path x:Name="WindMid"
+                  Stroke="#9FF0E8"
+                  StrokeThickness="3.5"
+                  StrokeStartLineCap="Round"
+                  StrokeEndLineCap="Round"
+                  Opacity="0.85"
+                  Data="M 50,80 C 55,130 85,150 100,150 C 115,150 145,130 150,80" />
+            <!-- Inner bright V. -->
+            <Path x:Name="WindInner"
+                  Stroke="#FFFFFFFF"
+                  StrokeThickness="4"
+                  StrokeStartLineCap="Round"
+                  StrokeEndLineCap="Round"
+                  Opacity="1.0"
+                  Data="M 70,108 C 78,140 92,150 100,150 C 108,150 122,140 130,108" />
+        </Canvas>
 
-            <!-- Inner specular highlight -->
-            <Ellipse Width="60" Height="22"
-                     Fill="#88FFFFFF"
-                     Margin="0,-80,0,0"
-                     HorizontalAlignment="Center"
-                     VerticalAlignment="Center" />
+        <!-- Specular highlight on the orb top. -->
+        <Ellipse Width="62" Height="20"
+                 HorizontalAlignment="Center" VerticalAlignment="Top"
+                 Margin="0,72,0,0"
+                 Fill="#80FFFFFF" />
 
-            <!-- Status flash overlay -->
-            <Ellipse x:Name="StatusFlash" Width="240" Height="240" Opacity="0"
-                     RenderTransformOrigin="0.5,0.5">
-                <Ellipse.Fill>
-                    <RadialGradientBrush>
-                        <GradientStop x:Name="StatusFlashStop" Color="#FF2EE6C9" Offset="0" />
-                        <GradientStop Color="#002EE6C9" Offset="1" />
-                    </RadialGradientBrush>
-                </Ellipse.Fill>
-                <Ellipse.RenderTransform>
-                    <ScaleTransform x:Name="StatusFlashScale" ScaleX="1" ScaleY="1" />
-                </Ellipse.RenderTransform>
-            </Ellipse>
-        </Grid>
-    </Viewbox>
+        <!-- Status flash overlay. -->
+        <Ellipse x:Name="StatusFlash"
+                 Width="240" Height="240"
+                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                 Opacity="0"
+                 RenderTransformOrigin="0.5,0.5">
+            <Ellipse.Fill>
+                <RadialGradientBrush>
+                    <GradientStop x:Name="StatusFlashStop" Color="#FF2EE6C9" Offset="0" />
+                    <GradientStop Color="#002EE6C9" Offset="1" />
+                </RadialGradientBrush>
+            </Ellipse.Fill>
+            <Ellipse.RenderTransform>
+                <ScaleTransform x:Name="StatusFlashScale" ScaleX="1" ScaleY="1" />
+            </Ellipse.RenderTransform>
+        </Ellipse>
+    </Grid>
 </UserControl>
