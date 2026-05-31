@@ -16,6 +16,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <StackPanel Grid.Row="0" Spacing="4">
@@ -203,6 +204,40 @@
                             VerticalAlignment="Center" Click="OnOpenFirstRunSetupClick"
                             Style="{StaticResource AccentButtonStyle}" />
                 </Grid>
+            </Border>
+
+            <!-- M3.3: Online AI · Gemini key setup -->
+            <Border Grid.Row="4" Style="{StaticResource VayuGlassCard}">
+                <StackPanel Spacing="12">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Border Width="3" Height="14" Background="{StaticResource VayuAccentBlueBrush}" />
+                        <TextBlock Style="{StaticResource VayuSectionText}" Text="ONLINE AI · GEMINI" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
+                               Text="Gemini is one optional online provider — cloud AI stays off by default. Your key is stored in Windows Credential Manager (or a DPAPI-encrypted fallback), never in a plain file, never logged, and never shown again after you save it." />
+
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Style="{StaticResource VayuMutedText}" Text="Status:" />
+                        <Border x:Name="GeminiKeyStatusBadge" Style="{StaticResource VayuChip}">
+                            <TextBlock x:Name="GeminiKeyStatusText" Style="{StaticResource VayuChipText}" Text="CHECKING…" />
+                        </Border>
+                    </StackPanel>
+
+                    <PasswordBox x:Name="GeminiKeyInput"
+                                 PlaceholderText="Paste your Gemini API key"
+                                 MaxWidth="520" HorizontalAlignment="Left" />
+
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <Button x:Name="SaveGeminiKeyButton" Content="Save key"
+                                Click="OnSaveGeminiKeyClick" Style="{StaticResource AccentButtonStyle}" />
+                        <Button x:Name="RemoveGeminiKeyButton" Content="Remove key"
+                                Click="OnRemoveGeminiKeyClick" IsEnabled="False" />
+                        <Button x:Name="TestGeminiKeyButton" Content="Test key (M3.4)"
+                                IsEnabled="False" />
+                    </StackPanel>
+
+                    <TextBlock x:Name="GeminiKeyMessageText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap" Text="" />
+                </StackPanel>
             </Border>
         </Grid>
     </ScrollViewer>
