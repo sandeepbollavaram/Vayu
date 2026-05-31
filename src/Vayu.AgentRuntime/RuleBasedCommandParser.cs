@@ -13,6 +13,7 @@ namespace Vayu.AgentRuntime;
 /// Vocabulary:
 /// <list type="bullet">
 /// <item><c>open &lt;any app name&gt;</c> → <c>app.open</c> (L1). The catalog/agent decides whether the app actually exists.</item>
+/// <item><c>open &lt;app&gt; and/then write/type &lt;text&gt;</c> → <c>app.open</c> with <see cref="TypingRequestedArgKey"/>=<c>true</c>. The agent then returns NeedsClarification because typing into apps is M5 scope.</item>
 /// <item><c>show logs</c> → <c>ui.show_logs</c> (L0)</item>
 /// <item><c>show settings</c> → <c>ui.show_settings</c> (L0)</item>
 /// <item>anything else → <c>unknown</c> (L0) — the runtime turns this into <c>NeedsClarification</c>.</item>
@@ -23,6 +24,11 @@ namespace Vayu.AgentRuntime;
 /// becomes <c>app.open</c> with <c>app=spotify</c>, and the
 /// <c>AppLauncherAgent</c> resolves it against <c>KnownAppCatalog</c> and
 /// the installed-app catalog.
+///
+/// TODO (M5): typing/clicking inside apps belongs to M5 Advanced Desktop
+/// Automation and must require explicit user confirmation per the
+/// permission model. The parser here only flags the intent; the agent
+/// refuses to act on it until M5 ships.
 /// </remarks>
 public sealed class RuleBasedCommandParser
 {
@@ -38,7 +44,18 @@ public sealed class RuleBasedCommandParser
     /// <summary>The intent emitted when nothing matches.</summary>
     public const string UnknownIntent = "unknown";
 
+    /// <summary>
+    /// Args key the parser sets to <c>"true"</c> when the user asked to
+    /// type/write something into the app ("open notepad and write hello").
+    /// The AppLauncherAgent rejects the plan with a NeedsClarification
+    /// pointing to M5 — Vayu never silently types in M1.
+    /// </summary>
+    public const string TypingRequestedArgKey = "typing_requested";
+
     private const string PlanSource = "rule-based";
+
+    private static readonly string[] TypingConnectors = { "and", "then" };
+    private static readonly string[] TypingVerbs = { "write", "type" };
 
     /// <summary>Parses <paramref name="request"/> into an <see cref="IntentPlan"/>.</summary>
     public IntentPlan Parse(CommandRequest request)
@@ -54,35 +71,79 @@ public sealed class RuleBasedCommandParser
         {
             return BuildPlan(ShowSettingsIntent, RiskLevel.L0, request.CorrelationId);
         }
-        if (TryParseOpen(normalized, out var app))
+        if (TryParseOpen(normalized, out var app, out var typingRequested))
         {
+            var args = ImmutableDictionary<string, string>.Empty.Add("app", app);
+            if (typingRequested)
+            {
+                args = args.Add(TypingRequestedArgKey, "true");
+            }
             return BuildPlan(
                 AppOpenIntent,
                 RiskLevel.L1,
                 request.CorrelationId,
-                args: ImmutableDictionary<string, string>.Empty.Add("app", app));
+                args: args);
         }
 
         return BuildPlan(UnknownIntent, RiskLevel.L0, request.CorrelationId);
     }
 
-    private static bool TryParseOpen(string normalized, out string app)
+    private static bool TryParseOpen(string normalized, out string app, out bool typingRequested)
     {
         app = string.Empty;
+        typingRequested = false;
+
         const string prefix = "open ";
         if (!normalized.StartsWith(prefix, StringComparison.Ordinal))
         {
             return false;
         }
-        var rest = normalized[prefix.Length..].Trim();
-        if (rest.Length == 0)
+
+        var tokens = normalized[prefix.Length..]
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (tokens.Length == 0)
         {
             return false;
         }
 
+        // Look for the typing clause boundary: a "and|then" + "write|type"
+        // pair somewhere in the token stream. If found, the app name is
+        // whatever came before; if found at index 0, there's no app name.
+        var boundary = -1;
+        for (var i = 0; i < tokens.Length - 1; i++)
+        {
+            if (IsTypingBoundary(tokens[i], tokens[i + 1]))
+            {
+                boundary = i;
+                break;
+            }
+        }
+
+        IEnumerable<string> appTokens;
+        if (boundary == 0)
+        {
+            // "open and write hello" — no app named.
+            return false;
+        }
+        if (boundary > 0)
+        {
+            typingRequested = true;
+            appTokens = tokens.Take(boundary);
+        }
+        else
+        {
+            appTokens = tokens;
+        }
+
         // Collapse internal whitespace so "vs code" → "vscode".
-        app = string.Concat(rest.Split(' ', StringSplitOptions.RemoveEmptyEntries));
+        app = string.Concat(appTokens);
         return app.Length > 0;
+    }
+
+    private static bool IsTypingBoundary(string left, string right)
+    {
+        return Array.Exists(TypingConnectors, c => string.Equals(c, left, StringComparison.Ordinal))
+            && Array.Exists(TypingVerbs,      v => string.Equals(v, right, StringComparison.Ordinal));
     }
 
     private static IntentPlan BuildPlan(
