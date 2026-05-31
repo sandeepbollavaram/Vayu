@@ -52,7 +52,9 @@ The wizard checks for Ollama in this order:
 2. The `ollama` executable is on `PATH`.
 3. `GET http://localhost:11434/api/tags` returns a 200.
 
-If none of the above, the wizard shows a screen explaining what Ollama is, what it does, and what installing it means. The user must click **Install Ollama** before anything happens. The manual install link (`https://ollama.com/download/windows`) is always visible as a fallback for users who'd rather install it themselves.
+The detection itself is implemented in M2.2 by `OllamaRuntimeService.GetRuntimeStatusAsync()` — it returns an `OllamaRuntimeStatus` snapshot the wizard renders directly. Detection is read-only: no install, no model pull, no cloud call, no elevation. Each probe is bounded by `OllamaProviderOptions.ProbeTimeoutSeconds` (default 5 s) so the wizard cannot stall on a slow runtime.
+
+If none of the above, the wizard shows a screen explaining what Ollama is, what it does, and what installing it means. The user must click **Install Ollama** before anything happens — the actual install/pull flow is M2.6 and requires explicit consent. The manual install link (`https://ollama.com/download/windows`) is always visible as a fallback for users who'd rather install it themselves.
 
 ### Recommended models
 
