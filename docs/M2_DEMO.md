@@ -31,6 +31,20 @@ Still on **Settings → AI Mode**:
 
 - With no curated model installed, **Offline AI planner (Ollama)** is **disabled**, and the hint reads *"Download Gemma 3 4B (or another curated model) first…"*.
 
+### Model row UI states (M2.9)
+
+Each catalog row is in exactly one state — the "Missing" chip, a live download, and an "Installed" model can never appear at once:
+
+| State | Status chip | Download button | Progress + Cancel | Metadata chips |
+| --- | --- | --- | --- | --- |
+| **MissingIdle** | Missing | shown, enabled (if Ollama reachable) | hidden | hidden |
+| **Downloading** | Downloading | hidden | progress bar + per-row Cancel + status line | hidden |
+| **Cancelled** | Cancelled | shown, enabled (retry) | hidden | hidden |
+| **Failed** | Failed | shown, enabled (retry) | hidden | hidden |
+| **Installed** | Installed | hidden | hidden | size · params · family |
+
+During a download the status line walks Ollama's phases: `Starting…` → `pulling manifest` → `downloading · 14%` (with a determinate progress bar) → `verifying sha256 digest` → `success`. The bar is indeterminate during manifest/verify phases (no byte totals) and determinate while downloading.
+
 ### 4. Download a model with explicit consent
 
 1. Open **Setup** (nav rail) or **Settings → Open First Run Setup**.
@@ -38,8 +52,10 @@ Still on **Settings → AI Mode**:
 3. Click **Download** on **Gemma 3 · 1B** (smallest, fastest to fetch).
 4. A consent dialog appears: *"Download gemma3:1b with Ollama?"* naming `http://localhost:11434/api/pull`.
 5. Click **Cancel** once to confirm nothing happens. Then click **Download** again and **Download** in the dialog.
-6. Watch the row stream progress (`downloading · NN%` → `verifying sha256 digest` → `success`). A **Cancel current download** button is available throughout.
-7. When it finishes, the row flips to **Installed** with size/family populated.
+6. Watch the row stream progress: the chip turns **Downloading**, a cyan progress bar appears, the status line shows `downloading · NN%`, and a per-row **Cancel** button is available. The Download button is hidden — no duplicate downloads, no stale Missing chip.
+7. When it finishes, the row flips to **Installed**: the chip reads Installed, the Download button is gone, and size · parameter · family chips appear.
+
+To see the cancel path: start a download, click the row's **Cancel** — the chip shows **Cancelled**, the status line reads *"Cancelled. You can retry."*, and the Download button comes back enabled.
 
 ### 5. Enable the offline planner
 
