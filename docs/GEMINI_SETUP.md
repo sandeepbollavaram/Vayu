@@ -4,6 +4,8 @@
 
 **Never paste your API key into any file inside this repository.**
 
+> **Status:** as of **M3.1** only the provider-agnostic *architecture* exists (`Vayu.AI.Online` contracts + `OnlineProviderCatalog`). The real Gemini connector and the key-setup UI land in **M3.2 / M3.3**. Until then, cloud AI is disabled by default and Vayu makes no cloud calls.
+
 The Gemini connector lives in `Vayu.AI.Gemini`. It is only constructed when:
 
 1. `appsettings.json` has `"defaultProvider": "online"` or `"hybrid"`, *and*
