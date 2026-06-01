@@ -18,10 +18,23 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!-- Header -->
-            <StackPanel Grid.Row="0" Spacing="4">
-                <TextBlock Text="FIRST RUN SETUP" Style="{StaticResource VayuTitleText}" FontSize="32" />
-                <TextBlock x:Name="StepIndicatorText" Style="{StaticResource VayuSubtitleText}" Text="Step 1 of 5 · Welcome" />
+            <!-- Header + stepper -->
+            <StackPanel Grid.Row="0" Spacing="12">
+                <StackPanel Spacing="4">
+                    <TextBlock Text="VAYU SETUP DASHBOARD" Style="{StaticResource VayuTitleText}" FontSize="32" />
+                    <TextBlock x:Name="StepIndicatorText" Style="{StaticResource VayuSubtitleText}" Text="Step 1 of 5 · Welcome" />
+                </StackPanel>
+                <!-- Stage stepper. Shows the full onboarding journey so setup reads
+                     like a dedicated first-run experience, not a settings page. -->
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Border Style="{StaticResource VayuChipTeal}"><TextBlock Style="{StaticResource VayuChipText}" Text="1 · WELCOME" /></Border>
+                    <Border Style="{StaticResource VayuChip}"><TextBlock Style="{StaticResource VayuChipText}" Text="2 · STORAGE" /></Border>
+                    <Border Style="{StaticResource VayuChip}"><TextBlock Style="{StaticResource VayuChipText}" Text="3 · AI MODE" /></Border>
+                    <Border Style="{StaticResource VayuChip}"><TextBlock Style="{StaticResource VayuChipText}" Text="4 · LOCAL AI" /></Border>
+                    <Border Style="{StaticResource VayuChip}"><TextBlock Style="{StaticResource VayuChipText}" Text="5 · ONLINE AI" /></Border>
+                    <Border Style="{StaticResource VayuChip}"><TextBlock Style="{StaticResource VayuChipText}" Text="6 · VOICE" /></Border>
+                    <Border Style="{StaticResource VayuChip}"><TextBlock Style="{StaticResource VayuChipText}" Text="7 · TRUST &amp; FINISH" /></Border>
+                </StackPanel>
             </StackPanel>
 
             <!-- Step content -->
@@ -33,9 +46,18 @@
                             <Border Width="3" Height="14" Background="{StaticResource VayuAccentCyanBrush}" />
                             <TextBlock Style="{StaticResource VayuSectionText}" Text="WELCOME TO VAYU" VerticalAlignment="Center" />
                         </StackPanel>
-                        <TextBlock Style="{StaticResource VayuBodyText}" Text="Vayu is local-first. The First Run Setup checks whether your offline AI runtime is ready." />
-                        <TextBlock Style="{StaticResource VayuMutedText}" Text="This wizard does NOT install Ollama or download models in M2.5. Every step is skippable — Vayu remains usable in M1 rule-based mode without it." TextWrapping="Wrap" />
-                        <TextBlock Style="{StaticResource VayuMutedText}" Text="What you'll see next: AI mode, Ollama detection, model catalog, and a final readiness summary." TextWrapping="Wrap" />
+                        <TextBlock Style="{StaticResource VayuBodyText}" Text="Vayu is a local-first Windows AI command center. This Setup Dashboard gets you to a working AI in a few steps." />
+                        <TextBlock Style="{StaticResource VayuMutedText}" Text="Vayu never installs software or downloads models without your permission. Every step is skippable — Vayu stays usable without it." TextWrapping="Wrap" />
+                        <TextBlock Style="{StaticResource VayuMutedText}" Text="What you'll set up: storage, AI mode, Local AI, Online AI, voice, and trust." TextWrapping="Wrap" />
+
+                        <!-- Storage stage preview (paths default to your local app data). -->
+                        <Border Style="{StaticResource VayuGlassCardElevated}" Margin="0,8,0,0">
+                            <StackPanel Spacing="6">
+                                <TextBlock Style="{StaticResource VayuSectionText}" Text="STORAGE (DEFAULTS TO LOCAL APP DATA)" />
+                                <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
+                                           Text="Vayu workspace · logs · cache · local models · generated assets. These default to a safe folder under %LOCALAPPDATA%\Vayu. Choosing custom paths is coming to this dashboard; for now the safe defaults are used." />
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
 
                     <!-- 2. Mode -->
@@ -55,7 +77,7 @@
                                      Content="Online Gemini — set up in Settings"
                                      IsEnabled="False" />
                         <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
-                                   Text="The wizard sets up the Offline path. Online Gemini and Hybrid routing are live as of M3.5 — save a Gemini key in Settings → Online AI · Gemini, then pick Online or Hybrid in Settings → AI Mode. Cloud calls ask for consent every time, and every plan still passes through the permission engine." />
+                                   Text="This dashboard sets up Local AI. Online and Hybrid AI are available — save a provider key in Settings → Online AI, then pick Online or Hybrid in Settings → AI Mode. Cloud calls ask for consent every time, and every plan still passes through the Permission Guard." />
                     </StackPanel>
 
                     <!-- 3. Ollama Status -->
@@ -83,7 +105,7 @@
                             <TextBlock Style="{StaticResource VayuMutedText}" Text="Server reachable:" />
                             <TextBlock x:Name="OllamaServerText" Style="{StaticResource VayuBodyText}" Text="Probing…" />
                         </StackPanel>
-                        <TextBlock x:Name="OllamaMessageText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap" Text="Vayu will NOT install Ollama automatically in this step. The M2.6 flow will guide it with explicit permission." />
+                        <TextBlock x:Name="OllamaMessageText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap" Text="Vayu will NOT install Ollama automatically. Model downloads always ask for permission first." />
                     </StackPanel>
 
                     <!-- 4. Models -->
@@ -166,7 +188,7 @@
                         <TextBlock x:Name="VerifyHeadlineText" Style="{StaticResource VayuBodyText}" FontSize="18" Text="Probing…" TextWrapping="Wrap" />
                         <TextBlock x:Name="VerifyGuidanceText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap" Text="" />
                         <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
-                                   Text="No installs happened during this wizard. No models were downloaded. You can revisit setup any time from Settings → Open First Run Setup." />
+                                   Text="No installs or downloads happened without your permission. You can revisit the Setup Dashboard any time from Settings → Open Setup Dashboard." />
                     </StackPanel>
                 </Grid>
             </Border>
