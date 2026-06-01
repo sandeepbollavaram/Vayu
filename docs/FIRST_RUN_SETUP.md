@@ -33,6 +33,16 @@ Rules for the setup dashboard:
 
 This is forward-looking direction — the current wizard (M2.5) is the read-only-detection + consented-pull foundation it builds on.
 
+### M4.R — first launch actually opens setup
+
+Until M4.R, setup was only reachable as a **Setup** tab in the nav rail, so a new user could miss it entirely. M4.R adds the routing seam that makes first launch behave like an installer-style onboarding:
+
+- `FirstRunExperience.DecideRouting(state)` (pure, in `Vayu.Core.Setup`) returns **ShowFirstRunSetup** on a fresh install and **EnterCommandCenter** once setup has been completed *or* explicitly skipped.
+- `MainWindow` calls it at startup and, on a fresh install, redirects to the Setup page **before** the main Vayu Command Center.
+- This is a **strong default, not a hard lock** — Vayu stays usable if the user navigates away, and the redirect never blocks or crashes the shell (it falls back to Home on any error). Completing or skipping the wizard sets `FirstRunSetupState.Completed`, so the redirect happens at most once until setup is reset.
+
+The dedicated, full-window installer-style setup *shell* (collecting data/workspace/logs/cache/model/asset paths in one flow) remains the forward-looking target above; M4.R lands the entry-point behaviour without overbuilding the installer.
+
 ## Flow
 
 ```
