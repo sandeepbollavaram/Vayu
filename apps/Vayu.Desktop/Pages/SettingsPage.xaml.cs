@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Controls;
 using Vayu.AI.Gemini;
 using Vayu.AI.Local;
 using Vayu.AI.Online;
+using Vayu.Voice;
 
 using Vayu_Desktop.Services;
 
@@ -62,9 +63,34 @@ public sealed partial class SettingsPage : Page
             SelectModeRadio(_plannerState.Mode);
             UpdateAiModeText();
         }
+
+        // M4.3: local STT provider status in the Voice section.
+        _sttProvider = App.Services?.GetService<ISpeechToTextProvider>();
+        if (_sttProvider is not null)
+        {
+            Loaded += OnSttStatusLoaded;
+        }
     }
 
+    private readonly ISpeechToTextProvider? _sttProvider;
     private bool _suppressModeChange;
+
+    private async void OnSttStatusLoaded(object sender, RoutedEventArgs e)
+    {
+        if (_sttProvider is null)
+        {
+            return;
+        }
+        try
+        {
+            var status = await _sttProvider.GetStatusAsync().ConfigureAwait(true);
+            VoiceSttStatusText.Text = $"Local STT ({status.ProviderName}): {status.Message}";
+        }
+        catch
+        {
+            VoiceSttStatusText.Text = "Local STT: status unavailable.";
+        }
+    }
 
     private void OnAiModeChecked(object sender, RoutedEventArgs e)
     {
