@@ -24,9 +24,10 @@ public sealed partial class HomePage : Page
     private readonly IAgentRuntime _runtime;
     private readonly IAuditLogService _audit;
 
-    // M4.2: push-to-talk UI foundation. No mic capture, no command execution.
+    // M4.2/M4.3: push-to-talk UI + local STT foundation. No real mic capture, no command execution.
     private readonly IVoiceInputService? _voiceInput;
     private readonly IVoiceActivitySink? _voiceSink;
+    private readonly ISpeechToTextProvider? _sttProvider;
     private VoiceSession? _voiceSession;
 
     /// <summary>Bound to the "Recent activity" preview at the bottom of the page.</summary>
@@ -39,6 +40,7 @@ public sealed partial class HomePage : Page
         _audit = App.Services.GetRequiredService<IAuditLogService>();
         _voiceInput = App.Services.GetService<IVoiceInputService>();
         _voiceSink = App.Services.GetService<IVoiceActivitySink>();
+        _sttProvider = App.Services.GetService<ISpeechToTextProvider>();
     }
 
     protected override async void OnNavigatedTo(NavigationEventArgs e)
@@ -46,9 +48,10 @@ public sealed partial class HomePage : Page
         base.OnNavigatedTo(e);
         await RefreshRecentAsync().ConfigureAwait(true);
         await RefreshMicStatusAsync().ConfigureAwait(true);
+        await RefreshSttStatusAsync().ConfigureAwait(true);
     }
 
-    // ---- M4.2: push-to-talk foundation ----
+    // ---- M4.2/M4.3: push-to-talk + local STT foundation ----
 
     private async Task RefreshMicStatusAsync()
     {
@@ -69,6 +72,24 @@ public sealed partial class HomePage : Page
         }
     }
 
+    private async Task RefreshSttStatusAsync()
+    {
+        if (_sttProvider is null)
+        {
+            VoiceSttStatusText.Text = "Local STT: no provider registered.";
+            return;
+        }
+        try
+        {
+            var status = await _sttProvider.GetStatusAsync().ConfigureAwait(true);
+            VoiceSttStatusText.Text = $"Local STT ({status.ProviderName}): {status.Message}";
+        }
+        catch
+        {
+            VoiceSttStatusText.Text = "Local STT: status unavailable.";
+        }
+    }
+
     private async void OnPushToTalkClick(object sender, RoutedEventArgs e)
     {
         if (_voiceInput is null)
@@ -78,14 +99,12 @@ public sealed partial class HomePage : Page
 
         _voiceSession = VoiceSession.StartPushToTalk(DateTimeOffset.UtcNow);
         SetVoiceUi(VoiceInteractionState.Listening, "LISTENING");
-        await PublishVoiceAsync("Listening (M4.2 UI only).").ConfigureAwait(true);
+        VoiceTranscriptText.Text = "Listening… press Stop to transcribe.";
+        await PublishVoiceAsync("Listening.").ConfigureAwait(true);
 
-        // No real capture in M4.2 — the stub returns a "recognition arrives in M4.3"
-        // result. We surface that honestly and never fake a transcript or run a command.
-        var result = await _voiceInput.StartPushToTalkAsync(_voiceSession).ConfigureAwait(true);
-        VoiceMicStatusText.Text = result.Success
-            ? "Microphone status: ready."
-            : $"Microphone status: {result.ErrorMessage}";
+        // M4.3 does not capture audio yet — the stub input service confirms the
+        // session without opening the microphone. No fake transcript is produced.
+        await _voiceInput.StartPushToTalkAsync(_voiceSession).ConfigureAwait(true);
     }
 
     private async void OnStopVoiceClick(object sender, RoutedEventArgs e)
@@ -94,9 +113,36 @@ public sealed partial class HomePage : Page
         {
             await _voiceInput.StopAsync().ConfigureAwait(true);
         }
-        _voiceSession = _voiceSession?.Cancelled(DateTimeOffset.UtcNow);
+
+        // Transcribe phase. No audio was captured in M4.3, so we pass an empty
+        // buffer; the local provider returns its safe not-configured result.
+        SetVoiceUi(VoiceInteractionState.Transcribing, "TRANSCRIBING");
+        await PublishVoiceAsync("Transcribing.").ConfigureAwait(true);
+
+        if (_sttProvider is not null)
+        {
+            try
+            {
+                var result = await _sttProvider
+                    .TranscribeAsync(ReadOnlyMemory<byte>.Empty)
+                    .ConfigureAwait(true);
+                VoiceTranscriptText.Text = result.Success
+                    ? result.Transcript
+                    : result.ErrorMessage ?? "No transcript.";
+            }
+            catch
+            {
+                VoiceTranscriptText.Text = "Transcription failed.";
+            }
+        }
+        else
+        {
+            VoiceTranscriptText.Text = "No local STT provider configured.";
+        }
+
+        _voiceSession = _voiceSession?.WithState(VoiceInteractionState.Idle);
         SetVoiceUi(VoiceInteractionState.Idle, "IDLE");
-        await PublishVoiceAsync("Cancelled.").ConfigureAwait(true);
+        await PublishVoiceAsync("Idle.").ConfigureAwait(true);
     }
 
     private void SetVoiceUi(VoiceInteractionState state, string badge)
