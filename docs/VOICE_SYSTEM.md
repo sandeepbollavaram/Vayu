@@ -1,6 +1,17 @@
 # Voice System
 
-> **Status: M4.3 — local STT provider foundation.** On top of the M4.1 contracts and the M4.2 push-to-talk UI, M4.3 adds the **local speech-to-text provider abstraction** — `ISpeechToTextProvider`, `LocalSpeechToTextOptions`, `SpeechToTextProviderStatus`, and a `WhisperCppSpeechToTextProvider` **shell**. Whisper.cpp is the first planned local path; the shell detects whether a model is configured but ships **no native binary** (so CI stays clean), returning an honest *"shell ready; native transcription runtime setup required"* result rather than a fabricated transcript. Audio stays **local and in-memory** — none is written to disk, uploaded, or logged. There is still **no real transcription, no microphone capture, and no command execution** — the voice→command pipeline is **M4.5**. The design below describes the full target shape.
+> **Status: M4.4 — system text-to-speech.** On top of M4.1 contracts, M4.2 push-to-talk UI, and M4.3 local STT, M4.4 adds **spoken responses** via System TTS — `TextToSpeechOptions`, `TextToSpeechProviderStatus`, `VoiceAssistantPhrases`, and `SystemTextToSpeechService` (validation, length cap, and a secret-guard) backed by a desktop `WinUiSpeechAdapter` (`Windows.Media.SpeechSynthesis`). TTS is **off by default** and opt-in (Settings → Voice toggle); the Home Voice card has **Speak status** + **Stop speaking**. Vayu only ever speaks short neutral phrases ("Done.", "Cancelled.", "I need confirmation to do that.") — **never user content, never a secret** (the guard refuses key/token/PEM-looking text). No cloud TTS, no audio files. Local STT (M4.3) remains a shell; the voice→command pipeline is still **M4.5**. The design below describes the full target shape.
+
+### M4.4 TTS contracts
+
+| Type | Role |
+| --- | --- |
+| `TextToSpeechOptions` | `EnableTextToSpeech` (off by default), `ProviderName` (`system`), `VoiceName`, `Rate`, `Volume`, `MaxCharsPerUtterance` (300). No secrets. |
+| `TextToSpeechProviderStatus` | Provider availability + enabled flag + voice + message. No audio. |
+| `VoiceAssistantPhrases` | The short, neutral phrases Vayu may speak. No long narration, no user content. |
+| `SystemTextToSpeechService` | `ITextToSpeechService` impl: rejects blank/over-long/secret-looking text, then delegates playback to an injected engine. The default engine is a no-op (CI-safe); the desktop app injects `WinUiSpeechAdapter`. |
+| `WinUiSpeechAdapter` (desktop) | The only place WinRT speech is touched; synthesises + plays in-process, discards the stream, `StopAsync` halts playback. |
+| `VoiceTtsState` | Process-level opt-in the Settings toggle flips at runtime. Default OFF. |
 
 ### M4.3 local STT contracts
 
@@ -50,7 +61,7 @@ The transcript is the *only* thing that crosses from the voice layer into the ru
 | M4.1 | **Voice architecture / contracts** (this section). No capture.|
 | M4.2 | ✅ Push-to-talk UI foundation — Home Voice card + Settings section + stub service. No capture, no STT, no execution. |
 | M4.3 | ✅ Local STT provider foundation — `ISpeechToTextProvider` + `WhisperCppSpeechToTextProvider` shell (no native binary, honest not-configured), transcript area in the Home Voice card. Audio local/in-memory; no command execution. |
-| M4.4 | TTS provider integration (System TTS first).                 |
+| M4.4 | ✅ TTS provider integration — `SystemTextToSpeechService` (validate + cap + secret-guard) + `WinUiSpeechAdapter` (System TTS). Off by default, opt-in toggle, Speak/Stop UI, short neutral phrases only. No cloud, no secrets spoken, no command execution. |
 | M4.5 | Voice command pipeline into `AgentRuntime`.                   |
 | M4.6 | Vayu Sphere voice-state animation.                            |
 | M4.7 | Wake word / clap trigger — planning docs only.               |
