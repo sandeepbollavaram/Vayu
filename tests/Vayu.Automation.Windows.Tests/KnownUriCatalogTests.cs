@@ -9,6 +9,7 @@ public class KnownUriCatalogTests
     [InlineData("whatsapp:")]
     [InlineData("spotify://")]
     [InlineData("SPOTIFY:")]
+    [InlineData("ms-settings:")]
     public void IsAllowedLaunchUri_AllowsBareVettedSchemes(string target)
     {
         Assert.True(KnownUriCatalog.IsAllowedLaunchUri(target));
@@ -28,7 +29,8 @@ public class KnownUriCatalogTests
     [InlineData("calc:")]
     [InlineData("file:///C:/Windows/System32/cmd.exe")]
     [InlineData("http://example.com")]
-    [InlineData("ms-settings:")]
+    [InlineData("ms-store:")]
+    [InlineData("shell:")]
     public void IsAllowedLaunchUri_RejectsUnvettedSchemes(string target)
     {
         Assert.False(KnownUriCatalog.IsAllowedLaunchUri(target));
