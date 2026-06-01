@@ -35,7 +35,13 @@ Vayu is a **Windows desktop** application first. It is designed to eventually su
 
 ## Product surface — the Vayu Command Center
 
-The Home screen is the **Vayu Command Center**: the AI core (Vayu Sphere), the command input, voice control, the last-result console, a trust/safety strip, and a **Vayu Activity** feed that shows what Vayu and its agents are doing now (the live agent/task/model-call surface grows here through M19). Setup is a **first-launch experience** that opens before the main shell, not a tab a user has to find. And a command like *"open spotify"* must reliably open the installed app — Vayu resolves apps through its catalog, discovered shortcuts, and **vetted URI schemes**, and **never** executes arbitrary user text as a shell command. These were corrected in the **M4.R** recovery sprint so the product reads as a real desktop tool system, not a demo.
+The Home screen is the **Vayu Command Center**: the AI core (Vayu Sphere), the command input, voice control, the last-result console, a trust/safety status strip (AI Mode · Provider · Runtime · Voice · Permission Guard · Audit Log), and a **Vayu Activity** feed plus **Agent Queue**, **AI Runtime**, **Trust Guard**, and **Setup Health** cards that show what Vayu and its agents are doing now (the live agent/task/model-call surface grows here through M19). Setup is a **Setup Dashboard** — a first-launch experience with a staged stepper (Welcome · Storage · AI Mode · Local AI · Online AI · Voice · Trust & Finish) that opens before the main shell, not a tab a user has to find. And a command like *"open spotify"* must reliably open the installed app — Vayu resolves apps through its catalog, **vetted URI schemes**, the **Windows App Paths registry** (validated executable paths only, never a command line), and discovered shortcuts, and **never** executes arbitrary user text as a shell command. These were corrected in the **M4.R / M4.R2** realignment sprints so the product reads as a real desktop tool system, not a demo.
+
+### What Vayu is — restated for the realignment
+
+- Vayu **is** a local-first Windows AI desktop assistant, an AI command center, a permission-gated desktop-automation system, an offline/online/hybrid AI router, a future workflow/agent controller, a future **approved** VPS/server control layer, and a future coding/creative tool system.
+- Vayu is **not** just a chatbot, just a voice UI, just an app launcher, or just a dashboard demo.
+- The **future VPS/server** capability is real on the roadmap but gated: it requires explicit user approval, secure credentials, audit logs, and a stop/cancel — **no hidden remote execution, no plaintext secrets**.
 
 ## Safety is the product
 
