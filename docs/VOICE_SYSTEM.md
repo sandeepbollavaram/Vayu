@@ -84,8 +84,112 @@ The transcript is the *only* thing that crosses from the voice layer into the ru
 | M4.4 | ✅ TTS provider integration — `SystemTextToSpeechService` (validate + cap + secret-guard) + `WinUiSpeechAdapter` (System TTS). Off by default, opt-in toggle, Speak/Stop UI, short neutral phrases only. No cloud, no secrets spoken, no command execution. |
 | M4.5 | ✅ Voice command pipeline — `VoiceCommandService` dispatches a successful, above-floor transcript through the existing `IAgentRuntime` (Source `voice/<provider>`). Off by default; failed/empty/low-confidence/cancelled never dispatch; no bypass; short secret-safe result phrase. Inert until a real STT runtime is configured. |
 | M4.6 | ✅ Vayu Sphere voice-state animation — `VoiceStateVisualMapper` + distinct sphere cues per state (listening/transcribing/thinking/executing/speaking/error/cancelled) + Home state chip. Visual-only; no audio amplitude; app-command animations untouched. |
-| M4.7 | Wake word / clap trigger — planning docs only.               |
+| M4.7 | ✅ Wake word / clap trigger — **planning docs only** (this doc's "Future wake word and clap trigger design" section). No engine, no clap detection, no always-listening service, no background capture. |
 | M4.8 | M4 polish + demo.                                             |
+
+---
+
+## Future wake word and clap trigger design (M4.7 — planning only)
+
+> **This section is design, not behaviour.** M4.7 plans wake word and clap
+> trigger; it ships **no** wake-word engine, **no** clap detector, **no**
+> always-listening service, and **no** background microphone capture. Today
+> the only way Vayu captures audio is push-to-talk — the user holds a key.
+> Everything below describes a *future, opt-in* capability gated on the safety
+> and consent model written here. Until that future milestone, none of it runs.
+
+### Where these fit
+
+`VoiceInputMode` already reserves the two future triggers as **planned**
+placeholders — `WakeWordPlanned` and `ClapTriggerPlanned` — and
+`VoiceInputModes.IsActive` returns `true` only for `PushToTalk`. That gate is
+the contract: a planned mode cannot become active by accident. Push-to-talk
+(`Ctrl+Win+Space`, hold-to-talk) stays the shipping default and the only mode a
+user needs.
+
+### Non-negotiable safety rules (all future trigger work inherits these)
+
+- **Push-to-talk is the safe default.** Wake word and clap trigger are extra
+  conveniences, never the baseline.
+- **Wake word is opt-in.** Off until the user explicitly enables it.
+- **Clap trigger is opt-in.** Off until the user explicitly enables it.
+- **Always-listening is OFF by default.** Enabling a wake word or clap trigger
+  is the *only* way any continuous-listen path can exist, and even then the user
+  must turn it on knowingly.
+- **Local detection is preferred; no cloud wake-word detection by default.**
+  Keyword spotting and clap detection run on-device. Audio for detection never
+  leaves the machine. (Cloud STT for the *post-trigger* command remains a
+  separate, already-consent-gated choice — the trigger itself stays local.)
+- **No raw audio logging.** Detection buffers live in memory and are discarded;
+  no audio bytes are written to disk or logs, ever — same rule as push-to-talk.
+- **No background mic capture without a visible indicator.** Whenever a trigger
+  is armed and the mic is open, a clear, always-visible indicator (sphere state
+  + tray/status cue) must show it. No silent listening.
+- **Clear stop/disable control.** The user can disable wake word / clap, and
+  stop an in-progress listen, from an obvious control at any time.
+- **A trigger only enters the `Listening` state.** Wake word and clap **start
+  listening** — they never execute an action and never produce a plan of their
+  own.
+- **The command pipeline is unchanged.** Anything heard after a trigger still
+  flows transcript → `CommandRequest { Source = "voice/..." }` → AI Router →
+  `IPermissionService` (L0–L6) → agent → audit log. No new execution path, no
+  permission bypass, identical to a typed or push-to-talk command.
+- **No command executes** until its transcript passes the confidence floor *and*
+  the permission/audit pipeline — a trigger firing is not consent to act.
+- **Clearable history.** If any voice metadata is ever retained (e.g. an opt-in
+  voice-debug transcript log), the user must be able to clear it. Audio is never
+  retained.
+
+### Wake word planning
+
+Candidate wake phrases (final choice deferred to implementation):
+
+- **"Hey Vayu"** — the primary candidate; two syllables of context reduce false
+  positives.
+- **"Vayu"** — shorter, higher false-positive risk; offered as a secondary
+  option, not the default.
+- **Custom wake phrase** — a later enhancement once the local KWS path is proven.
+
+Design constraints for the future wake-word implementation:
+
+- **Local-first detection.** A small on-device keyword-spotting (KWS) model
+  (e.g. an ONNX export via `Microsoft.ML.OnnxRuntime`); no cloud wake detection
+  by default. Pre-wake audio is discarded — only post-wake audio reaches STT.
+- **False-positive protection.** A confidence threshold on the KWS score, plus
+  optional double-trigger / short-phrase confirmation, so background speech and
+  TV audio don't arm the mic.
+- **Cooldown after activation.** After a trigger fires, a brief refractory window
+  prevents immediate re-triggering and repeated accidental listens.
+- **Manual confirmation for risky actions.** A wake-word-initiated command that
+  maps to a higher risk level still hits the normal permission confirmation —
+  the wake word never lowers a risk level or skips a prompt.
+- **Visible armed state.** When the wake word is armed, the sphere/tray shows it;
+  when it's actively listening post-trigger, that's the existing `Listening`
+  visual.
+
+### Clap trigger planning
+
+- **Opt-in only.** Off by default; the user must enable it explicitly.
+- **Pattern.** A simple **double-clap** to start, with a configurable pattern as
+  a later option (e.g. number of claps / timing window).
+- **False-positive protection.** Energy/transient thresholds over an estimated
+  noise floor, with timing constraints, so single environmental bangs and
+  applause don't trigger it.
+- **Not for noisy environments by default.** The feature is conservative: in
+  noisy conditions it should err toward *not* triggering, and the user is warned
+  it's best suited to quiet rooms.
+- **Only starts listening.** A detected clap pattern does exactly one thing —
+  begins a short push-to-talk-style `Listening` window. It never executes a
+  command directly and never bypasses the pipeline.
+- **Same stop/disable + indicator rules** as wake word: visible when armed, a
+  clear disable control, no raw audio logged.
+
+### What M4.7 explicitly does *not* do
+
+No wake-word engine, no clap detector, no always-listening service, no
+background microphone capture, no new STT/TTS runtime, no command-execution
+changes, and no UI beyond these doc references. Implementation is a **future
+milestone**, gated on the model above.
 
 ---
 
@@ -103,6 +207,9 @@ Hold a global hotkey (default `Ctrl+Win+Space`). Audio is captured while held, t
 
 ### 2. Wake word — "Hey Vayu"
 
+> Opt-in and off by default — see "Future wake word and clap trigger design"
+> above for the M4.7 safety/consent model that governs this.
+
 A small always-on KWS (keyword spotting) model. Candidates:
 
 - [openWakeWord](https://github.com/dscripka/openWakeWord) — Python, but exportable ONNX
@@ -112,6 +219,9 @@ A small always-on KWS (keyword spotting) model. Candidates:
 We default to openWakeWord (ONNX via `Microsoft.ML.OnnxRuntime`). Wake-word audio buffers are **discarded** after KWS triggers — only post-wake audio is sent to STT.
 
 ### 3. Clap trigger
+
+> Opt-in and off by default — see "Future wake word and clap trigger design"
+> above for the M4.7 safety/consent model that governs this.
 
 Audio energy detector with a double-clap pattern (two transients within 600 ms, each > 0.6 RMS over noise floor). Triggers push-to-talk for 3 seconds. Off by default; on by user toggle.
 
