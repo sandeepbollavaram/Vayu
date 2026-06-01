@@ -117,13 +117,13 @@ public sealed class FirstRunSetupViewModel : INotifyPropertyChanged
         {
             if (Detection.EndpointReachable && Detection.InstalledCuratedCount > 0)
             {
-                return "You're set. The rule-based parser (M1) still handles known commands; the local AI planner lands in M2.7.";
+                return "You're set. Vayu can plan with your local AI; the rule-based parser still handles known commands as a fallback. Turn on Local AI from Settings → AI Mode.";
             }
             if (Detection.EndpointReachable)
             {
-                return "Model download is deferred to M2.6 and will require explicit permission. Until then, you can install models manually with 'ollama pull gemma3:4b'.";
+                return "Ollama is running but has no model yet. Download one here — it always asks for permission — or install manually with 'ollama pull gemma3:4b'.";
             }
-            return "Vayu does not install Ollama automatically in M2.5. Visit https://ollama.com/download/windows or wait for the M2.6 guided flow with explicit consent.";
+            return "Vayu never installs Ollama automatically. Install it from https://ollama.com/download/windows, then re-check.";
         }
     }
 
