@@ -215,11 +215,27 @@ public sealed partial class HomePage : Page
         await PublishVoiceAsync("Idle.").ConfigureAwait(true);
     }
 
-    private void SetVoiceUi(VoiceInteractionState state, string badge)
+    private void SetVoiceUi(VoiceInteractionState state, string? badgeOverride = null)
     {
-        VoiceStateText.Text = badge;
+        VoiceStateText.Text = badgeOverride ?? VoiceStateVisualMapper.ChipLabel(state);
         PushToTalkButton.IsEnabled = state != VoiceInteractionState.Listening;
         StopVoiceButton.IsEnabled = state == VoiceInteractionState.Listening;
+
+        // Colour the chip to match the state (M4.6).
+        var styleKey = state switch
+        {
+            VoiceInteractionState.Listening => "VayuChipTeal",
+            VoiceInteractionState.Transcribing or VoiceInteractionState.Thinking or VoiceInteractionState.Executing => "VayuChip",
+            VoiceInteractionState.Speaking => "VayuChipTeal",
+            VoiceInteractionState.Error => "VayuChipRed",
+            VoiceInteractionState.Cancelled => "VayuChipAmber",
+            _ => "VayuChip",
+        };
+        if (Application.Current.Resources[styleKey] is Style style)
+        {
+            VoiceStateBadge.Style = style;
+        }
+
         Sphere.SetVoiceState(state);
     }
 
