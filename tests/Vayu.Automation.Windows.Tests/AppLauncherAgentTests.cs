@@ -87,6 +87,47 @@ public class AppLauncherAgentTests : IDisposable
     }
 
     [Fact]
+    public async Task ExecuteAsync_AppPathsResolves_LaunchesExecutablePath_BeforeShortcutScan()
+    {
+        // An app not in the static catalog but resolvable via App Paths should
+        // launch the resolved exe and never reach the shortcut scan.
+        var launcher = new FakeLauncher();
+        var resolver = new FakeAppPathResolver(("slack", @"C:\Apps\Slack.exe"));
+        var desktop = Path.Combine(_tempRoot, "Desktop");
+        Directory.CreateDirectory(desktop);
+        File.WriteAllText(Path.Combine(desktop, "Slack.lnk"), "fake"); // would also match
+        var installed = new InstalledAppCatalog(
+            new List<(string, string)> { (desktop, "UserDesktop") });
+        var agent = new AppLauncherAgent(launcher, installed, resolver);
+
+        var result = await agent.ExecuteAsync(Plan(("app", "slack")));
+
+        Assert.Equal(CommandStatus.Success, result.Status);
+        Assert.Equal(1, launcher.LaunchExecutablePathCallCount);
+        Assert.Equal(@"C:\Apps\Slack.exe", launcher.LastExecutablePath);
+        Assert.Equal(0, launcher.LaunchShortcutCallCount); // App Paths won, scan skipped
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_AppPathsMiss_FallsThroughToShortcutScan()
+    {
+        var launcher = new FakeLauncher();
+        var resolver = new FakeAppPathResolver(); // resolves nothing
+        var desktop = Path.Combine(_tempRoot, "Desktop");
+        Directory.CreateDirectory(desktop);
+        File.WriteAllText(Path.Combine(desktop, "Slack.lnk"), "fake");
+        var installed = new InstalledAppCatalog(
+            new List<(string, string)> { (desktop, "UserDesktop") });
+        var agent = new AppLauncherAgent(launcher, installed, resolver);
+
+        var result = await agent.ExecuteAsync(Plan(("app", "slack")));
+
+        Assert.Equal(CommandStatus.Success, result.Status);
+        Assert.Equal(0, launcher.LaunchExecutablePathCallCount);
+        Assert.Equal(1, launcher.LaunchShortcutCallCount);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_UnknownApp_NoInstalledCatalog_ReturnsFailedUnknown()
     {
         var launcher = new FakeLauncher();
@@ -258,8 +299,10 @@ public class AppLauncherAgentTests : IDisposable
 
         public int LaunchAsyncCallCount { get; private set; }
         public int LaunchShortcutCallCount { get; private set; }
+        public int LaunchExecutablePathCallCount { get; private set; }
         public string? LastAppId { get; private set; }
         public InstalledAppEntry? LastShortcut { get; private set; }
+        public string? LastExecutablePath { get; private set; }
 
         public Task<CommandResult> LaunchAsync(string appId, CancellationToken cancellationToken = default)
         {
@@ -274,5 +317,29 @@ public class AppLauncherAgentTests : IDisposable
             LastShortcut = entry;
             return Task.FromResult(_answer);
         }
+
+        public Task<CommandResult> LaunchExecutablePathAsync(string executablePath, string displayName, CancellationToken cancellationToken = default)
+        {
+            LaunchExecutablePathCallCount++;
+            LastExecutablePath = executablePath;
+            return Task.FromResult(_answer);
+        }
+    }
+
+    private sealed class FakeAppPathResolver : IAppPathResolver
+    {
+        private readonly Dictionary<string, string> _map;
+
+        public FakeAppPathResolver(params (string AppId, string Path)[] entries)
+        {
+            _map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var (appId, path) in entries)
+            {
+                _map[appId] = path;
+            }
+        }
+
+        public string? TryResolveExecutable(string appId)
+            => _map.TryGetValue(appId, out var path) ? path : null;
     }
 }
