@@ -24,7 +24,7 @@
 
             <StackPanel Grid.Row="0" Spacing="4">
                 <TextBlock Text="SETTINGS" Style="{StaticResource VayuTitleText}" FontSize="32" />
-                <TextBlock Text="Read-only at M1. Editable surfaces land alongside the first-run wizard in M2." Style="{StaticResource VayuSubtitleText}" />
+                <TextBlock Text="Configure AI mode, providers, voice, and trust. Every change is opt-in and audit-logged." Style="{StaticResource VayuSubtitleText}" />
             </StackPanel>
 
             <Grid Grid.Row="1" ColumnSpacing="20" RowSpacing="20">
@@ -54,7 +54,7 @@
                         <RadioButton x:Name="ModeHybridRadio" Content="Hybrid (local first, Gemini with consent fallback)"
                                      GroupName="AiMode" Checked="OnAiModeChecked" Tag="hybrid" IsEnabled="False" />
                         <TextBlock x:Name="AiModeHint" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
-                                   Text="Every AI mode is opt-in. Cloud calls ask for consent every time in M3.5. The model only proposes a plan — every action still passes through the permission engine, and Vayu falls back to the rule-based parser whenever a model is unavailable, unsure, or unsafe." />
+                                   Text="Every AI mode is opt-in. Cloud calls ask for consent every time. The model only proposes a plan — every action still passes through the Permission Guard, and Vayu falls back to the rule-based parser whenever a model is unavailable, unsure, or unsafe." />
                     </StackPanel>
                 </Border>
 
@@ -63,13 +63,13 @@
                     <StackPanel Spacing="10">
                         <StackPanel Orientation="Horizontal" Spacing="10">
                             <Border Width="3" Height="14" Background="{StaticResource VayuAccentTealBrush}" />
-                            <TextBlock Style="{StaticResource VayuSectionText}" Text="FIRST-RUN WIZARD" VerticalAlignment="Center" />
+                            <TextBlock Style="{StaticResource VayuSectionText}" Text="SETUP DASHBOARD" VerticalAlignment="Center" />
                         </StackPanel>
-                        <TextBlock Style="{StaticResource VayuBodyText}" Text="Will walk you through:" />
-                        <TextBlock Style="{StaticResource VayuMutedText}" Text="·  Ollama detection / install (with permission)" />
-                        <TextBlock Style="{StaticResource VayuMutedText}" Text="·  Gemma model download" />
-                        <TextBlock Style="{StaticResource VayuMutedText}" Text="·  Optional online provider key (Gemini, OpenAI, Anthropic, …)" />
-                        <TextBlock Style="{StaticResource VayuMutedText}" Text="·  Every step is skippable." />
+                        <TextBlock Style="{StaticResource VayuBodyText}" Text="Walks you through:" />
+                        <TextBlock Style="{StaticResource VayuMutedText}" Text="·  Storage and workspace paths" />
+                        <TextBlock Style="{StaticResource VayuMutedText}" Text="·  Local AI detection and model download (with permission)" />
+                        <TextBlock Style="{StaticResource VayuMutedText}" Text="·  Online AI provider key (Gemini, OpenAI, Anthropic, …)" />
+                        <TextBlock Style="{StaticResource VayuMutedText}" Text="·  Voice and Trust Center — every step is skippable." />
                     </StackPanel>
                 </Border>
 
@@ -83,7 +83,7 @@
                         <TextBlock Style="{StaticResource VayuBodyText}" Text="Safe routing is enabled." />
                         <TextBlock Style="{StaticResource VayuMutedText}" Text="·  Audit log: enabled" />
                         <TextBlock Style="{StaticResource VayuMutedText}" Text="·  Cloud AI: disabled by default" />
-                        <TextBlock Style="{StaticResource VayuMutedText}" Text="·  Verbose logging: M2" />
+                        <TextBlock Style="{StaticResource VayuMutedText}" Text="·  Verbose logging: available" />
                         <ToggleSwitch x:Name="VerboseToggle" IsEnabled="False" OffContent="Off" OnContent="On" />
                     </StackPanel>
                 </Border>
@@ -93,7 +93,7 @@
                     <StackPanel Spacing="10">
                         <StackPanel Orientation="Horizontal" Spacing="10">
                             <Border Width="3" Height="14" Background="{StaticResource VayuAccentAmberBrush}" />
-                            <TextBlock Style="{StaticResource VayuSectionText}" Text="FUTURE PROVIDERS" VerticalAlignment="Center" />
+                            <TextBlock Style="{StaticResource VayuSectionText}" Text="PROVIDER REGISTRY" VerticalAlignment="Center" />
                         </StackPanel>
                         <!-- Inline chip flow (StackPanel rows; no CommunityToolkit dependency) -->
                         <StackPanel Orientation="Horizontal" Spacing="8">
@@ -108,7 +108,7 @@
                             <Border Style="{StaticResource VayuChipAmber}"><TextBlock Style="{StaticResource VayuChipText}" Text="OPENROUTER" /></Border>
                             <Border Style="{StaticResource VayuChip}"><TextBlock Style="{StaticResource VayuChipText}" Text="CUSTOM OAI-COMPAT" /></Border>
                         </StackPanel>
-                        <TextBlock Style="{StaticResource VayuMutedText}" Text="See docs/AI_PROVIDER_REGISTRY.md for the full M1 catalog." />
+                        <TextBlock Style="{StaticResource VayuMutedText}" Text="See docs/AI_PROVIDER_REGISTRY.md for the full provider catalog." />
                     </StackPanel>
                 </Border>
             </Grid>
@@ -199,13 +199,13 @@
                     <StackPanel Grid.Column="0" Spacing="6">
                         <StackPanel Orientation="Horizontal" Spacing="10">
                             <Border Width="3" Height="14" Background="{StaticResource VayuAccentTealBrush}" />
-                            <TextBlock Style="{StaticResource VayuSectionText}" Text="FIRST RUN SETUP" VerticalAlignment="Center" />
+                            <TextBlock Style="{StaticResource VayuSectionText}" Text="SETUP DASHBOARD" VerticalAlignment="Center" />
                         </StackPanel>
-                        <TextBlock Style="{StaticResource VayuBodyText}" Text="Open the guided setup wizard." />
+                        <TextBlock Style="{StaticResource VayuBodyText}" Text="Open the guided Setup Dashboard." />
                         <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
-                                   Text="Walks through AI mode, Ollama detection, model catalog, and a readiness verdict. M2.5 is read-only — no installs, no model downloads. M2.6 will add guided install/pull behind explicit consent." />
+                                   Text="Walks through storage, AI mode, Local AI detection, model download, Online AI keys, voice, and the Trust Center. Model downloads always ask for permission; nothing installs silently." />
                     </StackPanel>
-                    <Button Grid.Column="1" x:Name="OpenFirstRunSetupButton" Content="Open First Run Setup"
+                    <Button Grid.Column="1" x:Name="OpenFirstRunSetupButton" Content="Open Setup Dashboard"
                             VerticalAlignment="Center" Click="OnOpenFirstRunSetupClick"
                             Style="{StaticResource AccentButtonStyle}" />
                 </Grid>
