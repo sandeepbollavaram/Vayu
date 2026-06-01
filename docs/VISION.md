@@ -33,6 +33,10 @@ See [ROADMAP.md](ROADMAP.md) for the milestone breakdown and [AI_PROVIDER_REGIST
 
 Vayu is a **Windows desktop** application first. It is designed to eventually support both local desktop usage and **approved** server/VPS-assisted workflows for agent execution — but every remote/server action must be **explicit, secure, logged, and user-approved**. Server/VPS execution is a future plan, not a current capability.
 
+## Product surface — the Vayu Command Center
+
+The Home screen is the **Vayu Command Center**: the AI core (Vayu Sphere), the command input, voice control, the last-result console, a trust/safety strip, and a **Vayu Activity** feed that shows what Vayu and its agents are doing now (the live agent/task/model-call surface grows here through M19). Setup is a **first-launch experience** that opens before the main shell, not a tab a user has to find. And a command like *"open spotify"* must reliably open the installed app — Vayu resolves apps through its catalog, discovered shortcuts, and **vetted URI schemes**, and **never** executes arbitrary user text as a shell command. These were corrected in the **M4.R** recovery sprint so the product reads as a real desktop tool system, not a demo.
+
 ## Safety is the product
 
 Vayu's differentiator is not "more automation" — it is **trustworthy** automation. Stop/cancel, audit logs, consent dialogs, and the permission engine are the core of the product, not optional add-ons. A feature that cannot be made safe, cancelable, and auditable does not ship.
