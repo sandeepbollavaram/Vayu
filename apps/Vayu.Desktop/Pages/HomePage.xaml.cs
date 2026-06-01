@@ -284,6 +284,7 @@ public sealed partial class HomePage : Page
 
         SetRuntime("PROCESSING", VayuAccent.Blue);
         Sphere.SetState(VayuSphereState.Processing);
+        ActivityNowText.Text = $"Running: “{text}”";
 
         var request = new CommandRequest { Text = text, Source = "text" };
         try
@@ -296,6 +297,7 @@ public sealed partial class HomePage : Page
         {
             Sphere.SetState(VayuSphereState.Error);
             SetRuntime("ERROR", VayuAccent.Red);
+            ActivityNowText.Text = "Idle — last command errored.";
             ResultStatus.Text = "LAST RESULT · ERROR";
             ResultIndicator.Fill = SolidBrush(VayuAccent.Red);
             ResultAgent.Text = string.Empty;
@@ -350,6 +352,7 @@ public sealed partial class HomePage : Page
         ResultRisk.Text  = result.Plan is null ? string.Empty : $"risk: {result.Plan.Risk}";
         ResultMessage.Text = result.Message ?? result.ClarificationPrompt ?? string.Empty;
         ResultTimestamp.Text = DateTime.Now.ToString("HH:mm:ss");
+        ActivityNowText.Text = $"Idle — last result: {statusLabel}.";
     }
 
     private void SetRuntime(string label, VayuAccent accent)
