@@ -13,6 +13,9 @@ public class KnownAppCatalogTests
     [InlineData("downloads")]
     [InlineData("spotify")]
     [InlineData("whatsapp")]
+    [InlineData("calculator")]
+    [InlineData("explorer")]
+    [InlineData("settings")]
     public void KnownAppIds_Resolve(string appId)
     {
         var info = KnownAppCatalog.TryGet(appId);
@@ -59,6 +62,7 @@ public class KnownAppCatalogTests
     [Theory]
     [InlineData("spotify",  "spotify:")]
     [InlineData("whatsapp", "whatsapp:")]
+    [InlineData("settings", "ms-settings:")]
     public void UriApps_HaveUriLaunchKind_AndAllowlistedTarget(string appId, string expectedTarget)
     {
         var info = KnownAppCatalog.TryGet(appId);
@@ -73,7 +77,11 @@ public class KnownAppCatalogTests
     [Theory]
     [InlineData("spotify music",   "spotify")]
     [InlineData("whatsapp desktop", "whatsapp")]
-    public void UriApp_Aliases_NormalizeToCanonicalId(string alias, string canonicalId)
+    [InlineData("calc",            "calculator")]
+    [InlineData("file explorer",   "explorer")]
+    [InlineData("files",           "explorer")]
+    [InlineData("windows settings", "settings")]
+    public void NewApp_Aliases_NormalizeToCanonicalId(string alias, string canonicalId)
     {
         var info = KnownAppCatalog.TryGet(alias);
 
@@ -93,7 +101,7 @@ public class KnownAppCatalogTests
 
     [Theory]
     [InlineData("spaceship")]
-    [InlineData("explorer")]
+    [InlineData("teleporter")]
     [InlineData("totally-not-an-app")]
     public void Unknown_AppOrAlias_ReturnsNull(string input)
     {
