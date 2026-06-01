@@ -103,9 +103,11 @@ public partial class App : Application
         // --- Automation: known-app launcher + installed-app discovery + agent ---
         services.AddSingleton<IAppLauncher, WindowsAppLauncher>();
         services.AddSingleton<InstalledAppCatalog>();
+        services.AddSingleton<WindowsAppPathsResolver>();
         services.AddSingleton(sp => new AppLauncherAgent(
             sp.GetRequiredService<IAppLauncher>(),
-            sp.GetRequiredService<InstalledAppCatalog>()));
+            sp.GetRequiredService<InstalledAppCatalog>(),
+            sp.GetRequiredService<WindowsAppPathsResolver>()));
         services.AddSingleton(sp => new ShowLogsAgent(sp.GetRequiredService<UiNavigationService>()));
         services.AddSingleton(sp => new ShowSettingsAgent(sp.GetRequiredService<UiNavigationService>()));
 
