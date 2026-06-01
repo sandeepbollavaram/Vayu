@@ -45,6 +45,14 @@ public sealed partial class VayuSphere : UserControl
     private static readonly Color SuccessColor = Color.FromArgb(0xFF, 0x2E, 0xE6, 0xC9);
     private static readonly Color ErrorColor   = Color.FromArgb(0xFF, 0xFF, 0x5C, 0x7C);
 
+    // M4.6 voice-state accent colours.
+    private static readonly Color ListenCyan  = Color.FromArgb(0xFF, 0x00, 0xE1, 0xFF);
+    private static readonly Color ScanBlue    = Color.FromArgb(0xFF, 0x4F, 0xA8, 0xFF);
+    private static readonly Color ThinkViolet = Color.FromArgb(0xFF, 0x9B, 0x7B, 0xFF);
+    private static readonly Color ExecuteTeal = Color.FromArgb(0xFF, 0x2E, 0xE6, 0xC9);
+    private static readonly Color SpeakTeal   = Color.FromArgb(0xFF, 0x2E, 0xE6, 0xC9);
+    private static readonly Color CancelAmber = Color.FromArgb(0xFF, 0xFF, 0xB8, 0x5C);
+
     public VayuSphere()
     {
         InitializeComponent();
@@ -73,32 +81,70 @@ public sealed partial class VayuSphere : UserControl
     }
 
     /// <summary>
-    /// Maps a voice interaction state onto the sphere's existing visual states
-    /// (M4.2 foundation). Full voice-reactive animation is M4.6.
+    /// Drives the sphere for a voice interaction state (M4.6). Each state gets a
+    /// distinct, lightweight cue via <see cref="VoiceStateVisualMapper"/>; the
+    /// app-command visuals (<see cref="SetState"/>) are untouched.
     /// </summary>
     public void SetVoiceState(VoiceInteractionState voiceState)
     {
-        switch (voiceState)
+        // Stop any continuous voice storyboard from a previous state so repeated
+        // push-to-talk/stop never leaves a stuck animation.
+        StopVoiceStoryboards();
+
+        var token = VoiceStateVisualMapper.Map(voiceState);
+        switch (token)
         {
-            case VoiceInteractionState.Listening:
-            case VoiceInteractionState.Transcribing:
-            case VoiceInteractionState.Thinking:
-            case VoiceInteractionState.Executing:
-                SetState(VayuSphereState.Processing);
+            case VoiceVisualToken.ListeningPulse:
+                SetRingColor(ListenCyan);
+                ListeningStoryboard.Begin();
                 break;
-            case VoiceInteractionState.Error:
-                SetState(VayuSphereState.Error);
+            case VoiceVisualToken.TranscribingScan:
+                SetRingColor(ScanBlue);
+                ProcessingStoryboard.Begin();
                 break;
-            case VoiceInteractionState.Speaking:
-                SetState(VayuSphereState.Success);
+            case VoiceVisualToken.ThinkingAccent:
+                SetRingColor(ThinkViolet);
+                ProcessingStoryboard.Begin();
                 break;
-            case VoiceInteractionState.Cancelled:
-            case VoiceInteractionState.Idle:
+            case VoiceVisualToken.ExecutingRing:
+                SetRingColor(ExecuteTeal);
+                ProcessingStoryboard.Begin();
+                break;
+            case VoiceVisualToken.SpeakingGlow:
+                StatusFlashStop.Color = SpeakTeal;
+                SpeakingStoryboard.Begin();
+                break;
+            case VoiceVisualToken.ErrorFlash:
+                Flash(ErrorColor);
+                break;
+            case VoiceVisualToken.CancelledFade:
+                Flash(CancelAmber);
+                break;
+            case VoiceVisualToken.IdlePulse:
             default:
-                SetState(VayuSphereState.Idle);
+                // The idle storyboard already runs forever; just clear overlays.
+                ResetVoiceOverlays();
                 break;
         }
     }
+
+    private void StopVoiceStoryboards()
+    {
+        ListeningStoryboard.Stop();
+        SpeakingStoryboard.Stop();
+        ResetVoiceOverlays();
+    }
+
+    private void ResetVoiceOverlays()
+    {
+        // Return the shared overlay elements to their calm baseline.
+        ProcessingRing.Opacity = 0;
+        PulseHalo.Opacity = 0.6;
+        StatusFlash.Opacity = 0;
+    }
+
+    private void SetRingColor(Color color)
+        => ProcessingRing.Stroke = new Microsoft.UI.Xaml.Media.SolidColorBrush(color);
 
     private void Flash(Color color)
     {
