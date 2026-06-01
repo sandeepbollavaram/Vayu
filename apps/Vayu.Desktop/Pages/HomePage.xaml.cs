@@ -218,6 +218,7 @@ public sealed partial class HomePage : Page
     private void SetVoiceUi(VoiceInteractionState state, string? badgeOverride = null)
     {
         VoiceStateText.Text = badgeOverride ?? VoiceStateVisualMapper.ChipLabel(state);
+        VoiceChipText.Text = $"VOICE · {VoiceStateVisualMapper.ChipLabel(state)}";
         PushToTalkButton.IsEnabled = state != VoiceInteractionState.Listening;
         StopVoiceButton.IsEnabled = state == VoiceInteractionState.Listening;
 
