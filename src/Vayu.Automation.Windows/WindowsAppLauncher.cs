@@ -83,6 +83,29 @@ public sealed class WindowsAppLauncher : IAppLauncher
             successMessage: $"Launched {entry.DisplayName}.");
     }
 
+    /// <inheritdoc />
+    public Task<CommandResult> LaunchExecutablePathAsync(string executablePath, string displayName, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(executablePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        // Defence in depth: even though the resolver validated the path, re-check
+        // here so this entry point can never launch a command line or non-exe.
+        if (!WindowsAppPathsResolver.IsSafeExecutablePath(executablePath))
+        {
+            return Task.FromResult(CommandResult.Failed(
+                $"Resolved path for {displayName} is not a safe executable.",
+                errorCode: "UNSAFE_EXECUTABLE",
+                agentName: AgentName));
+        }
+
+        return LaunchInternal(
+            executablePath,
+            displayName,
+            successMessage: $"Launched {displayName}.");
+    }
+
     private static Task<CommandResult> LaunchInternal(string target, string displayName, string successMessage)
     {
         var startInfo = new ProcessStartInfo
