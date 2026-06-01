@@ -206,8 +206,16 @@
                                        Text="Press Push to talk, then Stop. The transcript will appear here." />
                         </StackPanel>
                     </Border>
+                    <TextBlock x:Name="VoiceTtsStatusText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
+                               Text="Text-to-speech: checking…" />
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <Button x:Name="SpeakStatusButton" Content="Speak status"
+                                Click="OnSpeakStatusClick" />
+                        <Button x:Name="StopSpeakingButton" Content="Stop speaking"
+                                Click="OnStopSpeakingClick" />
+                    </StackPanel>
                     <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
-                               Text="M4.3 transcribes locally only — audio stays on this device and is never logged. Voice command execution arrives in M4.5. Voice is opt-in, never always-listening, and Stop/Cancel always stops capture." />
+                               Text="M4.3 transcribes locally only and M4.4 speaks short responses with System TTS (off by default, enable in Settings → Voice). Audio stays on this device and is never logged; no secrets are spoken. Voice command execution arrives in M4.5. Voice is opt-in, never always-listening, and Stop always stops." />
                 </StackPanel>
             </Border>
 
