@@ -43,6 +43,14 @@ public static class KnownAppCatalog
         new KnownAppInfo("notepad",   "Notepad",           "notepad",                      LaunchKind.Executable),
         new KnownAppInfo("terminal",  "Windows Terminal",  "wt",                           LaunchKind.Executable),
         new KnownAppInfo("downloads", "Downloads folder",  @"%USERPROFILE%\Downloads",     LaunchKind.Folder),
+
+        // URI-launched apps. These are typically Store/MSIX apps that register a
+        // protocol handler but have no classic .lnk on the Desktop/Start Menu, so
+        // the shortcut scan misses them. Each LaunchTarget is a registered URI
+        // scheme vetted in KnownUriCatalog — never arbitrary user text. Launching
+        // the bare scheme (e.g. "spotify:") activates the app without a payload.
+        new KnownAppInfo("spotify",   "Spotify",           "spotify:",                     LaunchKind.Uri),
+        new KnownAppInfo("whatsapp",  "WhatsApp",          "whatsapp:",                    LaunchKind.Uri),
     ];
 
     private static ImmutableDictionary<string, KnownAppInfo> BuildLookup(IReadOnlyList<KnownAppInfo> all)
@@ -62,6 +70,8 @@ public static class KnownAppCatalog
         AddAlias(builder, "wt", "terminal");
         AddAlias(builder, "googlechrome", "chrome");
         AddAlias(builder, "microsoftedge", "edge");
+        AddAlias(builder, "spotifymusic", "spotify");
+        AddAlias(builder, "whatsappdesktop", "whatsapp");
 
         return builder.ToImmutable();
 
