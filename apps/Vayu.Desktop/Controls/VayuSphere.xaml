@@ -74,6 +74,42 @@
                              Storyboard.TargetProperty="ScaleY"
                              From="0.85" To="1.12" Duration="0:0:0.44" />
         </Storyboard>
+
+        <!-- M4.6: Listening — brighter, faster breathing on the halo + visible accent ring. -->
+        <Storyboard x:Name="ListeningStoryboard" RepeatBehavior="Forever">
+            <DoubleAnimation Storyboard.TargetName="PulseScale"
+                             Storyboard.TargetProperty="ScaleX"
+                             From="0.97" To="1.10" Duration="0:0:0.9"
+                             AutoReverse="True" />
+            <DoubleAnimation Storyboard.TargetName="PulseScale"
+                             Storyboard.TargetProperty="ScaleY"
+                             From="0.97" To="1.10" Duration="0:0:0.9"
+                             AutoReverse="True" />
+            <DoubleAnimation Storyboard.TargetName="PulseHalo"
+                             Storyboard.TargetProperty="Opacity"
+                             From="0.55" To="0.95" Duration="0:0:0.9"
+                             AutoReverse="True" />
+            <DoubleAnimation Storyboard.TargetName="ProcessingRing"
+                             Storyboard.TargetProperty="Opacity"
+                             From="0.2" To="0.7" Duration="0:0:0.9"
+                             AutoReverse="True" />
+        </Storyboard>
+
+        <!-- M4.6: Speaking — soft, gentle outward glow (slower than the error flash). -->
+        <Storyboard x:Name="SpeakingStoryboard" RepeatBehavior="Forever">
+            <DoubleAnimation Storyboard.TargetName="StatusFlash"
+                             Storyboard.TargetProperty="Opacity"
+                             From="0.15" To="0.55" Duration="0:0:1.1"
+                             AutoReverse="True" />
+            <DoubleAnimation Storyboard.TargetName="StatusFlashScale"
+                             Storyboard.TargetProperty="ScaleX"
+                             From="0.95" To="1.08" Duration="0:0:1.1"
+                             AutoReverse="True" />
+            <DoubleAnimation Storyboard.TargetName="StatusFlashScale"
+                             Storyboard.TargetProperty="ScaleY"
+                             From="0.95" To="1.08" Duration="0:0:1.1"
+                             AutoReverse="True" />
+        </Storyboard>
     </UserControl.Resources>
 
     <Grid Width="320" Height="320">
