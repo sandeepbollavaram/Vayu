@@ -52,11 +52,11 @@ public sealed partial class FirstRunSetupPage : Page
 
         StepIndicatorText.Text = _vm.CurrentStep switch
         {
-            FirstRunSetupStep.Welcome => "Step 1 of 5 · Welcome",
-            FirstRunSetupStep.Mode    => "Step 2 of 5 · Pick an AI mode",
-            FirstRunSetupStep.Ollama  => "Step 3 of 5 · Ollama detection",
-            FirstRunSetupStep.Models  => "Step 4 of 5 · Model catalog",
-            FirstRunSetupStep.Verify  => "Step 5 of 5 · Verification",
+            FirstRunSetupStep.Welcome => "Welcome · storage defaults to local app data",
+            FirstRunSetupStep.Mode    => "AI Mode · Local, Online, or Hybrid",
+            FirstRunSetupStep.Ollama  => "Local AI · detect your offline runtime",
+            FirstRunSetupStep.Models  => "Local AI · model download (with permission)",
+            FirstRunSetupStep.Verify  => "Trust & Finish · readiness summary",
             _ => string.Empty,
         };
 
