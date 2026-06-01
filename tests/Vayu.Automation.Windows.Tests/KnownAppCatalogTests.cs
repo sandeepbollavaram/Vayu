@@ -11,6 +11,8 @@ public class KnownAppCatalogTests
     [InlineData("notepad")]
     [InlineData("terminal")]
     [InlineData("downloads")]
+    [InlineData("spotify")]
+    [InlineData("whatsapp")]
     public void KnownAppIds_Resolve(string appId)
     {
         var info = KnownAppCatalog.TryGet(appId);
@@ -52,6 +54,41 @@ public class KnownAppCatalogTests
         Assert.NotNull(info);
         Assert.Equal(LaunchKind.Folder, info!.LaunchKind);
         Assert.Contains("%USERPROFILE%", info.LaunchTarget, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Theory]
+    [InlineData("spotify",  "spotify:")]
+    [InlineData("whatsapp", "whatsapp:")]
+    public void UriApps_HaveUriLaunchKind_AndAllowlistedTarget(string appId, string expectedTarget)
+    {
+        var info = KnownAppCatalog.TryGet(appId);
+
+        Assert.NotNull(info);
+        Assert.Equal(LaunchKind.Uri, info!.LaunchKind);
+        Assert.Equal(expectedTarget, info.LaunchTarget);
+        // Every URI catalog entry must be launchable through the allowlist.
+        Assert.True(KnownUriCatalog.IsAllowedLaunchUri(info.LaunchTarget));
+    }
+
+    [Theory]
+    [InlineData("spotify music",   "spotify")]
+    [InlineData("whatsapp desktop", "whatsapp")]
+    public void UriApp_Aliases_NormalizeToCanonicalId(string alias, string canonicalId)
+    {
+        var info = KnownAppCatalog.TryGet(alias);
+
+        Assert.NotNull(info);
+        Assert.Equal(canonicalId, info!.AppId);
+    }
+
+    [Fact]
+    public void All_UriEntries_AreAllowlisted()
+    {
+        // Guards against ever shipping a Uri catalog entry that the launcher
+        // would reject (or, worse, a scheme that isn't vetted).
+        Assert.All(
+            KnownAppCatalog.All.Where(a => a.LaunchKind == LaunchKind.Uri),
+            info => Assert.True(KnownUriCatalog.IsAllowedLaunchUri(info.LaunchTarget)));
     }
 
     [Theory]
