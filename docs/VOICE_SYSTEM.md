@@ -1,6 +1,22 @@
 # Voice System
 
-> **Status: M4.4 — system text-to-speech.** On top of M4.1 contracts, M4.2 push-to-talk UI, and M4.3 local STT, M4.4 adds **spoken responses** via System TTS — `TextToSpeechOptions`, `TextToSpeechProviderStatus`, `VoiceAssistantPhrases`, and `SystemTextToSpeechService` (validation, length cap, and a secret-guard) backed by a desktop `WinUiSpeechAdapter` (`Windows.Media.SpeechSynthesis`). TTS is **off by default** and opt-in (Settings → Voice toggle); the Home Voice card has **Speak status** + **Stop speaking**. Vayu only ever speaks short neutral phrases ("Done.", "Cancelled.", "I need confirmation to do that.") — **never user content, never a secret** (the guard refuses key/token/PEM-looking text). No cloud TTS, no audio files. Local STT (M4.3) remains a shell; the voice→command pipeline is still **M4.5**. The design below describes the full target shape.
+> **Status: M4.5 — voice→AgentRuntime pipeline.** The voice loop is now wired into the runtime: `VoiceCommandService` turns a successful, above-floor transcript into a `CommandRequest { Source = "voice/<provider>" }` and dispatches it through the **same** `IAgentRuntime` as a typed command — so the AI Router, `IPermissionService`, and the audit log gate it identically. **No new execution path.** Voice commands are **off by default** (a Home toggle, default OFF); with the toggle off, push-to-talk transcribes only. A real transcript is required to dispatch — failed / empty / low-confidence / cancelled transcripts dispatch nothing — and since the M4.3 Whisper provider is still a shell, **nothing actually executes yet** (the UI says so honestly). After dispatch, if TTS is enabled, Vayu speaks a short secret-safe phrase (Done / I need confirmation / Cancelled / I could not complete that) — never the transcript or any command text. No cloud STT, no raw audio in logs. The design below describes the full target shape.
+
+### M4.5 voice command pipeline
+
+```
+push-to-talk → VoiceRecognitionResult (local STT)
+  └─ dispatch ONLY if Success && transcript non-empty && confidence ≥ floor && not cancelled
+       → CommandRequest { Text = transcript, Source = "voice/<provider>", Metadata = { confidence, provider } }
+         → IAgentRuntime.DispatchAsync  (AI Router → IPermissionService → agent → audit log)
+           → CommandResult  → optional short TTS phrase (secret-safe)
+```
+
+| Type | Role |
+| --- | --- |
+| `VoiceCommandOptions` | `EnableVoiceCommands` (off by default), `MinimumConfidence` (0.70), `SourcePrefix` (`voice`), `SpeakResultWhenTtsEnabled`, `MaxTranscriptChars` (500). |
+| `VoiceCommandResult` | Success / `WasDispatched` / transcript / confidence / `CommandResult` / reason / correlation id / provider. No audio. |
+| `VoiceCommandService` | `IVoiceCommandService` impl. Gates dispatch, builds the `CommandRequest`, calls `IAgentRuntime`, and speaks a short result phrase. Never bypasses permissions; never speaks secrets or command text. |
 
 ### M4.4 TTS contracts
 
@@ -62,7 +78,7 @@ The transcript is the *only* thing that crosses from the voice layer into the ru
 | M4.2 | ✅ Push-to-talk UI foundation — Home Voice card + Settings section + stub service. No capture, no STT, no execution. |
 | M4.3 | ✅ Local STT provider foundation — `ISpeechToTextProvider` + `WhisperCppSpeechToTextProvider` shell (no native binary, honest not-configured), transcript area in the Home Voice card. Audio local/in-memory; no command execution. |
 | M4.4 | ✅ TTS provider integration — `SystemTextToSpeechService` (validate + cap + secret-guard) + `WinUiSpeechAdapter` (System TTS). Off by default, opt-in toggle, Speak/Stop UI, short neutral phrases only. No cloud, no secrets spoken, no command execution. |
-| M4.5 | Voice command pipeline into `AgentRuntime`.                   |
+| M4.5 | ✅ Voice command pipeline — `VoiceCommandService` dispatches a successful, above-floor transcript through the existing `IAgentRuntime` (Source `voice/<provider>`). Off by default; failed/empty/low-confidence/cancelled never dispatch; no bypass; short secret-safe result phrase. Inert until a real STT runtime is configured. |
 | M4.6 | Vayu Sphere voice-state animation.                            |
 | M4.7 | Wake word / clap trigger — planning docs only.               |
 | M4.8 | M4 polish + demo.                                             |
