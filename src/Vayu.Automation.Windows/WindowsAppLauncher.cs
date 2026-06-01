@@ -42,6 +42,17 @@ public sealed class WindowsAppLauncher : IAppLauncher
                 agentName: AgentName));
         }
 
+        // URI launches must pass the scheme allowlist. The catalog is trusted,
+        // but this is the safety boundary that guarantees Vayu never shell-opens
+        // anything but a vetted, payload-free registered scheme.
+        if (info.LaunchKind == LaunchKind.Uri && !KnownUriCatalog.IsAllowedLaunchUri(info.LaunchTarget))
+        {
+            return Task.FromResult(CommandResult.Failed(
+                $"Launch URI for {info.DisplayName} is not on Vayu's allowlist.",
+                errorCode: "UNSAFE_URI",
+                agentName: AgentName));
+        }
+
         var target = info.LaunchKind == LaunchKind.Folder
             ? Environment.ExpandEnvironmentVariables(info.LaunchTarget)
             : info.LaunchTarget;
