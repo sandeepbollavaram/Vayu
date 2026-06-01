@@ -32,6 +32,18 @@ Give a non-technical Windows user everything they need to install Vayu, set it u
 ### 3. Everyday use (Version 1)
 - Using the command box.
 - Using voice (push-to-talk, listening/thinking/speaking states).
+- **Voice triggers — wake word & clap (future, opt-in)**:
+  - How to **enable/disable the wake word** ("Hey Vayu") — off by default; how
+    to turn it on, choose the phrase, and turn it back off.
+  - How to **enable/disable the clap trigger** (double-clap) — off by default;
+    why it's best in quiet rooms.
+  - **Privacy expectations**: detection runs locally; no cloud wake detection by
+    default; no audio is ever saved or logged; a visible indicator shows whenever
+    the mic is armed/listening; a trigger only *starts listening* — it never runs
+    a command by itself, and every command still passes permissions + audit.
+  - **How to stop listening**: the always-visible stop/disable control, how to
+    cancel an in-progress listen, and how to clear any retained voice metadata.
+  - *(Push-to-talk remains the default and needs none of the above.)*
 - Opening apps.
 - Using safe desktop automation (typing/clicking with confirmation).
 - Using workflows.
