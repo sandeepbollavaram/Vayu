@@ -43,18 +43,23 @@ public sealed class AppLauncherAgent : IAgent
 
     private readonly IAppLauncher _launcher;
     private readonly InstalledAppCatalog? _installed;
+    private readonly IAppPathResolver? _appPaths;
 
     /// <summary>
-    /// Constructs the agent. <paramref name="installed"/> is optional —
-    /// without it, only entries in <see cref="KnownAppCatalog"/> are
-    /// reachable. Tests typically pass <see langword="null"/> and exercise
-    /// just the static catalog path.
+    /// Constructs the agent. <paramref name="installed"/> and
+    /// <paramref name="appPaths"/> are optional — without them, only entries in
+    /// <see cref="KnownAppCatalog"/> are reachable. Tests typically pass
+    /// <see langword="null"/> and exercise just the static catalog path.
     /// </summary>
-    public AppLauncherAgent(IAppLauncher launcher, InstalledAppCatalog? installed = null)
+    public AppLauncherAgent(
+        IAppLauncher launcher,
+        InstalledAppCatalog? installed = null,
+        IAppPathResolver? appPaths = null)
     {
         ArgumentNullException.ThrowIfNull(launcher);
         _launcher = launcher;
         _installed = installed;
+        _appPaths = appPaths;
     }
 
     /// <inheritdoc />
@@ -89,13 +94,27 @@ public sealed class AppLauncherAgent : IAgent
                 plan);
         }
 
-        // 1. Static catalog (Chrome, Edge, VS Code, Notepad, Terminal, Downloads + aliases).
+        // 1. Static catalog (known apps, folders, vetted URI schemes + aliases).
         if (KnownAppCatalog.TryGet(app) is not null)
         {
             return await _launcher.LaunchAsync(app, cancellationToken).ConfigureAwait(false);
         }
 
-        // 2. Installed-app discovery (Desktop + Start Menu).
+        // 2. Windows App Paths registry — catches normal installs (e.g. Spotify's
+        //    classic installer) that register an executable but leave no shortcut.
+        //    Resolves to a validated .exe path only; never a command line.
+        if (_appPaths is not null && OperatingSystem.IsWindows())
+        {
+            var exe = _appPaths.TryResolveExecutable(app);
+            if (exe is not null)
+            {
+                return await _launcher
+                    .LaunchExecutablePathAsync(exe, app, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+        }
+
+        // 3. Installed-app discovery (Desktop + Start Menu shortcuts).
         if (_installed is not null)
         {
             var matches = await _installed.SearchAsync(app, cancellationToken).ConfigureAwait(false);
