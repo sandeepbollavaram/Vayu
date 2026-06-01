@@ -30,7 +30,8 @@ public static class KnownUriCatalog
         ImmutableHashSet.Create(
             StringComparer.OrdinalIgnoreCase,
             "spotify",
-            "whatsapp");
+            "whatsapp",
+            "ms-settings");
 
     /// <summary>
     /// Returns <see langword="true"/> only when <paramref name="target"/> is a
