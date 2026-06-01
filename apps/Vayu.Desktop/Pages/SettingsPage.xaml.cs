@@ -70,10 +70,30 @@ public sealed partial class SettingsPage : Page
         {
             Loaded += OnSttStatusLoaded;
         }
+
+        // M4.4: TTS opt-in toggle (off by default).
+        _ttsState = App.Services?.GetService<VoiceTtsState>();
+        if (_ttsState is not null)
+        {
+            TtsToggle.IsOn = _ttsState.Enabled;
+        }
     }
 
     private readonly ISpeechToTextProvider? _sttProvider;
+    private readonly VoiceTtsState? _ttsState;
     private bool _suppressModeChange;
+
+    private void OnTtsToggled(object sender, RoutedEventArgs e)
+    {
+        if (_ttsState is null)
+        {
+            return;
+        }
+        _ttsState.Enabled = TtsToggle.IsOn;
+        VoiceTtsStatusText.Text = _ttsState.Enabled
+            ? "Text-to-speech: on. Short neutral phrases only — Vayu never speaks secrets or user content."
+            : "Text-to-speech: off.";
+    }
 
     private async void OnSttStatusLoaded(object sender, RoutedEventArgs e)
     {
