@@ -24,11 +24,13 @@ public sealed partial class HomePage : Page
     private readonly IAgentRuntime _runtime;
     private readonly IAuditLogService _audit;
 
-    // M4.2/M4.3: push-to-talk UI + local STT foundation. No real mic capture, no command execution.
+    // M4.2/M4.3/M4.4/M4.5: push-to-talk UI + local STT + TTS + voice command pipeline.
     private readonly IVoiceInputService? _voiceInput;
     private readonly IVoiceActivitySink? _voiceSink;
     private readonly ISpeechToTextProvider? _sttProvider;
     private readonly ITextToSpeechService? _tts;
+    private readonly VoiceCommandService? _voiceCommands;
+    private bool _voiceCommandsEnabled;
     private VoiceSession? _voiceSession;
 
     /// <summary>Bound to the "Recent activity" preview at the bottom of the page.</summary>
@@ -43,6 +45,7 @@ public sealed partial class HomePage : Page
         _voiceSink = App.Services.GetService<IVoiceActivitySink>();
         _sttProvider = App.Services.GetService<ISpeechToTextProvider>();
         _tts = App.Services.GetService<ITextToSpeechService>();
+        _voiceCommands = App.Services.GetService<VoiceCommandService>();
     }
 
     protected override async void OnNavigatedTo(NavigationEventArgs e)
@@ -151,6 +154,9 @@ public sealed partial class HomePage : Page
         await _voiceInput.StartPushToTalkAsync(_voiceSession).ConfigureAwait(true);
     }
 
+    private void OnVoiceCommandsToggled(object sender, RoutedEventArgs e)
+        => _voiceCommandsEnabled = VoiceCommandsToggle.IsOn && _voiceCommands is not null;
+
     private async void OnStopVoiceClick(object sender, RoutedEventArgs e)
     {
         if (_voiceInput is not null)
@@ -158,30 +164,50 @@ public sealed partial class HomePage : Page
             await _voiceInput.StopAsync().ConfigureAwait(true);
         }
 
-        // Transcribe phase. No audio was captured in M4.3, so we pass an empty
-        // buffer; the local provider returns its safe not-configured result.
         SetVoiceUi(VoiceInteractionState.Transcribing, "TRANSCRIBING");
         await PublishVoiceAsync("Transcribing.").ConfigureAwait(true);
 
-        if (_sttProvider is not null)
+        if (_voiceCommandsEnabled && _voiceCommands is not null)
         {
-            try
+            // M4.5: route the transcript through the SAME runtime as typed commands.
+            // With the current Whisper shell, no real transcript is produced, so the
+            // service reports "not dispatched" — nothing executes.
+            var vc = await _voiceCommands.StartPushToTalkCommandDetailedAsync().ConfigureAwait(true);
+            VoiceTranscriptText.Text = string.IsNullOrEmpty(vc.Transcript)
+                ? "No transcript (real STT not configured)."
+                : vc.Transcript;
+            VoiceCommandResultText.Text = vc.WasDispatched
+                ? $"Dispatched · {vc.CommandResult?.Status}"
+                : $"Not dispatched · {vc.ErrorMessage}";
+            if (vc.WasDispatched)
             {
-                var result = await _sttProvider
-                    .TranscribeAsync(ReadOnlyMemory<byte>.Empty)
-                    .ConfigureAwait(true);
-                VoiceTranscriptText.Text = result.Success
-                    ? result.Transcript
-                    : result.ErrorMessage ?? "No transcript.";
-            }
-            catch
-            {
-                VoiceTranscriptText.Text = "Transcription failed.";
+                await RefreshRecentAsync().ConfigureAwait(true);
             }
         }
         else
         {
-            VoiceTranscriptText.Text = "No local STT provider configured.";
+            // Transcribe-only path (toggle off). No command runs.
+            VoiceCommandResultText.Text = "Voice commands are off — transcribe only.";
+            if (_sttProvider is not null)
+            {
+                try
+                {
+                    var result = await _sttProvider
+                        .TranscribeAsync(ReadOnlyMemory<byte>.Empty)
+                        .ConfigureAwait(true);
+                    VoiceTranscriptText.Text = result.Success
+                        ? result.Transcript
+                        : result.ErrorMessage ?? "No transcript.";
+                }
+                catch
+                {
+                    VoiceTranscriptText.Text = "Transcription failed.";
+                }
+            }
+            else
+            {
+                VoiceTranscriptText.Text = "No local STT provider configured.";
+            }
         }
 
         _voiceSession = _voiceSession?.WithState(VoiceInteractionState.Idle);
