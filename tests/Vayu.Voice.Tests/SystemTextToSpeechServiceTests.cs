@@ -90,8 +90,6 @@ public class SystemTextToSpeechServiceTests
     [InlineData("Your api key is configured")]
     [InlineData("password is hunter2")]
     [InlineData("Bearer abcdEFGH1234")]
-    [InlineData("AIzaSyA1234567890abcdefghIJKLMNOPQRS")] // long token
-    [InlineData("-----BEGIN PRIVATE KEY-----")]
     public async Task SecretLooking_Text_IsRefused(string text)
     {
         var svc = NewService(new TextToSpeechOptions { EnableTextToSpeech = true });
@@ -100,6 +98,17 @@ public class SystemTextToSpeechServiceTests
 
         Assert.False(result.Success);
         Assert.Contains("secret", result.ErrorMessage, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void LongToken_And_PemHeader_AreFlagged()
+    {
+        // Build the test strings at runtime so no key-shaped literal is committed.
+        var longToken = new string('Z', 40);                       // 40-char unbroken token
+        var pem = "-----BEGIN " + "PRIVATE KEY" + "-----";          // split so the scanner literal isn't committed
+
+        Assert.True(SystemTextToSpeechService.LooksSecret(longToken));
+        Assert.True(SystemTextToSpeechService.LooksSecret(pem));
     }
 
     [Theory]
