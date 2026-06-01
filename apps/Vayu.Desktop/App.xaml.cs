@@ -174,9 +174,14 @@ public partial class App : Application
             sp.GetRequiredService<IAuditLogService>(),
             sp.GetRequiredService<AgentRuntimeOptions>()));
 
-        // --- M4.2: voice push-to-talk UI foundation (stub — no mic capture, no STT) ---
+        // --- M4.2: voice push-to-talk UI foundation (stub — no mic capture) ---
         services.AddSingleton<IVoiceInputService, StubVoiceInputService>();
         services.AddSingleton<IVoiceActivitySink>(_ => new InMemoryVoiceActivitySink());
+
+        // --- M4.3: local STT provider (Whisper.cpp shell; off by default, no native runtime) ---
+        services.AddSingleton(new LocalSpeechToTextOptions());
+        services.AddSingleton<ISpeechToTextProvider>(sp =>
+            new WhisperCppSpeechToTextProvider(sp.GetRequiredService<LocalSpeechToTextOptions>()));
 
         // --- First Run Setup Wizard (M2.5): in-memory state for now; SQLite persistence lands in M2.8 ---
         services.AddSingleton<IFirstRunSetupService>(sp => new InMemoryFirstRunSetupService(
