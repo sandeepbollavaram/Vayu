@@ -183,6 +183,21 @@ public partial class App : Application
         services.AddSingleton<ISpeechToTextProvider>(sp =>
             new WhisperCppSpeechToTextProvider(sp.GetRequiredService<LocalSpeechToTextOptions>()));
 
+        // --- M4.4: system TTS (off by default; opt-in via the Settings toggle/VoiceTtsState) ---
+        services.AddSingleton(new TextToSpeechOptions());
+        services.AddSingleton(new VoiceTtsState());
+        services.AddSingleton<WinUiSpeechAdapter>();
+        services.AddSingleton<ITextToSpeechService>(sp =>
+        {
+            var adapter = sp.GetRequiredService<WinUiSpeechAdapter>();
+            var state = sp.GetRequiredService<VoiceTtsState>();
+            return new SystemTextToSpeechService(
+                sp.GetRequiredService<TextToSpeechOptions>(),
+                speakAsync: adapter.SpeakAsync,
+                stopAsync: adapter.StopAsync,
+                isEnabledOverride: () => state.Enabled);
+        });
+
         // --- First Run Setup Wizard (M2.5): in-memory state for now; SQLite persistence lands in M2.8 ---
         services.AddSingleton<IFirstRunSetupService>(sp => new InMemoryFirstRunSetupService(
             sp.GetRequiredService<IClock>()));
