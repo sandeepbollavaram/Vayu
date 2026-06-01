@@ -28,6 +28,7 @@ public sealed partial class HomePage : Page
     private readonly IVoiceInputService? _voiceInput;
     private readonly IVoiceActivitySink? _voiceSink;
     private readonly ISpeechToTextProvider? _sttProvider;
+    private readonly ITextToSpeechService? _tts;
     private VoiceSession? _voiceSession;
 
     /// <summary>Bound to the "Recent activity" preview at the bottom of the page.</summary>
@@ -41,6 +42,7 @@ public sealed partial class HomePage : Page
         _voiceInput = App.Services.GetService<IVoiceInputService>();
         _voiceSink = App.Services.GetService<IVoiceActivitySink>();
         _sttProvider = App.Services.GetService<ISpeechToTextProvider>();
+        _tts = App.Services.GetService<ITextToSpeechService>();
     }
 
     protected override async void OnNavigatedTo(NavigationEventArgs e)
@@ -49,6 +51,48 @@ public sealed partial class HomePage : Page
         await RefreshRecentAsync().ConfigureAwait(true);
         await RefreshMicStatusAsync().ConfigureAwait(true);
         await RefreshSttStatusAsync().ConfigureAwait(true);
+        await RefreshTtsStatusAsync().ConfigureAwait(true);
+    }
+
+    private async Task RefreshTtsStatusAsync()
+    {
+        if (_tts is null)
+        {
+            VoiceTtsStatusText.Text = "Text-to-speech: no provider registered.";
+            return;
+        }
+        if (_tts is Vayu.Voice.SystemTextToSpeechService systemTts)
+        {
+            var status = await systemTts.GetStatusAsync().ConfigureAwait(true);
+            VoiceTtsStatusText.Text = $"Text-to-speech ({status.ProviderName}): {status.Message}";
+        }
+        else
+        {
+            VoiceTtsStatusText.Text = "Text-to-speech: ready.";
+        }
+    }
+
+    private async void OnSpeakStatusClick(object sender, RoutedEventArgs e)
+    {
+        if (_tts is null)
+        {
+            return;
+        }
+        // Speak a short, neutral, secret-free phrase — never user content.
+        var phrase = Vayu.Voice.VoiceAssistantPhrases.Done;
+        var result = await _tts.SpeakAsync(new Vayu.Voice.SpeechSynthesisRequest(phrase)).ConfigureAwait(true);
+        if (!result.Success)
+        {
+            VoiceTtsStatusText.Text = $"Text-to-speech: {result.ErrorMessage}";
+        }
+    }
+
+    private async void OnStopSpeakingClick(object sender, RoutedEventArgs e)
+    {
+        if (_tts is not null)
+        {
+            await _tts.StopAsync().ConfigureAwait(true);
+        }
     }
 
     // ---- M4.2/M4.3: push-to-talk + local STT foundation ----
