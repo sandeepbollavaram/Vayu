@@ -198,6 +198,18 @@ public partial class App : Application
                 isEnabledOverride: () => state.Enabled);
         });
 
+        // --- M4.5: voice → AgentRuntime pipeline (off by default; same runtime/permission/audit as typed) ---
+        // The service's own EnableVoiceCommands gate is on; the Home toggle decides whether to route to it.
+        services.AddSingleton(new VoiceCommandOptions { EnableVoiceCommands = true });
+        services.AddSingleton(sp => new VoiceCommandService(
+            sp.GetRequiredService<IVoiceInputService>(),
+            sp.GetRequiredService<IAgentRuntime>(),
+            sp.GetRequiredService<IClock>(),
+            sp.GetRequiredService<VoiceCommandOptions>(),
+            sp.GetService<IVoiceActivitySink>(),
+            sp.GetService<ITextToSpeechService>(),
+            sp.GetService<VoiceTtsState>()));
+
         // --- First Run Setup Wizard (M2.5): in-memory state for now; SQLite persistence lands in M2.8 ---
         services.AddSingleton<IFirstRunSetupService>(sp => new InMemoryFirstRunSetupService(
             sp.GetRequiredService<IClock>()));
