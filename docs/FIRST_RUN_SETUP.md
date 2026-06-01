@@ -43,6 +43,14 @@ Until M4.R, setup was only reachable as a **Setup** tab in the nav rail, so a ne
 
 The dedicated, full-window installer-style setup *shell* (collecting data/workspace/logs/cache/model/asset paths in one flow) remains the forward-looking target above; M4.R lands the entry-point behaviour without overbuilding the installer.
 
+### M4.R2 — the page reads as a Setup Dashboard
+
+M4.R2 reshapes the page so it looks and reads like a dedicated onboarding flow rather than a settings page:
+
+- Titled **Vayu Setup Dashboard** with a visible **stage stepper**: Welcome · Storage · AI Mode · Local AI · Online AI · Voice · Trust & Finish.
+- A **Storage** stage preview lists the paths the dashboard will own — Vayu workspace, logs, cache, local models, generated assets — and states they default to a safe folder under `%LOCALAPPDATA%\Vayu`. **Custom path selection is shown as planned**; the safe defaults are used until the file-picker flow lands (kept out of M4.R2 to avoid an unsafe/no-op picker).
+- All remaining milestone/prototype wording was removed in favour of product copy (Permission Guard, Local/Online AI, permission-based downloads). The underlying step state machine and the consented model-pull flow are unchanged.
+
 ## Flow
 
 ```
