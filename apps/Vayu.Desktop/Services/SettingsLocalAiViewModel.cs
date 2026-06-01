@@ -279,13 +279,13 @@ public sealed class SettingsLocalAiViewModel : INotifyPropertyChanged
         }
         if (isReachable)
         {
-            return "Ollama is running but no models are installed yet. Model download arrives in M2.6 with explicit permission.";
+            return "Ollama is running but no models are installed yet. Download one from the Setup Dashboard — it always asks for permission first.";
         }
         if (isExecutable)
         {
             return "Ollama is installed but the local server is not running. Start it with 'ollama serve' or restart Ollama.";
         }
-        return "Ollama is not detected yet. The First Run Setup Wizard will guide installation in M2.5. No installation happens automatically.";
+        return "Ollama is not detected yet. The Setup Dashboard will guide installation. Nothing installs automatically.";
     }
 
     private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
