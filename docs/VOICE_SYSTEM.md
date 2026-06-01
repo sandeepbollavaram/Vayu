@@ -1,6 +1,10 @@
 # Voice System
 
-> **Status: M4.5 — voice→AgentRuntime pipeline.** The voice loop is now wired into the runtime: `VoiceCommandService` turns a successful, above-floor transcript into a `CommandRequest { Source = "voice/<provider>" }` and dispatches it through the **same** `IAgentRuntime` as a typed command — so the AI Router, `IPermissionService`, and the audit log gate it identically. **No new execution path.** Voice commands are **off by default** (a Home toggle, default OFF); with the toggle off, push-to-talk transcribes only. A real transcript is required to dispatch — failed / empty / low-confidence / cancelled transcripts dispatch nothing — and since the M4.3 Whisper provider is still a shell, **nothing actually executes yet** (the UI says so honestly). After dispatch, if TTS is enabled, Vayu speaks a short secret-safe phrase (Done / I need confirmation / Cancelled / I could not complete that) — never the transcript or any command text. No cloud STT, no raw audio in logs. The design below describes the full target shape.
+> **Status: M4.6 — Vayu Sphere voice-state polish.** On top of the wired voice pipeline (M4.5), M4.6 makes the **Vayu Sphere read the voice state at a glance**. `VoiceStateVisualMapper` (pure, testable) maps each `VoiceInteractionState` to a `VoiceVisualToken`, and `VayuSphere.SetVoiceState` turns that into a distinct lightweight cue: a calm idle pulse, a brighter/faster **Listening** pulse (cyan), a blue **Transcribing** scan, a violet **Thinking** accent, a teal **Executing** ring, a soft **Speaking** glow, a red **Error** flash, and an amber **Cancelled** fade. The Home Voice card shows a colour-matched state chip. **Visual-only** — no audio amplitude, no microphone/capture changes, no command-pipeline changes; the existing app-command Processing/Success/Error animations are untouched and repeated push-to-talk/stop never leaves a stuck animation. The design below describes the full target shape.
+
+### M4.5 voice command pipeline (unchanged)
+
+`VoiceCommandService` turns a successful, above-floor transcript into a `CommandRequest { Source = "voice/<provider>" }` dispatched through the **same** `IAgentRuntime` as a typed command. **No new execution path.** Off by default; failed/empty/low-confidence/cancelled dispatch nothing; inert until a real STT runtime is configured; short secret-safe TTS phrase after dispatch.
 
 ### M4.5 voice command pipeline
 
@@ -79,7 +83,7 @@ The transcript is the *only* thing that crosses from the voice layer into the ru
 | M4.3 | ✅ Local STT provider foundation — `ISpeechToTextProvider` + `WhisperCppSpeechToTextProvider` shell (no native binary, honest not-configured), transcript area in the Home Voice card. Audio local/in-memory; no command execution. |
 | M4.4 | ✅ TTS provider integration — `SystemTextToSpeechService` (validate + cap + secret-guard) + `WinUiSpeechAdapter` (System TTS). Off by default, opt-in toggle, Speak/Stop UI, short neutral phrases only. No cloud, no secrets spoken, no command execution. |
 | M4.5 | ✅ Voice command pipeline — `VoiceCommandService` dispatches a successful, above-floor transcript through the existing `IAgentRuntime` (Source `voice/<provider>`). Off by default; failed/empty/low-confidence/cancelled never dispatch; no bypass; short secret-safe result phrase. Inert until a real STT runtime is configured. |
-| M4.6 | Vayu Sphere voice-state animation.                            |
+| M4.6 | ✅ Vayu Sphere voice-state animation — `VoiceStateVisualMapper` + distinct sphere cues per state (listening/transcribing/thinking/executing/speaking/error/cancelled) + Home state chip. Visual-only; no audio amplitude; app-command animations untouched. |
 | M4.7 | Wake word / clap trigger — planning docs only.               |
 | M4.8 | M4 polish + demo.                                             |
 
