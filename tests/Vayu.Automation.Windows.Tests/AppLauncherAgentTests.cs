@@ -68,6 +68,25 @@ public class AppLauncherAgentTests : IDisposable
     }
 
     [Fact]
+    public async Task ExecuteAsync_Spotify_ResolvesViaKnownCatalog_NotShortcutScan()
+    {
+        // Regression: "open spotify" used to fall through to the Start-Menu scan
+        // and fail (Spotify is a Store/MSIX app with no classic .lnk). It is now
+        // a URI catalog entry, so it resolves on the static path with no shortcut
+        // catalog configured at all.
+        var launcher = new FakeLauncher(
+            answer: CommandResult.Success(message: "Launched Spotify.", agentName: "AppLauncher"));
+        var agent = new AppLauncherAgent(launcher);
+
+        var result = await agent.ExecuteAsync(Plan(("app", "spotify")));
+
+        Assert.Equal(CommandStatus.Success, result.Status);
+        Assert.Equal("spotify", launcher.LastAppId);
+        Assert.Equal(1, launcher.LaunchAsyncCallCount);
+        Assert.Equal(0, launcher.LaunchShortcutCallCount);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_UnknownApp_NoInstalledCatalog_ReturnsFailedUnknown()
     {
         var launcher = new FakeLauncher();
@@ -85,21 +104,24 @@ public class AppLauncherAgentTests : IDisposable
     [Fact]
     public async Task ExecuteAsync_UnknownApp_InstalledCatalogSingleMatch_CallsLaunchShortcut()
     {
+        // Uses an app NOT in the static KnownAppCatalog (Slack) so the request
+        // actually reaches the shortcut scan. (Spotify is now a static URI entry
+        // and short-circuits before the scan — see the Spotify regression test.)
         var desktop = Path.Combine(_tempRoot, "Desktop");
         Directory.CreateDirectory(desktop);
-        File.WriteAllText(Path.Combine(desktop, "Spotify.lnk"), "fake");
+        File.WriteAllText(Path.Combine(desktop, "Slack.lnk"), "fake");
         var catalog = new InstalledAppCatalog(
             new List<(string, string)> { (desktop, "UserDesktop") });
         var launcher = new FakeLauncher();
         var agent = new AppLauncherAgent(launcher, catalog);
 
-        var result = await agent.ExecuteAsync(Plan(("app", "spotify")));
+        var result = await agent.ExecuteAsync(Plan(("app", "slack")));
 
         Assert.Equal(CommandStatus.Success, result.Status);
         Assert.Equal(0, launcher.LaunchAsyncCallCount);
         Assert.Equal(1, launcher.LaunchShortcutCallCount);
         Assert.NotNull(launcher.LastShortcut);
-        Assert.Equal("Spotify", launcher.LastShortcut!.DisplayName);
+        Assert.Equal("Slack", launcher.LastShortcut!.DisplayName);
     }
 
     [Fact]
@@ -107,19 +129,19 @@ public class AppLauncherAgentTests : IDisposable
     {
         var desktop = Path.Combine(_tempRoot, "Desktop");
         Directory.CreateDirectory(desktop);
-        File.WriteAllText(Path.Combine(desktop, "Spotify Free.lnk"), "fake");
-        File.WriteAllText(Path.Combine(desktop, "Spotify Studio.lnk"), "fake");
+        File.WriteAllText(Path.Combine(desktop, "Slack Free.lnk"), "fake");
+        File.WriteAllText(Path.Combine(desktop, "Slack Studio.lnk"), "fake");
         var catalog = new InstalledAppCatalog(
             new List<(string, string)> { (desktop, "UserDesktop") });
         var launcher = new FakeLauncher();
         var agent = new AppLauncherAgent(launcher, catalog);
 
-        var result = await agent.ExecuteAsync(Plan(("app", "spotify")));
+        var result = await agent.ExecuteAsync(Plan(("app", "slack")));
 
         Assert.Equal(CommandStatus.NeedsClarification, result.Status);
         Assert.NotNull(result.ClarificationPrompt);
-        Assert.Contains("Spotify Free", result.ClarificationPrompt);
-        Assert.Contains("Spotify Studio", result.ClarificationPrompt);
+        Assert.Contains("Slack Free", result.ClarificationPrompt);
+        Assert.Contains("Slack Studio", result.ClarificationPrompt);
         Assert.Equal(0, launcher.LaunchAsyncCallCount);
         Assert.Equal(0, launcher.LaunchShortcutCallCount);
     }
@@ -132,8 +154,9 @@ public class AppLauncherAgentTests : IDisposable
         Directory.CreateDirectory(desktop);
         Directory.CreateDirectory(startMenu);
         // Same app, two roots — dedup by display name should collapse to one launch.
-        File.WriteAllText(Path.Combine(desktop, "Spotify.lnk"), "fake");
-        File.WriteAllText(Path.Combine(startMenu, "Spotify.lnk"), "fake");
+        // Uses Slack (not in the static catalog) so the scan path is exercised.
+        File.WriteAllText(Path.Combine(desktop, "Slack.lnk"), "fake");
+        File.WriteAllText(Path.Combine(startMenu, "Slack.lnk"), "fake");
         var catalog = new InstalledAppCatalog(
             new List<(string, string)>
             {
@@ -143,7 +166,7 @@ public class AppLauncherAgentTests : IDisposable
         var launcher = new FakeLauncher();
         var agent = new AppLauncherAgent(launcher, catalog);
 
-        var result = await agent.ExecuteAsync(Plan(("app", "spotify")));
+        var result = await agent.ExecuteAsync(Plan(("app", "slack")));
 
         Assert.Equal(CommandStatus.Success, result.Status);
         Assert.Equal(1, launcher.LaunchShortcutCallCount);
