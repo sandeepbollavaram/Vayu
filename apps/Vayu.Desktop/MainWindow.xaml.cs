@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
+using Vayu.Core.Setup;
 using Vayu_Desktop.Pages;
 using Vayu_Desktop.Services;
 
@@ -27,9 +28,39 @@ public sealed partial class MainWindow : Window
         _navigation = App.Services.GetRequiredService<UiNavigationService>();
         _navigation.NavigationRequested += OnNavigationRequested;
 
-        // Default to Home.
+        // Default to Home; the first-run check below may redirect to Setup.
         Nav.SelectedItem = Nav.MenuItems[0];
         ContentFrame.Navigate(typeof(HomePage));
+
+        _ = RouteFirstLaunchAsync();
+    }
+
+    /// <summary>
+    /// On a fresh install, opens the first-run setup experience before the main
+    /// Command Center. <see cref="FirstRunExperience"/> decides purely from the
+    /// persisted setup state; completing OR skipping the wizard suppresses this
+    /// on later launches. This is a strong default redirect, not a hard lock —
+    /// Vayu stays usable if the user navigates away.
+    /// </summary>
+    private async Task RouteFirstLaunchAsync()
+    {
+        FirstRunSetupState state;
+        try
+        {
+            var setup = App.Services.GetRequiredService<IFirstRunSetupService>();
+            state = await setup.GetStateAsync().ConfigureAwait(true);
+        }
+#pragma warning disable CA1031 // Startup routing must never crash the shell; fall back to Home.
+        catch (Exception)
+        {
+            return;
+        }
+#pragma warning restore CA1031
+
+        if (FirstRunExperience.ShouldShowFirstRunSetup(state))
+        {
+            NavigateTo("setup");
+        }
     }
 
     private void OnNavigationRequested(object? sender, string pageKey)
