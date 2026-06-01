@@ -179,7 +179,7 @@
                 </StackPanel>
             </Grid>
 
-            <!-- ============== VOICE (M4.2 push-to-talk foundation) ============== -->
+            <!-- ============== VOICE (M4.3 local STT foundation) ============== -->
             <Border Grid.Row="2" Style="{StaticResource VayuGlassCard}">
                 <StackPanel Spacing="12">
                     <StackPanel Orientation="Horizontal" Spacing="10">
@@ -191,14 +191,23 @@
                     </StackPanel>
                     <TextBlock x:Name="VoiceMicStatusText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
                                Text="Microphone status: checking…" />
+                    <TextBlock x:Name="VoiceSttStatusText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
+                               Text="Local STT: checking…" />
                     <StackPanel Orientation="Horizontal" Spacing="12">
                         <Button x:Name="PushToTalkButton" Content="Push to talk"
                                 Click="OnPushToTalkClick" Style="{StaticResource AccentButtonStyle}" />
                         <Button x:Name="StopVoiceButton" Content="Stop / Cancel"
                                 Click="OnStopVoiceClick" IsEnabled="False" />
                     </StackPanel>
+                    <Border Style="{StaticResource VayuGlassCardElevated}">
+                        <StackPanel Spacing="4">
+                            <TextBlock Style="{StaticResource VayuSectionText}" Text="TRANSCRIPT" />
+                            <TextBlock x:Name="VoiceTranscriptText" Style="{StaticResource VayuBodyText}" TextWrapping="Wrap"
+                                       Text="Press Push to talk, then Stop. The transcript will appear here." />
+                        </StackPanel>
+                    </Border>
                     <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
-                               Text="M4.2 UI foundation only — no microphone is captured and no command runs yet. Real transcription arrives in M4.3; the voice→command pipeline arrives in M4.5. Voice is opt-in, never always-listening." />
+                               Text="M4.3 transcribes locally only — audio stays on this device and is never logged. Voice command execution arrives in M4.5. Voice is opt-in, never always-listening, and Stop/Cancel always stops capture." />
                 </StackPanel>
             </Border>
 
