@@ -35,7 +35,7 @@
                     <Border Style="{StaticResource VayuChip}">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <Ellipse Width="8" Height="8" Fill="{StaticResource VayuAccentCyanBrush}" />
-                            <TextBlock Style="{StaticResource VayuChipText}" Text="MODE · OFFLINE" />
+                            <TextBlock x:Name="ModeChipText" Style="{StaticResource VayuChipText}" Text="AI MODE · LOCAL" />
                         </StackPanel>
                     </Border>
                     <Border Style="{StaticResource VayuChipTeal}">
@@ -47,11 +47,14 @@
                             <TextBlock x:Name="RuntimeChipText" Style="{StaticResource VayuChipText}" Text="RUNTIME · READY" />
                         </StackPanel>
                     </Border>
+                    <Border Style="{StaticResource VayuChip}">
+                        <TextBlock x:Name="VoiceChipText" Style="{StaticResource VayuChipText}" Text="VOICE · IDLE" />
+                    </Border>
                     <Border Style="{StaticResource VayuChipTeal}">
-                        <TextBlock Style="{StaticResource VayuChipText}" Text="PERMISSIONS · SAFE" />
+                        <TextBlock Style="{StaticResource VayuChipText}" Text="PERMISSION GUARD · ON" />
                     </Border>
                     <Border Style="{StaticResource VayuChipViolet}">
-                        <TextBlock Style="{StaticResource VayuChipText}" Text="MEMORY · LOCAL AUDIT" />
+                        <TextBlock Style="{StaticResource VayuChipText}" Text="AUDIT LOG · LOCAL" />
                     </Border>
                 </StackPanel>
             </Grid>
@@ -168,7 +171,23 @@
 
                     <Border Style="{StaticResource VayuGlassCard}">
                         <StackPanel Spacing="6">
-                            <TextBlock Style="{StaticResource VayuSectionText}" Text="TRUST &amp; SAFETY" />
+                            <TextBlock Style="{StaticResource VayuSectionText}" Text="AGENT QUEUE" />
+                            <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
+                                       Text="No agents queued. Coordinated agents, model calls, downloads, and builds will appear here with per-item approval and stop controls." />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource VayuGlassCard}">
+                        <StackPanel Spacing="6">
+                            <TextBlock Style="{StaticResource VayuSectionText}" Text="AI RUNTIME" />
+                            <TextBlock x:Name="ProviderSummaryText" Style="{StaticResource VayuBodyText}" TextWrapping="Wrap"
+                                       Text="Local-first. Local AI (Ollama), Online AI (Gemini), and Hybrid routing are available — pick a mode in Settings → AI Mode. Cloud calls ask for consent every time." />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource VayuGlassCard}">
+                        <StackPanel Spacing="6">
+                            <TextBlock Style="{StaticResource VayuSectionText}" Text="TRUST GUARD" />
                             <TextBlock Style="{StaticResource VayuBodyText}" TextWrapping="Wrap"
                                        Text="Every action is permission-gated and audit-logged. L0–L2 auto-allow; L3+ ask first; L6 is disabled. Vayu never runs arbitrary commands." />
                         </StackPanel>
@@ -176,28 +195,20 @@
 
                     <Border Style="{StaticResource VayuGlassCard}">
                         <StackPanel Spacing="6">
-                            <TextBlock Style="{StaticResource VayuSectionText}" Text="AI PROVIDER" />
-                            <TextBlock x:Name="ProviderSummaryText" Style="{StaticResource VayuBodyText}" TextWrapping="Wrap"
-                                       Text="Local-first. Offline (Ollama), Online (Gemini), and Hybrid routing are available — pick a mode in Settings. Cloud calls ask for consent every time." />
-                        </StackPanel>
-                    </Border>
-
-                    <Border Style="{StaticResource VayuGlassCard}">
-                        <StackPanel Spacing="6">
-                            <TextBlock Style="{StaticResource VayuSectionText}" Text="SETUP" />
+                            <TextBlock Style="{StaticResource VayuSectionText}" Text="SETUP HEALTH" />
                             <TextBlock Style="{StaticResource VayuBodyText}" TextWrapping="Wrap"
-                                       Text="First launch opens setup automatically. Re-run it any time from Settings → Open First Run Setup to check Ollama, download a model (with permission), or add an online provider key." />
+                                       Text="First launch opens the Setup Dashboard automatically. Re-run it any time from Settings → Open Setup Dashboard to check Local AI, download a model (with permission), or add an Online AI key." />
                         </StackPanel>
                     </Border>
                 </StackPanel>
             </Grid>
 
-            <!-- ============== VOICE (M4.3 local STT foundation) ============== -->
+            <!-- ============== VOICE ============== -->
             <Border Grid.Row="2" Style="{StaticResource VayuGlassCard}">
                 <StackPanel Spacing="12">
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <Border Width="3" Height="14" Background="{StaticResource VayuAccentVioletBrush}" />
-                        <TextBlock Style="{StaticResource VayuSectionText}" Text="VOICE" VerticalAlignment="Center" />
+                        <TextBlock Style="{StaticResource VayuSectionText}" Text="VOICE SETUP" VerticalAlignment="Center" />
                         <Border x:Name="VoiceStateBadge" Style="{StaticResource VayuChip}" VerticalAlignment="Center">
                             <TextBlock x:Name="VoiceStateText" Style="{StaticResource VayuChipText}" Text="IDLE" />
                         </Border>
@@ -233,6 +244,8 @@
                         <Button x:Name="StopSpeakingButton" Content="Stop speaking"
                                 Click="OnStopSpeakingClick" />
                     </StackPanel>
+                    <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
+                               Text="Wake word (&quot;Hey Vayu&quot;) and clap trigger: planned, opt-in, and off by default — Vayu is never always-listening." />
                     <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
                                Text="Honest state: push-to-talk and text-to-speech are wired; a local speech-to-text runtime is NOT configured yet, so push-to-talk produces no transcript and voice commands stay inert until one is set up. When a real transcript exists, it is dispatched through the same permission/audit pipeline as a typed command — voice never bypasses it. Wake word and clap trigger are planned and opt-in; Vayu is never always-listening. Audio stays on this device and is never logged; no secrets are spoken; Stop always stops." />
                 </StackPanel>
