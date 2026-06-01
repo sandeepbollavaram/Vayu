@@ -1,6 +1,17 @@
 # Voice System
 
-> **Status: M4.2 — push-to-talk UI foundation.** The voice architecture (M4.1) plus a **push-to-talk UI** now exist: the Home **Voice** card shows mic status, a Push-to-talk button, and Stop/Cancel, and drives the `VoiceSession` state machine + the Vayu Sphere. There is still **no real speech recognition, no microphone capture, and no always-listening** — `StubVoiceInputService` returns an honest "recognition arrives in M4.3" result and never fakes a transcript or runs a command. Real STT is **M4.3**; the voice→command pipeline is **M4.5**. The design below describes the full target shape.
+> **Status: M4.3 — local STT provider foundation.** On top of the M4.1 contracts and the M4.2 push-to-talk UI, M4.3 adds the **local speech-to-text provider abstraction** — `ISpeechToTextProvider`, `LocalSpeechToTextOptions`, `SpeechToTextProviderStatus`, and a `WhisperCppSpeechToTextProvider` **shell**. Whisper.cpp is the first planned local path; the shell detects whether a model is configured but ships **no native binary** (so CI stays clean), returning an honest *"shell ready; native transcription runtime setup required"* result rather than a fabricated transcript. Audio stays **local and in-memory** — none is written to disk, uploaded, or logged. There is still **no real transcription, no microphone capture, and no command execution** — the voice→command pipeline is **M4.5**. The design below describes the full target shape.
+
+### M4.3 local STT contracts
+
+| Type | Role |
+| --- | --- |
+| `LocalSpeechToTextOptions` | `EnableLocalStt` (off by default), `PreferredProvider` (`whispercpp`), `ModelPath`, `MaxCaptureSeconds`. No secrets. |
+| `SpeechToTextProviderStatus` | Provider availability + configured flag + model path + message. No audio. |
+| `ISpeechToTextProvider` | `GetStatusAsync` / `TranscribeAsync(ReadOnlyMemory<byte>)`. Audio in memory only; never logged or persisted; never a cloud call. |
+| `WhisperCppSpeechToTextProvider` | First local provider **shell**. Reports not-configured when the model/runtime is absent; never requires native DLLs; never fabricates a transcript. |
+
+A clearly-labelled `MockSpeechToTextProvider` exists in the **test project only** — it returns a fixed transcript so the push-to-talk → transcribe flow can be exercised without a real engine. It is never registered in production.
 
 ## M4.1 contracts
 
@@ -38,7 +49,7 @@ The transcript is the *only* thing that crosses from the voice layer into the ru
 | ---- | -------------------------------------------------------------- |
 | M4.1 | **Voice architecture / contracts** (this section). No capture.|
 | M4.2 | ✅ Push-to-talk UI foundation — Home Voice card + Settings section + stub service. No capture, no STT, no execution. |
-| M4.3 | Local STT provider integration (Whisper.cpp first).          |
+| M4.3 | ✅ Local STT provider foundation — `ISpeechToTextProvider` + `WhisperCppSpeechToTextProvider` shell (no native binary, honest not-configured), transcript area in the Home Voice card. Audio local/in-memory; no command execution. |
 | M4.4 | TTS provider integration (System TTS first).                 |
 | M4.5 | Voice command pipeline into `AgentRuntime`.                   |
 | M4.6 | Vayu Sphere voice-state animation.                            |
