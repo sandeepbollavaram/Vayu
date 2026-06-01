@@ -199,11 +199,17 @@
                         <Button x:Name="StopVoiceButton" Content="Stop / Cancel"
                                 Click="OnStopVoiceClick" IsEnabled="False" />
                     </StackPanel>
+                    <ToggleSwitch x:Name="VoiceCommandsToggle"
+                                  Header="Enable voice commands"
+                                  OffContent="Off — transcribe only"
+                                  OnContent="On — dispatch through the permission engine"
+                                  Toggled="OnVoiceCommandsToggled" />
                     <Border Style="{StaticResource VayuGlassCardElevated}">
                         <StackPanel Spacing="4">
                             <TextBlock Style="{StaticResource VayuSectionText}" Text="TRANSCRIPT" />
                             <TextBlock x:Name="VoiceTranscriptText" Style="{StaticResource VayuBodyText}" TextWrapping="Wrap"
                                        Text="Press Push to talk, then Stop. The transcript will appear here." />
+                            <TextBlock x:Name="VoiceCommandResultText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap" Text="" />
                         </StackPanel>
                     </Border>
                     <TextBlock x:Name="VoiceTtsStatusText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
@@ -215,7 +221,7 @@
                                 Click="OnStopSpeakingClick" />
                     </StackPanel>
                     <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
-                               Text="M4.3 transcribes locally only and M4.4 speaks short responses with System TTS (off by default, enable in Settings → Voice). Audio stays on this device and is never logged; no secrets are spoken. Voice command execution arrives in M4.5. Voice is opt-in, never always-listening, and Stop always stops." />
+                               Text="With voice commands on, a real transcript is dispatched through the same permission/audit pipeline as typed commands — voice never bypasses it. A real transcript is only available once a local STT runtime is configured, so dispatch stays inert with the current Whisper shell. Audio stays on this device and is never logged; no secrets are spoken. Voice is opt-in, never always-listening, and Stop always stops." />
                 </StackPanel>
             </Border>
 
