@@ -31,4 +31,13 @@ public interface IAppLauncher
     /// must never synthesise one from arbitrary user text.
     /// </summary>
     Task<CommandResult> LaunchShortcutAsync(InstalledAppEntry entry, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Launches a validated executable path resolved from the Windows
+    /// <c>App Paths</c> registry by <see cref="WindowsAppPathsResolver"/>.
+    /// Implementations MUST re-validate that <paramref name="executablePath"/>
+    /// is an existing <c>.exe</c> with no embedded arguments before launching —
+    /// the path must never be a command line or arbitrary user text.
+    /// </summary>
+    Task<CommandResult> LaunchExecutablePathAsync(string executablePath, string displayName, CancellationToken cancellationToken = default);
 }
