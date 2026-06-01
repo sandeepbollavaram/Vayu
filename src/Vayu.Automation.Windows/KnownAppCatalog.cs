@@ -37,20 +37,24 @@ public static class KnownAppCatalog
 
     private static IReadOnlyList<KnownAppInfo> BuildAll() =>
     [
-        new KnownAppInfo("chrome",    "Google Chrome",     "chrome",                       LaunchKind.Executable),
-        new KnownAppInfo("edge",      "Microsoft Edge",    "msedge",                       LaunchKind.Executable),
-        new KnownAppInfo("vscode",    "Visual Studio Code","code",                         LaunchKind.Executable),
-        new KnownAppInfo("notepad",   "Notepad",           "notepad",                      LaunchKind.Executable),
-        new KnownAppInfo("terminal",  "Windows Terminal",  "wt",                           LaunchKind.Executable),
-        new KnownAppInfo("downloads", "Downloads folder",  @"%USERPROFILE%\Downloads",     LaunchKind.Folder),
+        new KnownAppInfo("chrome",     "Google Chrome",      "chrome",                      LaunchKind.Executable),
+        new KnownAppInfo("edge",       "Microsoft Edge",     "msedge",                      LaunchKind.Executable),
+        new KnownAppInfo("vscode",     "Visual Studio Code", "code",                        LaunchKind.Executable),
+        new KnownAppInfo("notepad",    "Notepad",            "notepad",                     LaunchKind.Executable),
+        new KnownAppInfo("terminal",   "Windows Terminal",   "wt",                          LaunchKind.Executable),
+        new KnownAppInfo("calculator", "Calculator",         "calc",                        LaunchKind.Executable),
+        new KnownAppInfo("explorer",   "File Explorer",      "explorer",                    LaunchKind.Executable),
+        new KnownAppInfo("downloads",  "Downloads folder",   @"%USERPROFILE%\Downloads",    LaunchKind.Folder),
 
-        // URI-launched apps. These are typically Store/MSIX apps that register a
-        // protocol handler but have no classic .lnk on the Desktop/Start Menu, so
-        // the shortcut scan misses them. Each LaunchTarget is a registered URI
-        // scheme vetted in KnownUriCatalog — never arbitrary user text. Launching
-        // the bare scheme (e.g. "spotify:") activates the app without a payload.
-        new KnownAppInfo("spotify",   "Spotify",           "spotify:",                     LaunchKind.Uri),
-        new KnownAppInfo("whatsapp",  "WhatsApp",          "whatsapp:",                    LaunchKind.Uri),
+        // URI-launched apps. These are typically Store/MSIX or system apps that
+        // register a protocol handler but have no classic .lnk on the Desktop or
+        // Start Menu, so the shortcut scan misses them. Each LaunchTarget is a
+        // registered URI scheme vetted in KnownUriCatalog — never arbitrary user
+        // text. Launching the bare scheme (e.g. "spotify:") activates the app
+        // without a payload.
+        new KnownAppInfo("spotify",    "Spotify",            "spotify:",                    LaunchKind.Uri),
+        new KnownAppInfo("whatsapp",   "WhatsApp",           "whatsapp:",                   LaunchKind.Uri),
+        new KnownAppInfo("settings",   "Windows Settings",   "ms-settings:",                LaunchKind.Uri),
     ];
 
     private static ImmutableDictionary<string, KnownAppInfo> BuildLookup(IReadOnlyList<KnownAppInfo> all)
@@ -72,6 +76,11 @@ public static class KnownAppCatalog
         AddAlias(builder, "microsoftedge", "edge");
         AddAlias(builder, "spotifymusic", "spotify");
         AddAlias(builder, "whatsappdesktop", "whatsapp");
+        AddAlias(builder, "calc", "calculator");
+        AddAlias(builder, "fileexplorer", "explorer");
+        AddAlias(builder, "files", "explorer");
+        AddAlias(builder, "windowssettings", "settings");
+        AddAlias(builder, "settingsapp", "settings");
 
         return builder.ToImmutable();
 
