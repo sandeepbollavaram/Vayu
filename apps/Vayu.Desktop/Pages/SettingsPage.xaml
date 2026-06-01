@@ -316,6 +316,16 @@
                     <TextBlock x:Name="VoiceSttStatusText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
                                Text="Local STT: checking…" />
                     <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Border Style="{StaticResource VayuChip}"><TextBlock Style="{StaticResource VayuChipText}" Text="SYSTEM TTS · READY" /></Border>
+                        <Border Style="{StaticResource VayuChipAmber}"><TextBlock Style="{StaticResource VayuChipText}" Text="CLOUD TTS · DISABLED" /></Border>
+                    </StackPanel>
+                    <ToggleSwitch x:Name="TtsToggle"
+                                  Header="Enable short spoken responses (System TTS)"
+                                  OffContent="Off" OnContent="On"
+                                  Toggled="OnTtsToggled" />
+                    <TextBlock x:Name="VoiceTtsStatusText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
+                               Text="Text-to-speech: off by default. Short neutral phrases only — Vayu never speaks secrets or user content." />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
                         <Border Style="{StaticResource VayuChip}"><TextBlock Style="{StaticResource VayuChipText}" Text="WAKE WORD · PLANNED" /></Border>
                         <Border Style="{StaticResource VayuChip}"><TextBlock Style="{StaticResource VayuChipText}" Text="CLAP TRIGGER · PLANNED" /></Border>
                         <Border Style="{StaticResource VayuChipAmber}"><TextBlock Style="{StaticResource VayuChipText}" Text="ALWAYS-LISTENING · OFF" /></Border>
