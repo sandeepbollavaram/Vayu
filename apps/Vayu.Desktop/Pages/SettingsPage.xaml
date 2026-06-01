@@ -310,8 +310,11 @@
                                Text="Voice is opt-in and never always-listening. The push-to-talk control lives on the Home page." />
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Border Style="{StaticResource VayuChipTeal}"><TextBlock Style="{StaticResource VayuChipText}" Text="PUSH-TO-TALK · UI READY" /></Border>
-                        <Border Style="{StaticResource VayuChip}"><TextBlock Style="{StaticResource VayuChipText}" Text="REAL STT · M4.3" /></Border>
+                        <Border Style="{StaticResource VayuChip}"><TextBlock Style="{StaticResource VayuChipText}" Text="LOCAL STT · WHISPER.CPP SHELL" /></Border>
+                        <Border Style="{StaticResource VayuChipAmber}"><TextBlock Style="{StaticResource VayuChipText}" Text="CLOUD STT · DISABLED" /></Border>
                     </StackPanel>
+                    <TextBlock x:Name="VoiceSttStatusText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
+                               Text="Local STT: checking…" />
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Border Style="{StaticResource VayuChip}"><TextBlock Style="{StaticResource VayuChipText}" Text="WAKE WORD · PLANNED" /></Border>
                         <Border Style="{StaticResource VayuChip}"><TextBlock Style="{StaticResource VayuChipText}" Text="CLAP TRIGGER · PLANNED" /></Border>
