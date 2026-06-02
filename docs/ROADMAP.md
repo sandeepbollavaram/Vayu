@@ -211,6 +211,11 @@ Features:
 - Refuses to automate unapproved process names.
 - Never elevates; never bypasses Windows permissions.
 
+| Sub  | Scope                                                                                              |
+| ---- | -------------------------------------------------------------------------------------------------- |
+| M5.1 | ✅ **Automation architecture + safety foundation** — `Vayu.Automation.Windows` contracts (`AutomationActionType`/`AutomationTarget`/`AutomationActionPlan`/`AutomationActionResult`), `AutomationSafetyPolicy` (risk classification + rejection of secret/shell text, hidden/unknown targets, unknown actions), `IWindowDiscoveryService` + `WindowsWindowDiscoveryService` (visible top-level windows only), `IAutomationConfirmationService` (+ fail-closed default), and `CommandToAutomationPlanner` (open-and-type → planned, never-typed). **No real typing/clicking/screenshot.** See [DESKTOP_AUTOMATION.md](DESKTOP_AUTOMATION.md). |
+| M5.2 | WinUI automation confirmation dialog + safe typing/click executor (UI Automation, never global SendKeys) — where "open notepad and write hello" finally types, on approval, audited. |
+
 ---
 
 ## M6 — Workflows and Local Memory (v0.6.0)
