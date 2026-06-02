@@ -71,6 +71,7 @@ public sealed partial class SettingsPage : Page
         _audioCapture = App.Services?.GetService<IAudioCaptureService>();
         _modelDownload = App.Services?.GetService<WhisperModelDownloadService>();
         PopulateModelCatalog();
+        PopulateStorageSummary();
         if (_sttProvider is not null || _audioCapture is not null)
         {
             Loaded += OnSttStatusLoaded;
@@ -208,6 +209,49 @@ public sealed partial class SettingsPage : Page
         }
         ModelCatalogCombo.SelectedIndex = 1; // base.en (recommended)
         DownloadModelButton.IsEnabled = _modelDownload is not null;
+    }
+
+    private void PopulateStorageSummary()
+    {
+        var provider = App.Services?.GetService<IVayuStoragePathProvider>();
+        if (provider is null)
+        {
+            StorageSummaryText.Text = "Storage paths are not available in this build.";
+            return;
+        }
+        var p = provider.ActivePaths;
+        StorageSourceText.Text = provider.UsingCustomPaths ? "CUSTOM" : "DEFAULT";
+        StorageSummaryText.Text =
+            $"Data root: {Path.GetDirectoryName(p.WorkspaceRoot)}\n" +
+            $"Workspace: {p.WorkspaceRoot}\n" +
+            $"Logs: {p.LogsPath}\n" +
+            $"Cache: {p.CachePath}\n" +
+            $"Models: {p.ModelsPath}\n" +
+            $"Assets: {p.AssetsPath}";
+    }
+
+    private async void OnOpenDataFolderClick(object sender, RoutedEventArgs e)
+    {
+        var provider = App.Services?.GetService<IVayuStoragePathProvider>();
+        var root = provider is not null
+            ? Path.GetDirectoryName(provider.ActivePaths.WorkspaceRoot)
+            : null;
+        if (string.IsNullOrWhiteSpace(root) || !Directory.Exists(root))
+        {
+            return;
+        }
+        try
+        {
+            var folder = await global::Windows.Storage.StorageFolder
+                .GetFolderFromPathAsync(root);
+            await global::Windows.System.Launcher.LaunchFolderAsync(folder);
+        }
+#pragma warning disable CA1031 // Opening a folder is best-effort; never crash.
+        catch (Exception)
+        {
+            // Ignore — the folder simply doesn't open.
+        }
+#pragma warning restore CA1031
     }
 
     private static string ModelsDirectory()
