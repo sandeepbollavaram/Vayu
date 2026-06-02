@@ -98,25 +98,25 @@ public class RuleBasedCommandParserTests
     }
 
     [Theory]
-    [InlineData("open notepad and write hello",  "notepad")]
-    [InlineData("open notepad and type hello",   "notepad")]
-    [InlineData("open notepad then write hello", "notepad")]
-    [InlineData("open notepad then type hello",  "notepad")]
-    [InlineData("open vs code and write README", "vscode")]
-    public void Open_WithTypingClause_StopsAtAppName_AndFlagsTypingRequested(string command, string expectedApp)
+    [InlineData("open notepad and write hello",  "notepad", "hello")]
+    [InlineData("open notepad and type hello",   "notepad", "hello")]
+    [InlineData("open notepad then write hello", "notepad", "hello")]
+    [InlineData("open notepad then type hello",  "notepad", "hello")]
+    [InlineData("open vs code and write README", "vscode",  "README")]
+    public void Open_WithTypingClause_ProducesOpenAndTypeIntent_AtL3(string command, string expectedApp, string expectedText)
     {
-        // "open notepad and write hello" must NOT collapse into the app
-        // name "notepadandwritehello". The parser strips the typing clause
-        // and flags the plan so the agent can refuse with an M5 pointer.
+        // "open notepad and write hello" must NOT collapse into the app name; it
+        // becomes the L3 desktop.open_and_type intent with the app + the text to
+        // type (original casing preserved). The desktop automation agent then
+        // confirms and types only on approval.
         var parser = new RuleBasedCommandParser();
 
         var plan = parser.Parse(Req(command));
 
-        Assert.Equal(RuleBasedCommandParser.AppOpenIntent, plan.Intent);
-        Assert.Equal(RiskLevel.L1, plan.Risk);
+        Assert.Equal(RuleBasedCommandParser.OpenAndTypeIntent, plan.Intent);
+        Assert.Equal(RiskLevel.L3, plan.Risk);
         Assert.Equal(expectedApp, plan.Args["app"]);
-        Assert.True(plan.Args.TryGetValue(RuleBasedCommandParser.TypingRequestedArgKey, out var flag));
-        Assert.Equal("true", flag);
+        Assert.Equal(expectedText, plan.Args[RuleBasedCommandParser.TextArgKey]);
     }
 
     [Fact]
