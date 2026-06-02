@@ -13,6 +13,9 @@ namespace Vayu.Core.Setup;
 /// <param name="LocalModelInstalled">True if the selected model is present in the local Ollama store.</param>
 /// <param name="GeminiKeyConfigured">True if a Gemini API key is resolvable from any configured secret store. The key value itself is never stored here.</param>
 /// <param name="CompletedAtUtc">When the wizard last completed; null if it has not completed yet.</param>
+/// <param name="Skipped">True when the user explicitly skipped setup (still counts as <see cref="Completed"/> for routing).</param>
+/// <param name="StoragePaths">The chosen local storage folders; null until the storage step is configured (defaults apply).</param>
+/// <param name="WhisperModelPath">The selected/downloaded local Whisper model path; null until configured. Not a secret.</param>
 public sealed record FirstRunSetupState(
     bool Completed,
     FirstRunSetupMode Mode,
@@ -21,7 +24,10 @@ public sealed record FirstRunSetupState(
     string? SelectedLocalModel,
     bool LocalModelInstalled,
     bool GeminiKeyConfigured,
-    DateTimeOffset? CompletedAtUtc)
+    DateTimeOffset? CompletedAtUtc,
+    bool Skipped = false,
+    VayuStoragePaths? StoragePaths = null,
+    string? WhisperModelPath = null)
 {
     /// <summary>
     /// A freshly-installed state before the wizard has ever run.
@@ -34,5 +40,8 @@ public sealed record FirstRunSetupState(
         SelectedLocalModel: null,
         LocalModelInstalled: false,
         GeminiKeyConfigured: false,
-        CompletedAtUtc: null);
+        CompletedAtUtc: null,
+        Skipped: false,
+        StoragePaths: null,
+        WhisperModelPath: null);
 }
