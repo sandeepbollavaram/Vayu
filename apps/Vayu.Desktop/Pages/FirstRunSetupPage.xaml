@@ -50,12 +50,20 @@
                         <TextBlock Style="{StaticResource VayuMutedText}" Text="Vayu never installs software or downloads models without your permission. Every step is skippable — Vayu stays usable without it." TextWrapping="Wrap" />
                         <TextBlock Style="{StaticResource VayuMutedText}" Text="What you'll set up: storage, AI mode, Local AI, Online AI, voice, and trust." TextWrapping="Wrap" />
 
-                        <!-- Storage stage preview (paths default to your local app data). -->
+                        <!-- Storage stage (paths default to local app data; editable + persisted). -->
                         <Border Style="{StaticResource VayuGlassCardElevated}" Margin="0,8,0,0">
-                            <StackPanel Spacing="6">
-                                <TextBlock Style="{StaticResource VayuSectionText}" Text="STORAGE (DEFAULTS TO LOCAL APP DATA)" />
+                            <StackPanel Spacing="8">
+                                <TextBlock Style="{StaticResource VayuSectionText}" Text="STORAGE" />
                                 <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
-                                           Text="Vayu workspace · logs · cache · local models · generated assets. These default to a safe folder under %LOCALAPPDATA%\Vayu. Choosing custom paths is coming to this dashboard; for now the safe defaults are used." />
+                                           Text="Workspace, logs, cache, models, and generated assets. Defaults live under %LOCALAPPDATA%\Vayu. Set a root and Save — Vayu validates it and creates the folders only after you confirm." />
+                                <TextBox x:Name="StorageRootBox" Header="Vayu storage root" />
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <Button x:Name="SaveStorageButton" Content="Save storage paths"
+                                            Click="OnSaveStorageClick" Style="{StaticResource AccentButtonStyle}" />
+                                    <Button x:Name="ResetStorageButton" Content="Reset to default"
+                                            Click="OnResetStorageClick" />
+                                </StackPanel>
+                                <TextBlock x:Name="StorageMessageText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap" Text="" />
                             </StackPanel>
                         </Border>
                     </StackPanel>
