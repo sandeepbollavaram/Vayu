@@ -125,6 +125,18 @@ public partial class App : Application
         services.AddSingleton(sp => new ShowLogsAgent(sp.GetRequiredService<UiNavigationService>()));
         services.AddSingleton(sp => new ShowSettingsAgent(sp.GetRequiredService<UiNavigationService>()));
 
+        // --- M5.2: safe desktop automation (open-and-type) ---
+        services.AddSingleton<IWindowDiscoveryService, WindowsWindowDiscoveryService>();
+        services.AddSingleton<AutomationSafetyPolicy>();
+        services.AddSingleton<IAutomationConfirmationService, WinUiAutomationConfirmationService>();
+        services.AddSingleton<ITextTypingExecutor, WindowsTextTypingExecutor>();
+        services.AddSingleton(sp => new DesktopAutomationAgent(
+            sp.GetRequiredService<IAppLauncher>(),
+            sp.GetRequiredService<IWindowDiscoveryService>(),
+            sp.GetRequiredService<AutomationSafetyPolicy>(),
+            sp.GetRequiredService<IAutomationConfirmationService>(),
+            sp.GetRequiredService<ITextTypingExecutor>()));
+
         // --- Agent registry (populated at construction) ---
         services.AddSingleton(sp =>
         {
@@ -132,6 +144,7 @@ public partial class App : Application
             registry.Register(sp.GetRequiredService<AppLauncherAgent>());
             registry.Register(sp.GetRequiredService<ShowLogsAgent>());
             registry.Register(sp.GetRequiredService<ShowSettingsAgent>());
+            registry.Register(sp.GetRequiredService<DesktopAutomationAgent>());
             return registry;
         });
 
