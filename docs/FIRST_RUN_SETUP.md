@@ -59,6 +59,19 @@ Setup now behaves like a real installed product:
 - **Storage step is real.** The Welcome stage has an editable **Vayu storage root** (defaults to `%LOCALAPPDATA%\Vayu`). It derives workspace / logs / cache / models / assets subfolders, validates the path is a valid absolute location, **creates the folders only after you click Save** (never destructive), and persists them.
 - **No secrets persisted.** The setup record stores chosen paths, model paths, AI mode, and readiness booleans — **never an API key**. The Gemini key continues to live only in the secure secret store (Windows Credential Manager); setup records only *whether* a key is configured.
 
+### M4.13 — storage paths actually drive runtime
+
+The chosen storage root is no longer setup-only — Vayu **runs from it**:
+
+- At startup `VayuStoragePathProvider` resolves the **active** paths: the saved root when valid, otherwise the safe defaults. It creates the folders (best-effort) and never crashes startup.
+- **Logs** are written under the active `logs` folder, and **Whisper model downloads** default to the active `models` folder. `cache` and `assets` are created and exposed for current/future use.
+- The storage step now has a **Browse…** folder picker and shows the **derived child paths**; Settings has a **Storage** card showing the active root + logs/cache/models/assets, an **Open data folder** button, and **CUSTOM/DEFAULT** state.
+- **Bootstrap note.** The small settings database (`vayu.db`, holding setup state) stays at the fixed default `%LOCALAPPDATA%\Vayu` location — it is what tells Vayu where the chosen root is, so it cannot itself live under a path read from inside it.
+- **Ollama** manages its own model store; Vayu does not relocate it. The active `models` path governs Vayu's own (Whisper) downloads.
+- **No data migration.** Choosing a new root takes effect on the next launch; Vayu never silently copies or deletes data from the old location. Moving the data database + migrating existing data is a documented **future** capability.
+
+To verify: Settings → Storage shows the active paths; logs appear under the active `logs` folder; a Whisper download lands in the active `models` folder.
+
 ### Voice stage — local STT model path (M4.9)
 
 The **Voice** stage's working configuration lives in Settings → **Voice Setup**: enter a path to a local speech-to-text model file (e.g. a Whisper GGUF), press **Save** (Vayu validates the file exists and enables local STT), or **Disable** to turn it off. The model path is stored locally and contains no secret. Push-to-talk captures audio only while held; audio stays in memory, is never uploaded, and is never logged. Until a model + local engine are configured, voice honestly reports "not configured" and produces no transcript.
