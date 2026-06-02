@@ -53,8 +53,17 @@ public partial class App : Application
         // --- Core / clock ---
         services.AddSingleton<IClock, SystemClock>();
 
+        // --- Active storage paths (resolved once at startup) ---
+        // The bootstrap settings DB stays at the fixed default location — it is
+        // what tells us the chosen root, so it cannot itself move. We read the
+        // persisted setup state from it synchronously, then derive the active
+        // logs/cache/models/assets paths. Fail-safe to defaults; never crashes.
+        var activeStoragePaths = ResolveActiveStoragePaths();
+        services.AddSingleton<IVayuStoragePathProvider>(activeStoragePaths);
+
         // --- Logging (Serilog + redactor + in-memory ring buffer) ---
-        services.AddSingleton(new LoggingOptions());
+        // Log files go under the active logs path chosen during setup.
+        services.AddSingleton(new LoggingOptions { Directory = activeStoragePaths.ActivePaths.LogsPath });
         services.AddSingleton(sp => new InMemoryLogSink(sp.GetRequiredService<LoggingOptions>().InMemoryCapacity));
         services.AddSingleton(sp => VayuLogger.Create(
             sp.GetRequiredService<LoggingOptions>(),
@@ -250,5 +259,32 @@ public partial class App : Application
         });
 
         return services.BuildServiceProvider();
+    }
+
+    /// <summary>
+    /// Reads the persisted storage choice from the bootstrap settings DB (fixed
+    /// default location) and resolves the active storage paths. Synchronous and
+    /// fail-safe — any failure yields the default paths so startup never breaks.
+    /// </summary>
+    private static VayuStoragePathProvider ResolveActiveStoragePaths()
+    {
+        try
+        {
+            var bootstrap = new SqliteUserSettingsStore(new MemoryOptions());
+            var json = bootstrap.GetAsync(PersistentFirstRunSetupService.StateKey)
+                .GetAwaiter().GetResult();
+            if (!string.IsNullOrWhiteSpace(json))
+            {
+                var state = System.Text.Json.JsonSerializer.Deserialize<FirstRunSetupState>(json);
+                return new VayuStoragePathProvider(state?.StoragePaths);
+            }
+        }
+#pragma warning disable CA1031 // Startup path resolution must never crash; fall back to defaults.
+        catch (Exception)
+        {
+            // Fall through to defaults.
+        }
+#pragma warning restore CA1031
+        return new VayuStoragePathProvider(persisted: null);
     }
 }
