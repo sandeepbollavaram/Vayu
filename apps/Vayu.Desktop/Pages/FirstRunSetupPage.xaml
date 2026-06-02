@@ -58,12 +58,16 @@
                                            Text="Workspace, logs, cache, models, and generated assets. Defaults live under %LOCALAPPDATA%\Vayu. Set a root and Save — Vayu validates it and creates the folders only after you confirm." />
                                 <TextBox x:Name="StorageRootBox" Header="Vayu storage root" />
                                 <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <Button x:Name="BrowseStorageButton" Content="Browse…"
+                                            Click="OnBrowseStorageClick" />
                                     <Button x:Name="SaveStorageButton" Content="Save storage paths"
                                             Click="OnSaveStorageClick" Style="{StaticResource AccentButtonStyle}" />
                                     <Button x:Name="ResetStorageButton" Content="Reset to default"
                                             Click="OnResetStorageClick" />
                                 </StackPanel>
                                 <TextBlock x:Name="StorageMessageText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap" Text="" />
+                                <!-- Active/derived paths preview -->
+                                <TextBlock x:Name="StoragePathsPreview" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap" Text="" />
                             </StackPanel>
                         </Border>
                     </StackPanel>
