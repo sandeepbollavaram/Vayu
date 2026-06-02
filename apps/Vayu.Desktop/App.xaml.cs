@@ -199,8 +199,17 @@ public partial class App : Application
             var engine = sp.GetRequiredService<WhisperNetSpeechToTextEngine>();
             return new DelegatingLocalSttProvider(
                 sp.GetRequiredService<VoiceSttState>().Options,
-                transcribe: engine.TranscribeAsync);
+                transcribe: engine.TranscribeAsync,
+                modelExists: null,
+                // "Ready" only when whisper.net can actually load the model.
+                readinessProbe: path =>
+                {
+                    var ok = engine.TryProbeRuntime(path, out var message);
+                    return (ok, message);
+                });
         });
+        // Consented model download (HttpClient is the only network seam).
+        services.AddSingleton(_ => new WhisperModelDownloadService(new HttpClient()));
 
         // --- M4.4: system TTS (off by default; opt-in via the Settings toggle/VoiceTtsState) ---
         services.AddSingleton(new TextToSpeechOptions());
