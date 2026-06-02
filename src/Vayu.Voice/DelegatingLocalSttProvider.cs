@@ -27,9 +27,18 @@ public sealed class DelegatingLocalSttProvider : ISpeechToTextProvider
         string modelPath,
         CancellationToken cancellationToken);
 
+    /// <summary>
+    /// A lightweight readiness probe: given a model path, reports whether the
+    /// local engine can actually load it (returning a safe message either way).
+    /// Lets the desktop confirm genuine readiness without a full transcription —
+    /// so the UI never shows "Ready" for a model the engine can't load.
+    /// </summary>
+    public delegate (bool Ready, string Message) ReadinessProbe(string modelPath);
+
     private readonly LocalSpeechToTextOptions _options;
     private readonly Func<string, bool> _modelExists;
     private readonly TranscribeDelegate? _transcribe;
+    private readonly ReadinessProbe? _readinessProbe;
 
     /// <param name="options">Local STT options (enable flag + model path + provider name).</param>
     /// <param name="transcribe">
@@ -37,14 +46,20 @@ public sealed class DelegatingLocalSttProvider : ISpeechToTextProvider
     /// provider reports the engine as unavailable and never fabricates a result.
     /// </param>
     /// <param name="modelExists">Model-existence probe; defaults to <see cref="File.Exists"/>.</param>
+    /// <param name="readinessProbe">
+    /// Optional load-readiness probe. When provided, the provider reports
+    /// "Ready" only if this confirms the engine can load the model.
+    /// </param>
     public DelegatingLocalSttProvider(
         LocalSpeechToTextOptions? options = null,
         TranscribeDelegate? transcribe = null,
-        Func<string, bool>? modelExists = null)
+        Func<string, bool>? modelExists = null,
+        ReadinessProbe? readinessProbe = null)
     {
         _options = options ?? new LocalSpeechToTextOptions();
         _transcribe = transcribe;
         _modelExists = modelExists ?? File.Exists;
+        _readinessProbe = readinessProbe;
     }
 
     private string ProviderId => _options.PreferredProvider;
@@ -76,6 +91,23 @@ public sealed class DelegatingLocalSttProvider : ISpeechToTextProvider
                 IsConfigured: false,
                 ModelPath: modelPath,
                 Message: "Model found, but the local STT runtime is not available in this build. Transcription is unavailable."));
+        }
+
+        // Confirm the engine can actually LOAD the model before claiming Ready —
+        // a present file is not enough (could be the wrong format or corrupt).
+        if (_readinessProbe is not null)
+        {
+            var (ready, message) = _readinessProbe(modelPath);
+            if (!ready)
+            {
+                return Task.FromResult(new SpeechToTextProviderStatus(
+                    ProviderId,
+                    IsAvailable: false,
+                    IsConfigured: false,
+                    ModelPath: modelPath,
+                    Message: message));
+            }
+            return Task.FromResult(SpeechToTextProviderStatus.Ready(ProviderId, modelPath, message));
         }
 
         return Task.FromResult(SpeechToTextProviderStatus.Ready(
