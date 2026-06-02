@@ -16,7 +16,8 @@ Give a non-technical Windows user everything they need to install Vayu, set it u
 
 ### 2. Installing & first-run setup
 - Installing Vayu (MSIX / `.exe` installer).
-- Choosing paths during setup:
+- First launch opens the **Setup Dashboard** automatically (and remembers, across restarts, once you finish or skip it — re-open any time from Settings → Open Setup Dashboard).
+- Choosing paths during setup (set a **Vayu storage root**; Vayu derives and creates workspace/logs/cache/models/assets under it, only after you Save):
   - storage / data root
   - Vayu **workspace** path (where generated assets, websites, renders, and projects are saved by default)
   - logs path
