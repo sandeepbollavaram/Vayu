@@ -55,7 +55,18 @@ M4.R2 reshapes the page so it looks and reads like a dedicated onboarding flow r
 
 The **Voice** stage's working configuration lives in Settings → **Voice Setup**: enter a path to a local speech-to-text model file (e.g. a Whisper GGUF), press **Save** (Vayu validates the file exists and enables local STT), or **Disable** to turn it off. The model path is stored locally and contains no secret. Push-to-talk captures audio only while held; audio stays in memory, is never uploaded, and is never logged. Until a model + local engine are configured, voice honestly reports "not configured" and produces no transcript.
 
-As of **M4.10** the local engine is **whisper.net** (runs on-device). Provide a GGML/GGUF Whisper model compatible with the whisper.net runtime (e.g. `ggml-base.en.bin`); Vayu does **not** download a model for you yet (a guided model download is a future milestone). If transcription reports "runtime unavailable", the file isn't a compatible model — try a known-good one.
+As of **M4.10** the local engine is **whisper.net** (runs on-device). As of **M4.11** Vayu can also **download a verified model for you** from Settings → Voice Setup.
+
+**Make voice work (M4.11):**
+
+1. Settings → **Voice Setup**.
+2. Either **Download a model** — pick **base.en (recommended)**, click **Download**, confirm the consent dialog (it names the source, ~size, and destination `%LOCALAPPDATA%\Vayu\models`), watch progress (Cancel any time) — **or** paste the path to a Whisper GGML/GGUF model you already have and click **Save**.
+3. Confirm **Local STT: Ready** (this appears only when whisper.net can actually load the model).
+4. Optional: click **Test local STT**, speak, Stop — you'll see the transcript (this never runs a command).
+5. Home → hold **Push to talk** (the OS mic prompt appears the first time) → speak → **Stop** → the transcript appears.
+6. Leave **Enable voice commands** off to just transcribe; turn it on to have a valid transcript dispatched through the normal permission/audit pipeline.
+
+**Troubleshooting:** *Model invalid / runtime unavailable* → the file isn't a whisper.net-compatible GGML/GGUF model; download base.en. *Microphone: Not available* → grant Windows mic permission (Privacy → Microphone). *No speech recognised* → speak closer to the mic and retry. Audio never leaves the device and is never logged.
 
 ## Flow
 
