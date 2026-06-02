@@ -68,6 +68,8 @@ public sealed partial class SettingsPage : Page
         _sttProvider = App.Services?.GetService<ISpeechToTextProvider>();
         _sttState = App.Services?.GetService<VoiceSttState>();
         _audioCapture = App.Services?.GetService<IAudioCaptureService>();
+        _modelDownload = App.Services?.GetService<WhisperModelDownloadService>();
+        PopulateModelCatalog();
         if (_sttProvider is not null || _audioCapture is not null)
         {
             Loaded += OnSttStatusLoaded;
@@ -85,6 +87,9 @@ public sealed partial class SettingsPage : Page
     private readonly VoiceSttState? _sttState;
     private readonly IAudioCaptureService? _audioCapture;
     private readonly VoiceTtsState? _ttsState;
+    private readonly WhisperModelDownloadService? _modelDownload;
+    private CancellationTokenSource? _downloadCts;
+    private CancellationTokenSource? _testSttCts;
     private bool _suppressModeChange;
 
     private void OnTtsToggled(object sender, RoutedEventArgs e)
@@ -189,6 +194,169 @@ public sealed partial class SettingsPage : Page
         SttModelMessageText.Text = "Local STT disabled.";
         await RefreshSttStatusAsync().ConfigureAwait(true);
     }
+
+    private void PopulateModelCatalog()
+    {
+        foreach (var model in WhisperModelCatalog.All)
+        {
+            ModelCatalogCombo.Items.Add(new ComboBoxItem
+            {
+                Content = $"{model.DisplayName} · ~{model.ApproxSizeMb} MB — {model.Note}",
+                Tag = model.Id,
+            });
+        }
+        ModelCatalogCombo.SelectedIndex = 1; // base.en (recommended)
+        DownloadModelButton.IsEnabled = _modelDownload is not null;
+    }
+
+    private static string ModelsDirectory()
+        => Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Vayu", "models");
+
+    private async void OnDownloadModelClick(object sender, RoutedEventArgs e)
+    {
+        if (_modelDownload is null || _sttState is null)
+        {
+            DownloadMessageText.Text = "Model download is not available in this build.";
+            return;
+        }
+        if (ModelCatalogCombo.SelectedItem is not ComboBoxItem item || item.Tag is not string id
+            || WhisperModelCatalog.TryGet(id) is not { } model)
+        {
+            DownloadMessageText.Text = "Pick a model to download.";
+            return;
+        }
+
+        var destination = ModelsDirectory();
+        var consent = new ContentDialog
+        {
+            Title = $"Download {model.DisplayName}?",
+            Content = $"Source: {model.DownloadUrl}\nSize: ~{model.ApproxSizeMb} MB\nSaved to: {destination}\n\nThe download runs only on your confirmation.",
+            PrimaryButtonText = "Download",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = XamlRoot,
+        };
+        if (await consent.ShowAsync() != ContentDialogResult.Primary)
+        {
+            return;
+        }
+
+        _downloadCts = new CancellationTokenSource();
+        DownloadModelButton.IsEnabled = false;
+        CancelDownloadButton.IsEnabled = true;
+        DownloadProgressBar.Visibility = Visibility.Visible;
+        DownloadProgressBar.Value = 0;
+        DownloadMessageText.Text = "Starting download…";
+
+        var progress = new Progress<ModelDownloadProgress>(p =>
+        {
+            if (p.Fraction is { } f)
+            {
+                DownloadProgressBar.IsIndeterminate = false;
+                DownloadProgressBar.Value = f * 100;
+                DownloadMessageText.Text = $"Downloading… {f * 100:0}%";
+            }
+            else
+            {
+                DownloadProgressBar.IsIndeterminate = true;
+                DownloadMessageText.Text = $"Downloading… {p.BytesReceived / (1024 * 1024)} MB";
+            }
+        });
+
+        ModelDownloadResult result;
+        try
+        {
+            result = await _modelDownload
+                .DownloadAsync(model, destination, progress, _downloadCts.Token)
+                .ConfigureAwait(true);
+        }
+        finally
+        {
+            _downloadCts?.Dispose();
+            _downloadCts = null;
+            DownloadModelButton.IsEnabled = true;
+            CancelDownloadButton.IsEnabled = false;
+            DownloadProgressBar.Visibility = Visibility.Collapsed;
+        }
+
+        DownloadMessageText.Text = result.Message;
+        if (result.Status == ModelDownloadStatus.Completed && result.FilePath is not null)
+        {
+            _sttState.Configure(result.FilePath);
+            SttModelPathBox.Text = result.FilePath;
+            await RefreshSttStatusAsync().ConfigureAwait(true);
+        }
+    }
+
+    private void OnCancelDownloadClick(object sender, RoutedEventArgs e)
+        => _downloadCts?.Cancel();
+
+    private async void OnTestSttClick(object sender, RoutedEventArgs e)
+    {
+        if (_audioCapture is null)
+        {
+            TestSttResultText.Text = "Microphone capture is not available in this build.";
+            return;
+        }
+
+        _testSttCts = new CancellationTokenSource();
+        TestSttButton.IsEnabled = false;
+        StopTestSttButton.IsEnabled = true;
+        TestSttResultText.Text = "Listening… speak, then press Stop test.";
+
+        AudioCaptureResult capture;
+        try
+        {
+            capture = await _audioCapture.StartCaptureAsync(_testSttCts.Token).ConfigureAwait(true);
+        }
+#pragma warning disable CA1031 // UI boundary: surface capture failure safely.
+        catch (Exception)
+        {
+            capture = AudioCaptureResult.Failed("Microphone capture failed.");
+        }
+#pragma warning restore CA1031
+        finally
+        {
+            _testSttCts?.Dispose();
+            _testSttCts = null;
+            TestSttButton.IsEnabled = true;
+            StopTestSttButton.IsEnabled = false;
+        }
+
+        if (!capture.HasAudio)
+        {
+            TestSttResultText.Text = capture.Status == AudioCaptureStatus.Failed
+                ? capture.ErrorMessage ?? "Microphone capture failed."
+                : "No audio captured.";
+            return;
+        }
+
+        // Transcribe only — a test never dispatches a command.
+        var provider = App.Services?.GetService<ISpeechToTextProvider>() ?? _sttProvider;
+        if (provider is null)
+        {
+            TestSttResultText.Text = "Local STT provider is not available.";
+            return;
+        }
+        try
+        {
+            var result = await provider.TranscribeAsync(capture.Pcm16).ConfigureAwait(true);
+            TestSttResultText.Text = result.Success
+                ? $"Transcript: {result.Transcript}"
+                : result.ErrorMessage ?? "Transcription failed.";
+        }
+#pragma warning disable CA1031 // UI boundary: surface transcription failure safely.
+        catch (Exception)
+        {
+            TestSttResultText.Text = "Transcription failed.";
+        }
+#pragma warning restore CA1031
+    }
+
+    private void OnStopTestSttClick(object sender, RoutedEventArgs e)
+        => _testSttCts?.Cancel();
 
     private void OnAiModeChecked(object sender, RoutedEventArgs e)
     {
