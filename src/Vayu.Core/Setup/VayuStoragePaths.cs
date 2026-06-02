@@ -49,7 +49,14 @@ public sealed record VayuStoragePaths(
         }
         try
         {
-            var full = Path.GetFullPath(Environment.ExpandEnvironmentVariables(path));
+            var expanded = Environment.ExpandEnvironmentVariables(path);
+            // Reject relative inputs: the path the user typed must itself be rooted,
+            // not merely rooted after resolving against the current directory.
+            if (!Path.IsPathRooted(expanded))
+            {
+                return false;
+            }
+            var full = Path.GetFullPath(expanded);
             return Path.IsPathRooted(full)
                 && full.IndexOfAny(Path.GetInvalidPathChars()) < 0;
         }
