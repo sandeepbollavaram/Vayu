@@ -64,9 +64,11 @@ public sealed partial class SettingsPage : Page
             UpdateAiModeText();
         }
 
-        // M4.3: local STT provider status in the Voice section.
+        // Voice Setup: local STT provider status + model-path configuration.
         _sttProvider = App.Services?.GetService<ISpeechToTextProvider>();
-        if (_sttProvider is not null)
+        _sttState = App.Services?.GetService<VoiceSttState>();
+        _audioCapture = App.Services?.GetService<IAudioCaptureService>();
+        if (_sttProvider is not null || _audioCapture is not null)
         {
             Loaded += OnSttStatusLoaded;
         }
@@ -80,6 +82,8 @@ public sealed partial class SettingsPage : Page
     }
 
     private readonly ISpeechToTextProvider? _sttProvider;
+    private readonly VoiceSttState? _sttState;
+    private readonly IAudioCaptureService? _audioCapture;
     private readonly VoiceTtsState? _ttsState;
     private bool _suppressModeChange;
 
@@ -97,19 +101,93 @@ public sealed partial class SettingsPage : Page
 
     private async void OnSttStatusLoaded(object sender, RoutedEventArgs e)
     {
-        if (_sttProvider is null)
+        if (_sttState?.Options.ModelPath is { Length: > 0 } existingPath)
+        {
+            SttModelPathBox.Text = existingPath;
+        }
+
+        if (_audioCapture is not null)
+        {
+            try
+            {
+                var mic = await _audioCapture.GetMicrophoneStatusAsync().ConfigureAwait(true);
+                VoiceMicStatusText.Text = $"Microphone: {mic.Message}";
+            }
+            catch
+            {
+                VoiceMicStatusText.Text = "Microphone: status unavailable.";
+            }
+        }
+
+        await RefreshSttStatusAsync().ConfigureAwait(true);
+    }
+
+    private async Task RefreshSttStatusAsync()
+    {
+        // Re-resolve so the status reflects any model path just saved (the STT
+        // provider is transient over the live VoiceSttState).
+        var provider = App.Services?.GetService<ISpeechToTextProvider>() ?? _sttProvider;
+        if (provider is null)
         {
             return;
         }
         try
         {
-            var status = await _sttProvider.GetStatusAsync().ConfigureAwait(true);
+            var status = await provider.GetStatusAsync().ConfigureAwait(true);
             VoiceSttStatusText.Text = $"Local STT ({status.ProviderName}): {status.Message}";
         }
         catch
         {
             VoiceSttStatusText.Text = "Local STT: status unavailable.";
         }
+    }
+
+    private async void OnSaveSttModelClick(object sender, RoutedEventArgs e)
+    {
+        if (_sttState is null)
+        {
+            SttModelMessageText.Text = "Local STT is not available in this build.";
+            return;
+        }
+
+        var path = SttModelPathBox.Text?.Trim();
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            SttModelMessageText.Text = "Enter the path to a local STT model file.";
+            return;
+        }
+
+        bool exists;
+        try
+        {
+            exists = File.Exists(path);
+        }
+        catch
+        {
+            exists = false;
+        }
+
+        if (!exists)
+        {
+            SttModelMessageText.Text = "That file was not found. Check the path and try again.";
+            return;
+        }
+
+        _sttState.Configure(path);
+        SttModelMessageText.Text = "Model saved. Local STT is enabled.";
+        await RefreshSttStatusAsync().ConfigureAwait(true);
+    }
+
+    private async void OnDisableSttClick(object sender, RoutedEventArgs e)
+    {
+        if (_sttState is null)
+        {
+            return;
+        }
+        _sttState.Disable();
+        SttModelPathBox.Text = string.Empty;
+        SttModelMessageText.Text = "Local STT disabled.";
+        await RefreshSttStatusAsync().ConfigureAwait(true);
     }
 
     private void OnAiModeChecked(object sender, RoutedEventArgs e)
