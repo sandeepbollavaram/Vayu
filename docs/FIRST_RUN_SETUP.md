@@ -51,6 +51,14 @@ M4.R2 reshapes the page so it looks and reads like a dedicated onboarding flow r
 - A **Storage** stage preview lists the paths the dashboard will own — Vayu workspace, logs, cache, local models, generated assets — and states they default to a safe folder under `%LOCALAPPDATA%\Vayu`. **Custom path selection is shown as planned**; the safe defaults are used until the file-picker flow lands (kept out of M4.R2 to avoid an unsafe/no-op picker).
 - All remaining milestone/prototype wording was removed in favour of product copy (Permission Guard, Local/Online AI, permission-based downloads). The underlying step state machine and the consented model-pull flow are unchanged.
 
+### M4.12 — durable setup state + storage paths
+
+Setup now behaves like a real installed product:
+
+- **Persistent across restarts.** Setup state lives in a SQLite `UserSettings` table in the local `vayu.db` (via `IUserSettingsStore` + `PersistentFirstRunSetupService`). First launch shows the Setup Dashboard; once you complete **or** skip it, later launches route straight to the Command Center. Re-open it any time from Settings → Open Setup Dashboard.
+- **Storage step is real.** The Welcome stage has an editable **Vayu storage root** (defaults to `%LOCALAPPDATA%\Vayu`). It derives workspace / logs / cache / models / assets subfolders, validates the path is a valid absolute location, **creates the folders only after you click Save** (never destructive), and persists them.
+- **No secrets persisted.** The setup record stores chosen paths, model paths, AI mode, and readiness booleans — **never an API key**. The Gemini key continues to live only in the secure secret store (Windows Credential Manager); setup records only *whether* a key is configured.
+
 ### Voice stage — local STT model path (M4.9)
 
 The **Voice** stage's working configuration lives in Settings → **Voice Setup**: enter a path to a local speech-to-text model file (e.g. a Whisper GGUF), press **Save** (Vayu validates the file exists and enables local STT), or **Disable** to turn it off. The model path is stored locally and contains no secret. Push-to-talk captures audio only while held; audio stays in memory, is never uploaded, and is never logged. Until a model + local engine are configured, voice honestly reports "not configured" and produces no transcript.
