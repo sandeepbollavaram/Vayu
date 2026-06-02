@@ -19,11 +19,15 @@ namespace Vayu_Desktop.Pages;
 public sealed partial class FirstRunSetupPage : Page
 {
     private readonly FirstRunSetupViewModel? _vm;
+    private readonly PersistentFirstRunSetupService? _persistentSetup;
     private CancellationTokenSource? _activePullCts;
 
     public FirstRunSetupPage()
     {
         InitializeComponent();
+
+        _persistentSetup = App.Services?.GetService<IFirstRunSetupService>() as PersistentFirstRunSetupService;
+        _ = PrefillStorageAsync();
 
         var runtime = App.Services?.GetService<IOllamaRuntimeService>();
         var setupService = App.Services?.GetService<IFirstRunSetupService>();
@@ -231,6 +235,87 @@ public sealed partial class FirstRunSetupPage : Page
         if (sender is Control c)
         {
             c.IsEnabled = false;
+        }
+    }
+
+    // ---- Storage step (M4.12) ----
+
+    private async Task PrefillStorageAsync()
+    {
+        if (_persistentSetup is null)
+        {
+            StorageRootBox.Text = DefaultStorageRoot();
+            return;
+        }
+        try
+        {
+            var state = await _persistentSetup.GetStateAsync().ConfigureAwait(true);
+            StorageRootBox.Text = state.StoragePaths?.WorkspaceRoot is { Length: > 0 } ws
+                ? Path.GetDirectoryName(ws) ?? DefaultStorageRoot()
+                : DefaultStorageRoot();
+        }
+        catch
+        {
+            StorageRootBox.Text = DefaultStorageRoot();
+        }
+    }
+
+    private static string DefaultStorageRoot()
+        => Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Vayu");
+
+    private void OnResetStorageClick(object sender, RoutedEventArgs e)
+    {
+        StorageRootBox.Text = DefaultStorageRoot();
+        StorageMessageText.Text = "Reset to the default location.";
+    }
+
+    private async void OnSaveStorageClick(object sender, RoutedEventArgs e)
+    {
+        if (_persistentSetup is null)
+        {
+            StorageMessageText.Text = "Storage settings are not available in this build.";
+            return;
+        }
+
+        var root = StorageRootBox.Text?.Trim();
+        if (!VayuStoragePaths.IsValidPathShape(root))
+        {
+            StorageMessageText.Text = "Enter a valid absolute folder path (e.g. C:\\Vayu).";
+            return;
+        }
+
+        root = Path.GetFullPath(Environment.ExpandEnvironmentVariables(root!));
+        var paths = new VayuStoragePaths(
+            WorkspaceRoot: Path.Combine(root, "workspace"),
+            LogsPath: Path.Combine(root, "logs"),
+            CachePath: Path.Combine(root, "cache"),
+            ModelsPath: Path.Combine(root, "models"),
+            AssetsPath: Path.Combine(root, "assets"));
+
+        // Create the folders only now, after the user's explicit Save. Non-destructive.
+        try
+        {
+            foreach (var p in paths.AllPaths)
+            {
+                Directory.CreateDirectory(p);
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            StorageMessageText.Text = "That folder is not writable. Pick another location.";
+            return;
+        }
+
+        try
+        {
+            var state = await _persistentSetup.GetStateAsync().ConfigureAwait(true);
+            await _persistentSetup.UpdateAsync(state with { StoragePaths = paths }).ConfigureAwait(true);
+            StorageMessageText.Text = $"Storage saved under {root}.";
+        }
+        catch
+        {
+            StorageMessageText.Text = "Could not save storage settings.";
         }
     }
 }
