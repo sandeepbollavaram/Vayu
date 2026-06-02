@@ -35,6 +35,12 @@ public sealed class RuleBasedCommandParser
     /// <summary>The intent emitted for app-launch commands.</summary>
     public const string AppOpenIntent = "app.open";
 
+    /// <summary>The intent emitted for "open &lt;app&gt; and write/type &lt;text&gt;" — handled by the desktop automation agent (M5.2).</summary>
+    public const string OpenAndTypeIntent = "desktop.open_and_type";
+
+    /// <summary>Args key carrying the text to type for <see cref="OpenAndTypeIntent"/>.</summary>
+    public const string TextArgKey = "text";
+
     /// <summary>The intent emitted for "show logs".</summary>
     public const string ShowLogsIntent = "ui.show_logs";
 
@@ -71,13 +77,21 @@ public sealed class RuleBasedCommandParser
         {
             return BuildPlan(ShowSettingsIntent, RiskLevel.L0, request.CorrelationId);
         }
-        if (TryParseOpen(normalized, out var app, out var typingRequested))
+        if (TryParseOpen(normalized, out var app, out var typingRequested, out var textTokenStart))
         {
-            var args = ImmutableDictionary<string, string>.Empty.Add("app", app);
             if (typingRequested)
             {
-                args = args.Add(TypingRequestedArgKey, "true");
+                // "open <app> and write <text>" → desktop.open_and_type (L3). The
+                // text is taken from the ORIGINAL request to preserve its casing;
+                // the desktop automation agent confirms + types only on approval.
+                var text = ExtractTypedText(request.Text, textTokenStart);
+                var typeArgs = ImmutableDictionary<string, string>.Empty
+                    .Add("app", app)
+                    .Add(TextArgKey, text);
+                return BuildPlan(OpenAndTypeIntent, RiskLevel.L3, request.CorrelationId, args: typeArgs);
             }
+
+            var args = ImmutableDictionary<string, string>.Empty.Add("app", app);
             return BuildPlan(
                 AppOpenIntent,
                 RiskLevel.L1,
@@ -88,10 +102,11 @@ public sealed class RuleBasedCommandParser
         return BuildPlan(UnknownIntent, RiskLevel.L0, request.CorrelationId);
     }
 
-    private static bool TryParseOpen(string normalized, out string app, out bool typingRequested)
+    private static bool TryParseOpen(string normalized, out string app, out bool typingRequested, out int textWordIndex)
     {
         app = string.Empty;
         typingRequested = false;
+        textWordIndex = -1;
 
         const string prefix = "open ";
         if (!normalized.StartsWith(prefix, StringComparison.Ordinal))
@@ -129,6 +144,9 @@ public sealed class RuleBasedCommandParser
         {
             typingRequested = true;
             appTokens = tokens.Take(boundary);
+            // Text words start after the connector + verb (2 tokens), in the
+            // "open " prefix-stripped word stream: 1 (open) + boundary + 2.
+            textWordIndex = 1 + boundary + 2;
         }
         else
         {
@@ -138,6 +156,22 @@ public sealed class RuleBasedCommandParser
         // Collapse internal whitespace so "vs code" → "vscode".
         app = string.Concat(appTokens);
         return app.Length > 0;
+    }
+
+    /// <summary>
+    /// Extracts the original-cased text to type, starting at
+    /// <paramref name="wordIndex"/> in the whole request's word stream.
+    /// </summary>
+    private static string ExtractTypedText(string? rawText, int wordIndex)
+    {
+        if (string.IsNullOrWhiteSpace(rawText) || wordIndex < 0)
+        {
+            return string.Empty;
+        }
+        var words = rawText.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return wordIndex >= words.Length
+            ? string.Empty
+            : string.Join(' ', words.Skip(wordIndex));
     }
 
     private static bool IsTypingBoundary(string left, string right)
