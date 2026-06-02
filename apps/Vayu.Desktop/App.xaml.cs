@@ -187,14 +187,20 @@ public partial class App : Application
         // reports the runtime as unavailable rather than faking a transcript.
         services.AddSingleton(new LocalSpeechToTextOptions());
         services.AddSingleton(sp => new VoiceSttState(sp.GetRequiredService<LocalSpeechToTextOptions>()));
+        // The real whisper.net engine (the only place the native runtime is used).
+        services.AddSingleton<WhisperNetSpeechToTextEngine>();
         // Transient so each resolve reads the live model-path/enable state the
-        // Settings → Voice Setup surface may have just updated.
+        // Settings → Voice Setup surface may have just updated. The whisper.net
+        // engine is the injected transcription delegate — real, local, no fake.
         services.AddTransient<IAudioCaptureService>(sp =>
             new WindowsAudioCaptureService(sp.GetRequiredService<VoiceSttState>().Options));
         services.AddTransient<ISpeechToTextProvider>(sp =>
-            new DelegatingLocalSttProvider(
+        {
+            var engine = sp.GetRequiredService<WhisperNetSpeechToTextEngine>();
+            return new DelegatingLocalSttProvider(
                 sp.GetRequiredService<VoiceSttState>().Options,
-                transcribe: null));
+                transcribe: engine.TranscribeAsync);
+        });
 
         // --- M4.4: system TTS (off by default; opt-in via the Settings toggle/VoiceTtsState) ---
         services.AddSingleton(new TextToSpeechOptions());
