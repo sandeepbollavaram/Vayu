@@ -55,6 +55,8 @@ M4.R2 reshapes the page so it looks and reads like a dedicated onboarding flow r
 
 The **Voice** stage's working configuration lives in Settings → **Voice Setup**: enter a path to a local speech-to-text model file (e.g. a Whisper GGUF), press **Save** (Vayu validates the file exists and enables local STT), or **Disable** to turn it off. The model path is stored locally and contains no secret. Push-to-talk captures audio only while held; audio stays in memory, is never uploaded, and is never logged. Until a model + local engine are configured, voice honestly reports "not configured" and produces no transcript.
 
+As of **M4.10** the local engine is **whisper.net** (runs on-device). Provide a GGML/GGUF Whisper model compatible with the whisper.net runtime (e.g. `ggml-base.en.bin`); Vayu does **not** download a model for you yet (a guided model download is a future milestone). If transcription reports "runtime unavailable", the file isn't a compatible model — try a known-good one.
+
 ## Flow
 
 ```
