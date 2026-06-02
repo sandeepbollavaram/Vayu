@@ -33,6 +33,9 @@ public partial class App : Application
     /// <summary>Service provider built during <see cref="OnLaunched"/>. Pages resolve services from here.</summary>
     public static IServiceProvider Services { get; private set; } = null!;
 
+    /// <summary>The shell window, exposed so dialogs/pickers can obtain the HWND.</summary>
+    public static Window? MainWindow { get; private set; }
+
     public App()
     {
         InitializeComponent();
@@ -43,6 +46,7 @@ public partial class App : Application
     {
         Services = BuildServices();
         _window = new MainWindow();
+        MainWindow = _window;
         _window.Activate();
     }
 
