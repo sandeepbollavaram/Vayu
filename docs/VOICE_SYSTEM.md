@@ -1,8 +1,16 @@
 # Voice System
 
+> **whisper.net engine wired (M4.10).** The local STT delegate is now a **real on-device whisper.net engine** (`WhisperNetSpeechToTextEngine`, Desktop-only). Captured 16 kHz mono PCM is converted to float samples (`PcmAudioConverter`) and transcribed by whisper.net using the model file you configure in Settings → Voice Setup — **fully local, no cloud**. The native packages (`Whisper.net` + `Whisper.net.Runtime`) live **only** in the desktop app, so `Vayu.Voice` stays native-free and CI stays green. The engine maps every failure to a safe message (model missing / runtime unavailable / empty audio / no speech recognised / cancelled) and **never fabricates a transcript**. You supply the model file; Vayu does **not** download one (a guided model download is a future milestone). Recommended model: a GGML/GGUF Whisper model compatible with the whisper.net runtime (e.g. `ggml-base.en.bin`).
+
 > **Real local STT vertical slice (M4.9).** Push-to-talk now performs **real microphone capture** and **real local transcription** when a model is configured. Flow: hold Push to talk → `IAudioCaptureService` captures 16 kHz mono PCM **in memory** (Windows `AudioGraph` adapter, capture only while active, capped by `MaxCaptureSeconds`) → Stop → the audio is transcribed by a local `ISpeechToTextProvider` → the transcript appears on the Home Voice card. If **Enable voice commands** is OFF the transcript is shown but nothing dispatches ("Transcript ready. Voice commands are off."); if ON, the transcript is dispatched as a `CommandRequest { Source = "voice/<provider>" }` through the **same** `IAgentRuntime` → permission → audit path as a typed command. **No cloud STT, no wake word, no clap, no always-listening.** The native engine plugs in via an injected transcription delegate, so the `Vayu.Voice` library stays native-free and CI stays green; until a real engine + model are configured the provider reports **not configured / runtime unavailable** and **no transcript is fabricated**. Configure the model path in Settings → Voice Setup.
 >
 > **Configuring the local STT model.** Settings → **Voice Setup** has a model-path field: enter the path to a local model file (e.g. a Whisper GGUF), press **Save** — Vayu validates the file exists and enables local STT — or **Disable** to turn it back off. The path is stored locally (no secret); audio never leaves the device and is never logged.
+>
+> **Local STT troubleshooting.**
+> - *"No local STT model is configured"* — set a model path in Settings → Voice Setup and Save.
+> - *"model file was not found"* — the path is wrong or the file moved; re-Save the correct path.
+> - *"runtime could not transcribe / runtime unavailable"* — the file isn't a whisper.net-compatible GGML/GGUF model, or it's corrupt; try a known-good model such as `ggml-base.en.bin`.
+> - *"No speech was recognised"* — capture succeeded but no words were detected; speak closer to the mic and try again.
 
 > **Voice Setup surface (M4.R2).** The Home voice section is presented as **Voice Setup** — microphone status, Local STT provider status, TTS status, the voice-command toggle, and an explicit *planned, opt-in* line for wake word ("Hey Vayu") and clap trigger. It states the honest state plainly and never implies always-listening.
 
@@ -94,6 +102,7 @@ The transcript is the *only* thing that crosses from the voice layer into the ru
 | M4.6 | ✅ Vayu Sphere voice-state animation — `VoiceStateVisualMapper` + distinct sphere cues per state (listening/transcribing/thinking/executing/speaking/error/cancelled) + Home state chip. Visual-only; no audio amplitude; app-command animations untouched. |
 | M4.7 | ✅ Wake word / clap trigger — **planning docs only** (this doc's "Future wake word and clap trigger design" section). No engine, no clap detection, no always-listening service, no background capture. |
 | M4.9 | ✅ **Real local STT vertical slice** — real push-to-talk mic capture (`IAudioCaptureService` + Windows `AudioGraph` adapter, in-memory PCM, capped, Stop-cancellable) + `DelegatingLocalSttProvider` (real transcription via injected delegate; honest not-configured, never a fake transcript) + Settings → Voice Setup model-path config. Transcript dispatch still requires Enable voice commands and flows through the permission/audit pipeline. No cloud STT, no wake/clap, no always-listening. |
+| M4.10 | ✅ **whisper.net engine** — `WhisperNetSpeechToTextEngine` (Desktop-only, `Whisper.net` + `Whisper.net.Runtime`) plugged into the M4.9 delegate seam + `PcmAudioConverter` (16-bit PCM → float). Real on-device transcription from the configured model; safe failure mapping; no fake transcript; no cloud; `Vayu.Voice` stays native-free. User supplies the model file (no auto-download yet). |
 | M4.8 | M4 polish + demo.                                             |
 
 ---
