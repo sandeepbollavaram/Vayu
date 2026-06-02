@@ -299,22 +299,41 @@
                 </StackPanel>
             </Border>
 
-            <!-- M4.2: Voice -->
+            <!-- Voice Setup -->
             <Border Grid.Row="6" Style="{StaticResource VayuGlassCard}">
                 <StackPanel Spacing="10">
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <Border Width="3" Height="14" Background="{StaticResource VayuAccentVioletBrush}" />
-                        <TextBlock Style="{StaticResource VayuSectionText}" Text="VOICE" VerticalAlignment="Center" />
+                        <TextBlock Style="{StaticResource VayuSectionText}" Text="VOICE SETUP" VerticalAlignment="Center" />
                     </StackPanel>
                     <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
-                               Text="Voice is opt-in and never always-listening. The push-to-talk control lives on the Home page." />
+                               Text="Voice is opt-in and never always-listening. Push-to-talk captures only while you hold it; the control lives on the Home page." />
+                    <TextBlock x:Name="VoiceMicStatusText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
+                               Text="Microphone: checking…" />
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Border Style="{StaticResource VayuChipTeal}"><TextBlock Style="{StaticResource VayuChipText}" Text="PUSH-TO-TALK · UI READY" /></Border>
-                        <Border Style="{StaticResource VayuChip}"><TextBlock Style="{StaticResource VayuChipText}" Text="LOCAL STT · WHISPER.CPP SHELL" /></Border>
+                        <Border Style="{StaticResource VayuChipTeal}"><TextBlock Style="{StaticResource VayuChipText}" Text="PUSH-TO-TALK · READY" /></Border>
+                        <Border Style="{StaticResource VayuChip}"><TextBlock Style="{StaticResource VayuChipText}" Text="LOCAL STT · WHISPER" /></Border>
                         <Border Style="{StaticResource VayuChipAmber}"><TextBlock Style="{StaticResource VayuChipText}" Text="CLOUD STT · DISABLED" /></Border>
                     </StackPanel>
                     <TextBlock x:Name="VoiceSttStatusText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
                                Text="Local STT: checking…" />
+
+                    <!-- Local STT model path configuration -->
+                    <TextBlock Style="{StaticResource VayuMutedText}" Text="Local STT model file (e.g. a Whisper GGUF). Stored locally; no secrets." TextWrapping="Wrap" />
+                    <Grid ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0" x:Name="SttModelPathBox"
+                                 PlaceholderText="C:\models\ggml-base.en.bin" />
+                        <Button Grid.Column="1" x:Name="SaveSttModelButton" Content="Save"
+                                Click="OnSaveSttModelClick" Style="{StaticResource AccentButtonStyle}" />
+                        <Button Grid.Column="2" x:Name="DisableSttButton" Content="Disable"
+                                Click="OnDisableSttClick" />
+                    </Grid>
+                    <TextBlock x:Name="SttModelMessageText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap" Text="" />
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Border Style="{StaticResource VayuChip}"><TextBlock Style="{StaticResource VayuChipText}" Text="SYSTEM TTS · READY" /></Border>
                         <Border Style="{StaticResource VayuChipAmber}"><TextBlock Style="{StaticResource VayuChipText}" Text="CLOUD TTS · DISABLED" /></Border>
