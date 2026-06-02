@@ -10,7 +10,7 @@ public class LocalSpeechToTextOptionsTests
         var o = new LocalSpeechToTextOptions();
 
         Assert.False(o.EnableLocalStt);
-        Assert.Equal("whispercpp", o.PreferredProvider);
+        Assert.Equal("whisper.net", o.PreferredProvider);
         Assert.Null(o.ModelPath);
         Assert.InRange(o.MaxCaptureSeconds, 1, 120);
         Assert.Equal("local-stt", o.ProviderName);
