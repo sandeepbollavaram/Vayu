@@ -1,12 +1,35 @@
 # Desktop Automation
 
-> **Status: M5.1 — safety foundation (no real typing/clicking yet).** M5 gives
-> Vayu the ability to do more than launch apps — focus windows, read visible
-> text, type, click, and (with permission) screenshot. M5.1 lays the **safety
-> contracts** for that capability. Nothing in M5.1 types, clicks, or captures a
-> screen; it defines *what Vayu may plan*, *how risky each action is*, and *what
-> the user must approve* before anything runs. The executor + confirmation UI
-> arrive in **M5.2**.
+> **Status: M5.2 — first real safe-typing slice (Notepad).** The safety
+> foundation from M5.1 is now wired end-to-end: `open notepad and write hello`
+> opens Notepad and, **only after you approve**, types the exact approved text
+> via Windows UI Automation (`ValuePattern.SetValue` — never global SendKeys).
+> Secret-looking and shell-looking text is **blocked before any prompt**; a
+> hidden/unknown window is never typed into; Cancel types nothing; every run is
+> audit-logged. Clicking, reading visible text, and screenshots remain planned
+> (not yet executable).
+
+### M5.2 — how "open notepad and write hello" works
+
+1. The parser produces the **`desktop.open_and_type`** intent (risk **L3**) with
+   `app=notepad` and `text=hello` (original casing preserved).
+2. It flows through `AgentRuntime → IPermissionService` (L3 → a real **Allow /
+   Cancel** permission dialog) → `DesktopAutomationAgent`.
+3. The agent evaluates the typing plan with `AutomationSafetyPolicy` **first** —
+   secret/shell text is rejected here, before opening the app or prompting.
+4. It opens Notepad (existing safe launcher) and polls `IWindowDiscoveryService`
+   for the **visible** Notepad window.
+5. It shows the **automation confirmation dialog** (`WinUiAutomationConfirmationService`):
+   action = Type text, target app/window, **exact text preview**, risk, warning,
+   **Approve once / Cancel** (dismiss = Cancel).
+6. On **Cancel** → nothing is typed. On **Approve once** →
+   `WindowsTextTypingExecutor` finds the editable control via UI Automation and
+   sets its value to the approved text.
+7. The runtime writes a redacted audit row; the Home result panel shows the
+   outcome.
+
+Two independent safety layers apply — the permission engine **and** the
+automation confirmation — and neither is bypassed.
 
 ## The safety model
 
@@ -73,13 +96,28 @@ This compound command is the canonical M5 example. Today:
 - it will be **completed only after** the M5.2 confirmation dialog + a safe
   typing executor, and only on explicit approval, with an audit row.
 
-## Coming in M5.2
+## Shipped in M5.2
 
-- A WinUI confirmation dialog implementing `IAutomationConfirmationService`
-  (shows target / action / text preview / risk / warning; **Approve once** /
-  **Cancel**).
-- A safe typing executor that focuses the approved window and types the approved
-  text via the UI Automation pattern (never global `SendKeys`), audited and
-  cancelable.
-- Click + read-visible-text executors.
+- ✅ `WinUiAutomationConfirmationService` — the WinUI confirmation dialog
+  (target / action / **exact text preview** / risk / warning; **Approve once** /
+  **Cancel**, dismiss = Cancel).
+- ✅ A real **Allow / Cancel** permission dialog (`WinUiConfirmationPrompt`) for
+  L3+ at the permission layer.
+- ✅ `WindowsTextTypingExecutor` — safe typing via UI Automation
+  `ValuePattern.SetValue` (official `Interop.UIAutomationClient`), fail-safe when
+  no editable control is found; **never** global `SendKeys`.
+- ✅ `DesktopAutomationAgent` (`desktop.open_and_type`, L3) wired into the runtime.
+
+## Still to come
+
+- Click executor (`ClickElement`).
+- Read-visible-text executor (`ReadVisibleText`).
 - Screenshot capture, permission-gated.
+- These remain **planned** — no clicking, reading, or screenshots execute yet.
+
+## What M5.2 does NOT do
+
+No browser login automation, no password/credential entry, no payment/checkout
+automation, no hidden-window automation, no screenshot capture, no arbitrary app
+scripting, and no arbitrary shell execution. Typing is the only executable
+action, and only into a visible, approved window after explicit approval.
