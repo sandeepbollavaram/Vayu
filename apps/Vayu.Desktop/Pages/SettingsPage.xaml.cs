@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Controls;
 using Vayu.AI.Gemini;
 using Vayu.AI.Local;
 using Vayu.AI.Online;
+using Vayu.Core.Setup;
 using Vayu.Voice;
 
 using Vayu_Desktop.Services;
@@ -210,9 +211,10 @@ public sealed partial class SettingsPage : Page
     }
 
     private static string ModelsDirectory()
-        => Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Vayu", "models");
+        => App.Services?.GetService<IVayuStoragePathProvider>()?.ActivePaths.ModelsPath
+           ?? Path.Combine(
+               Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+               "Vayu", "models");
 
     private async void OnDownloadModelClick(object sender, RoutedEventArgs e)
     {
