@@ -214,7 +214,8 @@ Features:
 | Sub  | Scope                                                                                              |
 | ---- | -------------------------------------------------------------------------------------------------- |
 | M5.1 | ✅ **Automation architecture + safety foundation** — `Vayu.Automation.Windows` contracts (`AutomationActionType`/`AutomationTarget`/`AutomationActionPlan`/`AutomationActionResult`), `AutomationSafetyPolicy` (risk classification + rejection of secret/shell text, hidden/unknown targets, unknown actions), `IWindowDiscoveryService` + `WindowsWindowDiscoveryService` (visible top-level windows only), `IAutomationConfirmationService` (+ fail-closed default), and `CommandToAutomationPlanner` (open-and-type → planned, never-typed). **No real typing/clicking/screenshot.** See [DESKTOP_AUTOMATION.md](DESKTOP_AUTOMATION.md). |
-| M5.2 | WinUI automation confirmation dialog + safe typing/click executor (UI Automation, never global SendKeys) — where "open notepad and write hello" finally types, on approval, audited. |
+| M5.2 | ✅ **Safe typing vertical slice** — `desktop.open_and_type` intent (L3) + `DesktopAutomationAgent` + `WindowsTextTypingExecutor` (UI Automation `ValuePattern`, never global SendKeys) + WinUI automation confirmation dialog (exact text preview, Approve once/Cancel) + real L3 permission dialog. **"open notepad and write hello" now opens Notepad and types only on approval, audited.** Secret/shell text blocked before any prompt; hidden/unknown windows never typed into. Clicking/reading/screenshots still planned. |
+| M5.3 | Click + read-visible-text executors; screenshot capture (permission-gated). |
 
 ---
 
