@@ -319,7 +319,8 @@
                                Text="Local STT: checking…" />
 
                     <!-- Local STT model path configuration -->
-                    <TextBlock Style="{StaticResource VayuMutedText}" Text="Local STT model file (e.g. a Whisper GGUF). Stored locally; no secrets." TextWrapping="Wrap" />
+                    <TextBlock Style="{StaticResource VayuMutedText}" Text="Local STT provider: whisper.net (runs on-device, no cloud)." TextWrapping="Wrap" />
+                    <TextBlock Style="{StaticResource VayuMutedText}" Text="Model file: a GGML/GGUF Whisper model compatible with the whisper.net runtime (e.g. ggml-base.en.bin). Stored locally; no secrets; not downloaded automatically." TextWrapping="Wrap" />
                     <Grid ColumnSpacing="8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
