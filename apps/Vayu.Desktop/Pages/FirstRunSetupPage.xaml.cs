@@ -245,6 +245,7 @@ public sealed partial class FirstRunSetupPage : Page
         if (_persistentSetup is null)
         {
             StorageRootBox.Text = DefaultStorageRoot();
+            UpdateStoragePreview(StorageRootBox.Text);
             return;
         }
         try
@@ -258,6 +259,7 @@ public sealed partial class FirstRunSetupPage : Page
         {
             StorageRootBox.Text = DefaultStorageRoot();
         }
+        UpdateStoragePreview(StorageRootBox.Text);
     }
 
     private static string DefaultStorageRoot()
@@ -268,6 +270,61 @@ public sealed partial class FirstRunSetupPage : Page
     {
         StorageRootBox.Text = DefaultStorageRoot();
         StorageMessageText.Text = "Reset to the default location.";
+        UpdateStoragePreview(StorageRootBox.Text);
+    }
+
+    private async void OnBrowseStorageClick(object sender, RoutedEventArgs e)
+    {
+        var picker = new global::Windows.Storage.Pickers.FolderPicker
+        {
+            SuggestedStartLocation = global::Windows.Storage.Pickers.PickerLocationId.ComputerFolder,
+        };
+        picker.FileTypeFilter.Add("*");
+
+        // WinUI 3 desktop: the picker must be associated with the app window (HWND).
+        var window = App.MainWindow;
+        if (window is null)
+        {
+            StorageMessageText.Text = "Folder picker is unavailable; type a path instead.";
+            return;
+        }
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+
+        global::Windows.Storage.StorageFolder? folder;
+        try
+        {
+            folder = await picker.PickSingleFolderAsync();
+        }
+#pragma warning disable CA1031 // Picker failure is non-fatal; keep the text field usable.
+        catch (Exception)
+        {
+            StorageMessageText.Text = "Folder picker failed; type a path instead.";
+            return;
+        }
+#pragma warning restore CA1031
+
+        if (folder is not null)
+        {
+            StorageRootBox.Text = folder.Path;
+            UpdateStoragePreview(folder.Path);
+        }
+    }
+
+    private void UpdateStoragePreview(string? root)
+    {
+        if (!VayuStoragePaths.IsValidPathShape(root))
+        {
+            StoragePathsPreview.Text = string.Empty;
+            return;
+        }
+        var full = Path.GetFullPath(Environment.ExpandEnvironmentVariables(root!));
+        StoragePathsPreview.Text =
+            $"workspace: {Path.Combine(full, "workspace")}\n" +
+            $"logs: {Path.Combine(full, "logs")}\n" +
+            $"cache: {Path.Combine(full, "cache")}\n" +
+            $"models: {Path.Combine(full, "models")}\n" +
+            $"assets: {Path.Combine(full, "assets")}";
     }
 
     private async void OnSaveStorageClick(object sender, RoutedEventArgs e)
@@ -311,7 +368,8 @@ public sealed partial class FirstRunSetupPage : Page
         {
             var state = await _persistentSetup.GetStateAsync().ConfigureAwait(true);
             await _persistentSetup.UpdateAsync(state with { StoragePaths = paths }).ConfigureAwait(true);
-            StorageMessageText.Text = $"Storage saved under {root}.";
+            StorageMessageText.Text = $"Storage saved under {root}. Takes effect on next launch; existing data is not moved.";
+            UpdateStoragePreview(root);
         }
         catch
         {
