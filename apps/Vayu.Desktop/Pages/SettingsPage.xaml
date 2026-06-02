@@ -335,6 +335,34 @@
                                 Click="OnDisableSttClick" />
                     </Grid>
                     <TextBlock x:Name="SttModelMessageText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap" Text="" />
+
+                    <!-- Guided model download (explicit consent; verified source) -->
+                    <Border Style="{StaticResource VayuGlassCardElevated}">
+                        <StackPanel Spacing="8">
+                            <TextBlock Style="{StaticResource VayuSectionText}" Text="DOWNLOAD A MODEL" />
+                            <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
+                                       Text="Vayu can download a verified Whisper model (ggerganov/whisper.cpp on Hugging Face) to %LOCALAPPDATA%\Vayu\models. Nothing downloads without your click." />
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <ComboBox x:Name="ModelCatalogCombo" MinWidth="240" />
+                                <Button x:Name="DownloadModelButton" Content="Download"
+                                        Click="OnDownloadModelClick" Style="{StaticResource AccentButtonStyle}" />
+                                <Button x:Name="CancelDownloadButton" Content="Cancel"
+                                        Click="OnCancelDownloadClick" IsEnabled="False" />
+                            </StackPanel>
+                            <ProgressBar x:Name="DownloadProgressBar" Minimum="0" Maximum="100" Value="0"
+                                         Visibility="Collapsed" Foreground="{StaticResource VayuAccentCyanBrush}" />
+                            <TextBlock x:Name="DownloadMessageText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap" Text="" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Test local STT (transcribe-only; never dispatches a command) -->
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Button x:Name="TestSttButton" Content="Test local STT" Click="OnTestSttClick" />
+                        <Button x:Name="StopTestSttButton" Content="Stop test" Click="OnStopTestSttClick" IsEnabled="False" />
+                    </StackPanel>
+                    <TextBlock x:Name="TestSttResultText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
+                               Text="Test captures a short sample and transcribes it locally. It never runs a command and never logs audio." />
+
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Border Style="{StaticResource VayuChip}"><TextBlock Style="{StaticResource VayuChipText}" Text="SYSTEM TTS · READY" /></Border>
                         <Border Style="{StaticResource VayuChipAmber}"><TextBlock Style="{StaticResource VayuChipText}" Text="CLOUD TTS · DISABLED" /></Border>
