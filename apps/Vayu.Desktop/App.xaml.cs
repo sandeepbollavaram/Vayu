@@ -180,10 +180,21 @@ public partial class App : Application
         services.AddSingleton<IVoiceInputService, StubVoiceInputService>();
         services.AddSingleton<IVoiceActivitySink>(_ => new InMemoryVoiceActivitySink());
 
-        // --- M4.3: local STT provider (Whisper.cpp shell; off by default, no native runtime) ---
+        // --- Local STT: real push-to-talk mic capture + delegating provider ---
+        // Capture is Windows-only and lives in the desktop adapter; the library
+        // stays native-free. The transcription delegate is the seam a real local
+        // engine (e.g. Whisper) plugs into — null here, so the provider honestly
+        // reports the runtime as unavailable rather than faking a transcript.
         services.AddSingleton(new LocalSpeechToTextOptions());
-        services.AddSingleton<ISpeechToTextProvider>(sp =>
-            new WhisperCppSpeechToTextProvider(sp.GetRequiredService<LocalSpeechToTextOptions>()));
+        services.AddSingleton(sp => new VoiceSttState(sp.GetRequiredService<LocalSpeechToTextOptions>()));
+        // Transient so each resolve reads the live model-path/enable state the
+        // Settings → Voice Setup surface may have just updated.
+        services.AddTransient<IAudioCaptureService>(sp =>
+            new WindowsAudioCaptureService(sp.GetRequiredService<VoiceSttState>().Options));
+        services.AddTransient<ISpeechToTextProvider>(sp =>
+            new DelegatingLocalSttProvider(
+                sp.GetRequiredService<VoiceSttState>().Options,
+                transcribe: null));
 
         // --- M4.4: system TTS (off by default; opt-in via the Settings toggle/VoiceTtsState) ---
         services.AddSingleton(new TextToSpeechOptions());
