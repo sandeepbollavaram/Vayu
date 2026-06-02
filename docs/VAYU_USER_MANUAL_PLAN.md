@@ -32,6 +32,7 @@ Give a non-technical Windows user everything they need to install Vayu, set it u
 ### 3. Everyday use (Version 1)
 - Using the command box.
 - Using voice (push-to-talk, listening/thinking/speaking states).
+- **Setting up local voice (working as of M4.11)**: in Settings → Voice Setup, download a verified Whisper model (base.en recommended) or point at one you have; confirm **Local STT: Ready**; optionally **Test local STT**; then push-to-talk on Home transcribes locally. Turn on **Enable voice commands** to have a valid transcript run through the normal permission/audit pipeline. All on-device — no cloud STT, no always-listening, audio never logged.
 - **Voice triggers — wake word & clap (future, opt-in)**:
   - How to **enable/disable the wake word** ("Hey Vayu") — off by default; how
     to turn it on, choose the phrase, and turn it back off.
