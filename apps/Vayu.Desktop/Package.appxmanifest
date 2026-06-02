@@ -49,5 +49,8 @@
   <Capabilities>
     <rescap:Capability Name="runFullTrust" />
     <systemai:Capability Name="systemAIModels"/>
+    <!-- Push-to-talk microphone capture (M4.9). The OS mic prompt fires on the
+         user's first Push to talk; Vayu never captures otherwise. -->
+    <DeviceCapability Name="microphone" />
   </Capabilities>
 </Package>
