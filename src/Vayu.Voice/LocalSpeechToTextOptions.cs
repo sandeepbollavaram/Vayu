@@ -13,8 +13,8 @@ public sealed record LocalSpeechToTextOptions
     /// <summary>Master switch. Default <see langword="false"/> — local STT is opt-in.</summary>
     public bool EnableLocalStt { get; init; }
 
-    /// <summary>Which local provider to prefer, e.g. <c>"whispercpp"</c>.</summary>
-    public string PreferredProvider { get; init; } = "whispercpp";
+    /// <summary>Which local provider to prefer, e.g. <c>"whisper.net"</c>.</summary>
+    public string PreferredProvider { get; init; } = "whisper.net";
 
     /// <summary>Path to the local model file (e.g. a Whisper GGUF). Null until the user configures one.</summary>
     public string? ModelPath { get; init; }
