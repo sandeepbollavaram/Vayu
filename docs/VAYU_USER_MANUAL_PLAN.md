@@ -48,7 +48,7 @@ Give a non-technical Windows user everything they need to install Vayu, set it u
     cancel an in-progress listen, and how to clear any retained voice metadata.
   - *(Push-to-talk remains the default and needs none of the above.)*
 - Opening apps.
-- Using safe desktop automation (typing/clicking with confirmation): Vayu shows exactly what it will do in which visible window and waits for your approval; it never types passwords/keys or shell commands, never touches hidden windows, and screenshots need explicit permission. See [DESKTOP_AUTOMATION.md](DESKTOP_AUTOMATION.md).
+- Using safe desktop automation (typing/clicking with confirmation): Vayu shows exactly what it will do in which visible window and waits for your approval; it never types passwords/keys or shell commands, never touches hidden windows, and screenshots need explicit permission. As of M5.2, **`open notepad and write hello`** works end-to-end — Notepad opens and Vayu types the approved text only after you Approve once. See [DESKTOP_AUTOMATION.md](DESKTOP_AUTOMATION.md).
 - Using workflows.
 - Using Mission Control (coordinating coding agents with approval).
 - Using the coding autopilot.
