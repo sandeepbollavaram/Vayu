@@ -28,10 +28,16 @@ public sealed partial class HomePage : Page
     private readonly IVoiceInputService? _voiceInput;
     private readonly IVoiceActivitySink? _voiceSink;
     private readonly ISpeechToTextProvider? _sttProvider;
+    private readonly IAudioCaptureService? _audioCapture;
     private readonly ITextToSpeechService? _tts;
     private readonly VoiceCommandService? _voiceCommands;
     private bool _voiceCommandsEnabled;
     private VoiceSession? _voiceSession;
+
+    // Real push-to-talk capture (M4.9). The CTS is cancelled by Stop; the task
+    // resolves with the in-memory audio so the Stop handler can transcribe it.
+    private CancellationTokenSource? _captureCts;
+    private Task<AudioCaptureResult>? _captureTask;
 
     /// <summary>Bound to the "Recent activity" preview at the bottom of the page.</summary>
     public ObservableCollection<string> RecentRows { get; } = new();
@@ -44,6 +50,7 @@ public sealed partial class HomePage : Page
         _voiceInput = App.Services.GetService<IVoiceInputService>();
         _voiceSink = App.Services.GetService<IVoiceActivitySink>();
         _sttProvider = App.Services.GetService<ISpeechToTextProvider>();
+        _audioCapture = App.Services.GetService<IAudioCaptureService>();
         _tts = App.Services.GetService<ITextToSpeechService>();
         _voiceCommands = App.Services.GetService<VoiceCommandService>();
     }
@@ -137,9 +144,9 @@ public sealed partial class HomePage : Page
         }
     }
 
-    private async void OnPushToTalkClick(object sender, RoutedEventArgs e)
+    private void OnPushToTalkClick(object sender, RoutedEventArgs e)
     {
-        if (_voiceInput is null)
+        if (_audioCapture is null || _captureTask is not null)
         {
             return;
         }
@@ -147,11 +154,13 @@ public sealed partial class HomePage : Page
         _voiceSession = VoiceSession.StartPushToTalk(DateTimeOffset.UtcNow);
         SetVoiceUi(VoiceInteractionState.Listening, "LISTENING");
         VoiceTranscriptText.Text = "Listening… press Stop to transcribe.";
-        await PublishVoiceAsync("Listening.").ConfigureAwait(true);
+        VoiceCommandResultText.Text = string.Empty;
+        _ = PublishVoiceAsync("Listening.");
 
-        // M4.3 does not capture audio yet — the stub input service confirms the
-        // session without opening the microphone. No fake transcript is produced.
-        await _voiceInput.StartPushToTalkAsync(_voiceSession).ConfigureAwait(true);
+        // Start REAL microphone capture. It runs until Stop cancels the token or
+        // the configured max-duration cap elapses. No audio is captured until now.
+        _captureCts = new CancellationTokenSource();
+        _captureTask = _audioCapture.StartCaptureAsync(_captureCts.Token);
     }
 
     private void OnVoiceCommandsToggled(object sender, RoutedEventArgs e)
@@ -159,57 +168,100 @@ public sealed partial class HomePage : Page
 
     private async void OnStopVoiceClick(object sender, RoutedEventArgs e)
     {
-        if (_voiceInput is not null)
+        var captureTask = _captureTask;
+        if (captureTask is null)
         {
-            await _voiceInput.StopAsync().ConfigureAwait(true);
+            return;
         }
 
+        // Stop capture and collect the in-memory audio.
+        _captureCts?.Cancel();
         SetVoiceUi(VoiceInteractionState.Transcribing, "TRANSCRIBING");
         await PublishVoiceAsync("Transcribing.").ConfigureAwait(true);
 
-        if (_voiceCommandsEnabled && _voiceCommands is not null)
+        AudioCaptureResult capture;
+        try
         {
-            // M4.5: route the transcript through the SAME runtime as typed commands.
-            // With the current Whisper shell, no real transcript is produced, so the
-            // service reports "not dispatched" — nothing executes.
-            var vc = await _voiceCommands.StartPushToTalkCommandDetailedAsync().ConfigureAwait(true);
-            VoiceTranscriptText.Text = string.IsNullOrEmpty(vc.Transcript)
-                ? "No transcript (real STT not configured)."
-                : vc.Transcript;
-            VoiceCommandResultText.Text = vc.WasDispatched
-                ? $"Dispatched · {vc.CommandResult?.Status}"
-                : $"Not dispatched · {vc.ErrorMessage}";
-            if (vc.WasDispatched)
-            {
-                await RefreshRecentAsync().ConfigureAwait(true);
-            }
+            capture = await captureTask.ConfigureAwait(true);
         }
-        else
+#pragma warning disable CA1031 // UI boundary: surface capture failure, never crash.
+        catch (Exception)
         {
-            // Transcribe-only path (toggle off). No command runs.
-            VoiceCommandResultText.Text = "Voice commands are off — transcribe only.";
-            if (_sttProvider is not null)
-            {
-                try
-                {
-                    var result = await _sttProvider
-                        .TranscribeAsync(ReadOnlyMemory<byte>.Empty)
-                        .ConfigureAwait(true);
-                    VoiceTranscriptText.Text = result.Success
-                        ? result.Transcript
-                        : result.ErrorMessage ?? "No transcript.";
-                }
-                catch
-                {
-                    VoiceTranscriptText.Text = "Transcription failed.";
-                }
-            }
-            else
-            {
-                VoiceTranscriptText.Text = "No local STT provider configured.";
-            }
+            capture = AudioCaptureResult.Failed("Microphone capture failed.");
+        }
+#pragma warning restore CA1031
+        finally
+        {
+            _captureCts?.Dispose();
+            _captureCts = null;
+            _captureTask = null;
         }
 
+        if (!capture.HasAudio)
+        {
+            VoiceTranscriptText.Text = capture.Status == AudioCaptureStatus.Failed
+                ? capture.ErrorMessage ?? "Microphone capture failed."
+                : "No audio captured.";
+            VoiceCommandResultText.Text = string.Empty;
+            await ResetVoiceIdleAsync().ConfigureAwait(true);
+            return;
+        }
+
+        // Transcribe the real captured audio locally (no cloud).
+        await TranscribeAndMaybeDispatchAsync(capture.Pcm16).ConfigureAwait(true);
+        await ResetVoiceIdleAsync().ConfigureAwait(true);
+    }
+
+    private async Task TranscribeAndMaybeDispatchAsync(ReadOnlyMemory<byte> audio)
+    {
+        if (_sttProvider is null)
+        {
+            VoiceTranscriptText.Text = "No local STT provider configured.";
+            return;
+        }
+
+        VoiceRecognitionResult result;
+        try
+        {
+            result = await _sttProvider.TranscribeAsync(audio).ConfigureAwait(true);
+        }
+#pragma warning disable CA1031 // UI boundary: surface transcription failure honestly.
+        catch (Exception)
+        {
+            VoiceTranscriptText.Text = "Transcription failed.";
+            return;
+        }
+#pragma warning restore CA1031
+
+        if (!result.Success || string.IsNullOrWhiteSpace(result.Transcript))
+        {
+            VoiceTranscriptText.Text = result.ErrorMessage ?? "No transcript (local STT not configured).";
+            VoiceCommandResultText.Text = string.Empty;
+            return;
+        }
+
+        VoiceTranscriptText.Text = result.Transcript;
+
+        if (!_voiceCommandsEnabled || _voiceCommands is null)
+        {
+            VoiceCommandResultText.Text = "Transcript ready. Voice commands are off.";
+            return;
+        }
+
+        // Dispatch the real transcript through the SAME runtime/permission/audit
+        // pipeline as a typed command — voice never bypasses it.
+        var request = new CommandRequest
+        {
+            Text = result.Transcript,
+            Source = $"voice/{result.ProviderName}",
+        };
+        var commandResult = await _runtime.DispatchAsync(request).ConfigureAwait(true);
+        VoiceCommandResultText.Text = $"Dispatched · {commandResult.Status}";
+        await RefreshRecentAsync().ConfigureAwait(true);
+    }
+
+    private async Task ResetVoiceIdleAsync()
+    {
         _voiceSession = _voiceSession?.WithState(VoiceInteractionState.Idle);
         SetVoiceUi(VoiceInteractionState.Idle, "IDLE");
         await PublishVoiceAsync("Idle.").ConfigureAwait(true);
