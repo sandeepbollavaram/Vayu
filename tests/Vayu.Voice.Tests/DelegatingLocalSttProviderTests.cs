@@ -118,6 +118,37 @@ public class DelegatingLocalSttProviderTests
         Assert.Equal(@"C:\m\model.bin", seenModel);
     }
 
+    [Fact]
+    public async Task GetStatus_ModelInvalid_WhenReadinessProbeFails()
+    {
+        var provider = new DelegatingLocalSttProvider(
+            new LocalSpeechToTextOptions { EnableLocalStt = true, ModelPath = @"C:\m\bad.bin" },
+            transcribe: Never(),
+            modelExists: _ => true,
+            readinessProbe: _ => (false, "The local STT runtime could not load this model."));
+
+        var status = await provider.GetStatusAsync();
+
+        Assert.False(status.IsConfigured);
+        Assert.False(status.IsAvailable);
+        Assert.Contains("could not load", status.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task GetStatus_Ready_WhenReadinessProbeSucceeds()
+    {
+        var provider = new DelegatingLocalSttProvider(
+            new LocalSpeechToTextOptions { EnableLocalStt = true, ModelPath = @"C:\m\good.bin" },
+            transcribe: Never(),
+            modelExists: _ => true,
+            readinessProbe: _ => (true, "Local STT runtime is ready (whisper.net)."));
+
+        var status = await provider.GetStatusAsync();
+
+        Assert.True(status.IsConfigured);
+        Assert.True(status.IsAvailable);
+    }
+
     private static DelegatingLocalSttProvider.TranscribeDelegate Never()
         => (_, _, _) => throw new InvalidOperationException("delegate must not be called");
 
