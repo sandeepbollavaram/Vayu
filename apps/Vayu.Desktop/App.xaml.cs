@@ -84,9 +84,10 @@ public partial class App : Application
             sp.GetRequiredService<SecureConfigService>(),
             sp.GetRequiredService<GeminiProviderOptions>()));
 
-        // --- Memory: SQLite audit log ---
+        // --- Memory: SQLite audit log + durable user settings ---
         services.AddSingleton(new MemoryOptions());
         services.AddSingleton<IAuditLogService>(sp => new SqliteAuditLogService(sp.GetRequiredService<MemoryOptions>()));
+        services.AddSingleton<IUserSettingsStore>(sp => new SqliteUserSettingsStore(sp.GetRequiredService<MemoryOptions>()));
 
         // --- Permissions: policy + WinUI prompt + engine ---
         services.AddSingleton(PermissionPolicy.Default);
@@ -238,9 +239,15 @@ public partial class App : Application
             sp.GetService<ITextToSpeechService>(),
             sp.GetService<VoiceTtsState>()));
 
-        // --- First Run Setup Wizard (M2.5): in-memory state for now; SQLite persistence lands in M2.8 ---
-        services.AddSingleton<IFirstRunSetupService>(sp => new InMemoryFirstRunSetupService(
-            sp.GetRequiredService<IClock>()));
+        // --- First Run Setup: durable SQLite-backed state (survives restarts) ---
+        services.AddSingleton<IFirstRunSetupService>(sp =>
+        {
+            var store = sp.GetRequiredService<IUserSettingsStore>();
+            return new PersistentFirstRunSetupService(
+                get: store.GetAsync,
+                set: store.SetAsync,
+                clock: sp.GetRequiredService<IClock>());
+        });
 
         return services.BuildServiceProvider();
     }
