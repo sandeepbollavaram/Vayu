@@ -20,6 +20,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <StackPanel Grid.Row="0" Spacing="4">
@@ -378,6 +379,27 @@
                         <Border Style="{StaticResource VayuChip}"><TextBlock Style="{StaticResource VayuChipText}" Text="CLAP TRIGGER · PLANNED" /></Border>
                         <Border Style="{StaticResource VayuChipAmber}"><TextBlock Style="{StaticResource VayuChipText}" Text="ALWAYS-LISTENING · OFF" /></Border>
                     </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Storage summary -->
+            <Border Grid.Row="7" Style="{StaticResource VayuGlassCard}">
+                <StackPanel Spacing="8">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Border Width="3" Height="14" Background="{StaticResource VayuAccentCyanBrush}" />
+                        <TextBlock Style="{StaticResource VayuSectionText}" Text="STORAGE" VerticalAlignment="Center" />
+                        <Border x:Name="StorageSourceChip" Style="{StaticResource VayuChip}" VerticalAlignment="Center">
+                            <TextBlock x:Name="StorageSourceText" Style="{StaticResource VayuChipText}" Text="DEFAULT" />
+                        </Border>
+                    </StackPanel>
+                    <TextBlock x:Name="StorageSummaryText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
+                               Text="Resolving active storage paths…" />
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Button x:Name="OpenDataFolderButton" Content="Open data folder" Click="OnOpenDataFolderClick" />
+                        <Button x:Name="ReopenSetupButton" Content="Open Setup Dashboard" Click="OnOpenFirstRunSetupClick" />
+                    </StackPanel>
+                    <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
+                               Text="Vayu uses these folders for logs, cache, models, and generated assets. Changing the root in the Setup Dashboard takes effect on next launch; existing data is not moved." />
                 </StackPanel>
             </Border>
         </Grid>
