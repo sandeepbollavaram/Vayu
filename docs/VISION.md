@@ -43,6 +43,15 @@ The Home screen is the **Vayu Command Center**: the AI core (Vayu Sphere), the c
 - Vayu is **not** just a chatbot, just a voice UI, just an app launcher, or just a dashboard demo.
 - The **future VPS/server** capability is real on the roadmap but gated: it requires explicit user approval, secure credentials, audit logs, and a stop/cancel — **no hidden remote execution, no plaintext secrets**.
 
+## Desktop automation — safe by construction
+
+Beyond launching apps, Vayu can (from M5) focus windows, read visible text, type,
+click, and screenshot — but **only** as permission-gated, audit-logged,
+cancelable, user-approved actions. The M5.1 safety foundation makes this concrete:
+every action is a *plan* the user sees before it runs; Vayu **never** types
+secrets or shell commands, **never** acts on a hidden or unknown window, and
+**never** runs arbitrary shell. See [DESKTOP_AUTOMATION.md](DESKTOP_AUTOMATION.md).
+
 ## Safety is the product
 
 Vayu's differentiator is not "more automation" — it is **trustworthy** automation. Stop/cancel, audit logs, consent dialogs, and the permission engine are the core of the product, not optional add-ons. A feature that cannot be made safe, cancelable, and auditable does not ship.
