@@ -133,7 +133,7 @@
                     </Grid>
 
                     <StackPanel Spacing="6">
-                        <TextBlock Style="{StaticResource VayuMutedText}" Text="Local AI is OFF by default. Detection is read-only — no installs, no model downloads." />
+                        <TextBlock Style="{StaticResource VayuMutedText}" Text="Local AI is off by default. Vayu detects Ollama and shows installed models; nothing installs or downloads without your permission." />
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <TextBlock Style="{StaticResource VayuMutedText}" Text="Endpoint:" />
                             <TextBlock x:Name="EndpointDisplayText" Style="{StaticResource VayuBodyText}" Text="http://localhost:11434" />
@@ -254,7 +254,7 @@
                         <TextBlock Style="{StaticResource VayuSectionText}" Text="ONLINE PROVIDER REGISTRY" VerticalAlignment="Center" />
                     </StackPanel>
                     <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
-                               Text="Choose optional cloud providers. Gemini works now; other connectors are planned. Cloud calls require Allow once consent — Vayu is not tied to any single vendor." />
+                               Text="Choose an optional online AI provider. Cloud calls require Allow-once consent — Vayu is not tied to any single vendor." />
 
                     <ItemsControl x:Name="ProviderRegistryItems">
                         <ItemsControl.ItemTemplate>
