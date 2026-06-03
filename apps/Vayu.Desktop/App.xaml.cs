@@ -41,6 +41,9 @@ public partial class App : Application
         InitializeComponent();
     }
 
+    /// <summary>The free-floating desktop sphere overlay.</summary>
+    public static SphereOverlayWindow? SphereOverlay { get; private set; }
+
     /// <inheritdoc />
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
@@ -48,6 +51,17 @@ public partial class App : Application
         _window = new MainWindow();
         MainWindow = _window;
         _window.Activate();
+
+        // Free-floating desktop sphere: a control surface that opens/focuses the
+        // Command Center. It never captures audio or automates on its own.
+        var overlay = new SphereOverlayWindow();
+        overlay.OpenRequested += (_, _) =>
+        {
+            _window.AppWindow.Show();
+            _window.Activate();
+        };
+        overlay.Activate();
+        SphereOverlay = overlay;
     }
 
     private static IServiceProvider BuildServices()
