@@ -29,21 +29,16 @@
     <SolidColorBrush x:Key="VayuTextSecondary" Color="#CCBAC8DC" />
     <SolidColorBrush x:Key="VayuTextMuted"     Color="#9988A0C0" />
 
-    <!-- ===== Surfaces ===== -->
-    <SolidColorBrush x:Key="VayuShellBackground"   Color="#FF050912" />
-    <SolidColorBrush x:Key="VayuGlassFill"         Color="#331A2438" />
-    <SolidColorBrush x:Key="VayuGlassFillStrong"   Color="#552A4068" />
-    <SolidColorBrush x:Key="VayuGlassStroke"       Color="#5A2E4870" />
-    <SolidColorBrush x:Key="VayuGlassStrokeStrong" Color="#AA4A8BD9" />
+    <!-- ===== Surfaces (frosted glass — Mica shows through; NO gradient fills) ===== -->
+    <SolidColorBrush x:Key="VayuShellBackground"   Color="#FF070B14" />
+    <!-- Very low-opacity fills so the translucent Mica backdrop reads as glass. -->
+    <SolidColorBrush x:Key="VayuGlassFill"         Color="#14FFFFFF" />
+    <SolidColorBrush x:Key="VayuGlassFillStrong"   Color="#22FFFFFF" />
+    <!-- Hairline borders only. -->
+    <SolidColorBrush x:Key="VayuGlassStroke"       Color="#1FFFFFFF" />
+    <SolidColorBrush x:Key="VayuGlassStrokeStrong" Color="#33FFFFFF" />
 
-    <!-- Shell gradient — radial-feel via diagonal linear -->
-    <LinearGradientBrush x:Key="VayuShellGradient" StartPoint="0,0" EndPoint="1,1">
-        <GradientStop Color="#FF040810" Offset="0.0" />
-        <GradientStop Color="#FF0A1428" Offset="0.45" />
-        <GradientStop Color="#FF050B18" Offset="1.0" />
-    </LinearGradientBrush>
-
-    <!-- Core orb gradient — matches the Vayu app icon -->
+    <!-- Core orb (flat radial glow only on the sphere itself, not a UI fill). -->
     <RadialGradientBrush x:Key="VayuCoreGlowBrush" Center="0.5,0.5" RadiusX="0.5" RadiusY="0.5">
         <GradientStop Color="#FFB6F4FF" Offset="0.0" />
         <GradientStop Color="#FF2EE6C9" Offset="0.45" />
@@ -56,12 +51,12 @@
         <GradientStop Color="#0000E1FF" Offset="1.0" />
     </RadialGradientBrush>
 
-    <!-- ===== Glass card ===== -->
+    <!-- ===== Frosted glass panel (replaces the old solid cards) ===== -->
     <Style x:Key="VayuGlassCard" TargetType="Border">
         <Setter Property="Background"      Value="{StaticResource VayuGlassFill}" />
         <Setter Property="BorderBrush"     Value="{StaticResource VayuGlassStroke}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius"    Value="14" />
+        <Setter Property="CornerRadius"    Value="12" />
         <Setter Property="Padding"         Value="20" />
     </Style>
 
@@ -70,36 +65,25 @@
         <Setter Property="BorderBrush" Value="{StaticResource VayuGlassStrokeStrong}" />
     </Style>
 
-    <!-- ===== Status chip — base + accent variants ===== -->
+    <!-- ===== Status pill — quiet glass, hairline border, neutral text ===== -->
     <Style x:Key="VayuChip" TargetType="Border">
-        <Setter Property="Background"      Value="#330A1828" />
-        <Setter Property="BorderBrush"     Value="{StaticResource VayuAccentCyanBrush}" />
+        <Setter Property="Background"      Value="{StaticResource VayuGlassFill}" />
+        <Setter Property="BorderBrush"     Value="{StaticResource VayuGlassStroke}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius"    Value="14" />
+        <Setter Property="CornerRadius"    Value="999" />
         <Setter Property="Padding"         Value="12,5" />
     </Style>
 
-    <Style x:Key="VayuChipTeal" TargetType="Border" BasedOn="{StaticResource VayuChip}">
-        <Setter Property="BorderBrush" Value="{StaticResource VayuAccentTealBrush}" />
-    </Style>
-
-    <Style x:Key="VayuChipViolet" TargetType="Border" BasedOn="{StaticResource VayuChip}">
-        <Setter Property="BorderBrush" Value="{StaticResource VayuAccentVioletBrush}" />
-    </Style>
-
-    <Style x:Key="VayuChipAmber" TargetType="Border" BasedOn="{StaticResource VayuChip}">
-        <Setter Property="BorderBrush" Value="{StaticResource VayuAccentAmberBrush}" />
-    </Style>
-
-    <Style x:Key="VayuChipRed" TargetType="Border" BasedOn="{StaticResource VayuChip}">
-        <Setter Property="BorderBrush" Value="{StaticResource VayuAccentRedBrush}" />
-    </Style>
+    <Style x:Key="VayuChipTeal" TargetType="Border" BasedOn="{StaticResource VayuChip}" />
+    <Style x:Key="VayuChipViolet" TargetType="Border" BasedOn="{StaticResource VayuChip}" />
+    <Style x:Key="VayuChipAmber" TargetType="Border" BasedOn="{StaticResource VayuChip}" />
+    <Style x:Key="VayuChipRed" TargetType="Border" BasedOn="{StaticResource VayuChip}" />
 
     <Style x:Key="VayuChipText" TargetType="TextBlock">
-        <Setter Property="Foreground"       Value="{StaticResource VayuTextPrimary}" />
-        <Setter Property="FontSize"         Value="12" />
-        <Setter Property="FontWeight"       Value="SemiBold" />
-        <Setter Property="CharacterSpacing" Value="40" />
+        <Setter Property="Foreground"       Value="{StaticResource VayuTextSecondary}" />
+        <Setter Property="FontSize"         Value="11" />
+        <Setter Property="FontWeight"       Value="Medium" />
+        <Setter Property="CharacterSpacing" Value="30" />
     </Style>
 
     <!-- ===== Typography ===== -->
@@ -119,8 +103,8 @@
     <Style x:Key="VayuSectionText" TargetType="TextBlock">
         <Setter Property="FontSize"         Value="11" />
         <Setter Property="FontWeight"       Value="SemiBold" />
-        <Setter Property="Foreground"       Value="{StaticResource VayuAccentCyanBrush}" />
-        <Setter Property="CharacterSpacing" Value="200" />
+        <Setter Property="Foreground"       Value="{StaticResource VayuTextMuted}" />
+        <Setter Property="CharacterSpacing" Value="180" />
     </Style>
 
     <Style x:Key="VayuBodyText" TargetType="TextBlock">
@@ -140,12 +124,12 @@
         <Setter Property="FontFamily"      Value="Cascadia Mono, Consolas, Segoe UI" />
         <Setter Property="FontSize"        Value="15" />
         <Setter Property="Foreground"      Value="{StaticResource VayuTextPrimary}" />
-        <Setter Property="Background"      Value="#660A1828" />
-        <Setter Property="BorderBrush"     Value="{StaticResource VayuAccentCyanBrush}" />
+        <Setter Property="Background"      Value="{StaticResource VayuGlassFillStrong}" />
+        <Setter Property="BorderBrush"     Value="{StaticResource VayuGlassStrokeStrong}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius"    Value="10" />
-        <Setter Property="Padding"         Value="14,12" />
-        <Setter Property="MinHeight"       Value="44" />
+        <Setter Property="CornerRadius"    Value="12" />
+        <Setter Property="Padding"         Value="16,13" />
+        <Setter Property="MinHeight"       Value="50" />
     </Style>
 
     <!-- ===== Accent button ===== -->
