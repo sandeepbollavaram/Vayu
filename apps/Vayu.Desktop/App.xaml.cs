@@ -60,6 +60,21 @@ public partial class App : Application
             _window.AppWindow.Show();
             _window.Activate();
         };
+        var coordinator = Services.GetService<Services.WakeWordCoordinator>();
+        overlay.StartListeningRequested += async (_, _) =>
+        {
+            if (coordinator is not null)
+            {
+                await coordinator.StartAsync();
+            }
+        };
+        overlay.StopListeningRequested += async (_, _) =>
+        {
+            if (coordinator is not null)
+            {
+                await coordinator.StopAsync();
+            }
+        };
         overlay.Activate();
         SphereOverlay = overlay;
     }
@@ -251,6 +266,26 @@ public partial class App : Application
         });
         // Consented model download (HttpClient is the only network seam).
         services.AddSingleton(_ => new WhisperModelDownloadService(new HttpClient()));
+
+        // --- Wake word ("Hey Vayu", Vosk, off by default, on-device) ---
+        // Off by default; the user enables it and points at a local Vosk model.
+        // The default model path is a "wake" folder under the active models dir.
+        services.AddSingleton(sp =>
+        {
+            var models = sp.GetService<IVayuStoragePathProvider>()?.ActivePaths.ModelsPath
+                         ?? System.IO.Path.Combine(
+                             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                             "Vayu", "models");
+            return new WakeWordOptions
+            {
+                EnableWakeWord = false,
+                ModelPath = System.IO.Path.Combine(models, "vosk-wake"),
+            };
+        });
+        services.AddSingleton<IWakeWordService>(sp =>
+            new VoskWakeWordEngine(sp.GetRequiredService<WakeWordOptions>()));
+        services.AddSingleton(sp => new WakeWordCoordinator(
+            sp.GetRequiredService<IWakeWordService>(), sp));
 
         // --- M4.4: system TTS (off by default; opt-in via the Settings toggle/VoiceTtsState) ---
         services.AddSingleton(new TextToSpeechOptions());
