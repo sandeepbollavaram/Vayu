@@ -133,6 +133,10 @@ exist** yet.
 - Real mic capture (AudioGraph) producing usable PCM.
 - whisper.net transcribing real speech.
 - Vosk "Hey Vayu" actually triggering on a real mic.
+- **One-click Vosk wake-model download** (Settings → Voice Setup → "Hey Vayu
+  wake word" → Download): downloads + extracts the alphacephei.com model into
+  `…\models\vosk-wake`, then the Enable toggle arms it. Built + unit-tested
+  (extract/flatten/zip-slip/cleanup) but not yet run end-to-end on a real PC.
 - "open notepad and write hello" actually typing into real Notepad.
 - System TTS speaking on the user's machine.
 
@@ -144,10 +148,13 @@ exist** yet.
    online/both → Next installs Ollama model + API keys + link accounts → finish →
    launch. **Direction documented in `docs/FIRST_RUN_SETUP.md`; no installer
    exists.** Setup is currently an in-app first-run flow, not installer-first.
-2. **One-click model downloads.** Wake word needs a Vosk model **hand-placed** at
-   `…\models\vosk-wake`; whisper model is a separate manual download in Settings.
-   No bundled/auto download yet. (This is the single biggest UX blocker for the
-   voice demo — **recommended next task.**)
+2. **Model downloads — mostly built now.** Whisper STT model: one-click download
+   in Settings → Voice Setup (since M4.11). Vosk wake model: one-click download +
+   extract in Settings → Voice Setup → "Hey Vayu wake word" (added on rebuild-v2,
+   `VoskModelCatalog` + `VoskModelDownloadService`). **Remaining gaps:** no
+   checksum/hash verification of the downloaded model bytes (only an HTTPS
+   allowlist), and no install-time bundling so a fresh machine still downloads on
+   first use. Both downloads still need real-PC end-to-end confirmation.
 3. **Connectors** (Gmail, GitHub, VSCode, Music, Files) — empty stubs, no logic.
 4. **"Drive Claude Code / other CLIs"** (Hermes/OpenClaw-style) — not started.
 5. **VPS / remote control** — not started.
@@ -237,21 +244,26 @@ Fallback when wake model absent: **Home "Push to talk"** (same real capture +
 whisper.net path, gated by the "Run my voice commands" toggle for dispatch).
 
 To make the voice demo work on a real PC **right now**, the user must:
-1. Place a Vosk model at `…\models\vosk-wake` (or use push-to-talk instead).
-2. Download a whisper model (Settings → Voice Setup).
-3. Enable wake word (off by default).
+1. Download the Vosk wake model (Settings → Voice Setup → "Hey Vayu wake word" →
+   Download) — or use push-to-talk instead of the wake word.
+2. Download a whisper model (Settings → Voice Setup → "Download a model").
+3. Enable the wake word toggle (off by default).
 
-**→ The fix that removes all of this friction is the one-click model download
-(see §8, task 1).**
+The one-click downloads now cover both models; what remains unproven is whether
+they work end-to-end on the user's real machine (download → arm → trigger →
+transcribe → type).
 
 ---
 
 ## 8. Recommended next steps (priority order)
 
-1. **One-click Vosk + whisper model download** baked into Voice Setup (with TLS +
-   checksum verification). Removes the #1 demo blocker. *(Highest ROI.)*
+1. ~~One-click Vosk + whisper model download~~ — **done** (whisper M4.11; Vosk
+   wake model on rebuild-v2). Follow-up hardening: add **checksum/hash
+   verification** of downloaded model bytes, and **install-time bundling** so a
+   fresh machine doesn't download on first use.
 2. **User runs slice 1A and reports** which of the §3B items work/break; fix the
-   specific failing one (likely sphere transparency or Notepad typing).
+   specific failing one (likely sphere transparency or Notepad typing). The wake
+   model download → enable → "Hey Vayu" trigger path is now the key thing to test.
 3. **Replace `StubVoiceInputService`** so mic-status reflects the real device.
 4. **Real installer** (Inno Setup, Vibrance-style) per `docs/FIRST_RUN_SETUP.md` —
    only after the in-app flow is proven, and with code signing planned.
