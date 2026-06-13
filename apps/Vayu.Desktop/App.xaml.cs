@@ -276,16 +276,18 @@ public partial class App : Application
                          ?? System.IO.Path.Combine(
                              Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                              "Vayu", "models");
-            return new WakeWordOptions
+            return new WakeWordConfigState(new WakeWordOptions
             {
                 EnableWakeWord = false,
                 ModelPath = System.IO.Path.Combine(models, "vosk-wake"),
-            };
+            });
         });
         services.AddSingleton<IWakeWordService>(sp =>
-            new VoskWakeWordEngine(sp.GetRequiredService<WakeWordOptions>()));
+            new VoskWakeWordEngine(sp.GetRequiredService<WakeWordConfigState>()));
         services.AddSingleton(sp => new WakeWordCoordinator(
             sp.GetRequiredService<IWakeWordService>(), sp));
+        // Consented Vosk wake-model download + extract (HttpClient is the only network seam).
+        services.AddSingleton(_ => new VoskModelDownloadService(new HttpClient()));
 
         // --- M4.4: system TTS (off by default; opt-in via the Settings toggle/VoiceTtsState) ---
         services.AddSingleton(new TextToSpeechOptions());
