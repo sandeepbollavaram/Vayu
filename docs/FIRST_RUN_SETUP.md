@@ -33,6 +33,21 @@ Rules for the setup dashboard:
 
 This is forward-looking direction — the current wizard (M2.5) is the read-only-detection + consented-pull foundation it builds on.
 
+### Installer-first direction (rebuild v2)
+
+Vayu is moving to a real downloadable Windows **installer** (an Inno-Setup-style `.exe`, like the Vibrance setup), so setup feels like installing a product — not an in-app page. The installer wizard screens, in order:
+
+1. **Install location** — choose the install folder (default `C:\Program Files\Vayu`).
+2. **Shortcuts & startup** — Desktop / Start Menu shortcuts; optional "start Vayu at login" and "show the desktop sphere".
+3. **Vayu storage root** — where workspace / logs / cache / models / generated assets live (default `%LOCALAPPDATA%\Vayu`).
+4. **AI mode** — Offline / Online / Hybrid.
+5. **Local AI** — detect Ollama and pull a local model (with consent) — or skip.
+6. **Online AI keys** — enter API keys for the providers you want; stored in Windows Credential Manager (never plaintext) — or skip.
+7. **Voice** — download the local speech-to-text and wake-word models (with consent) — or skip.
+8. **Finish & launch** — installs, then opens the Vayu Command Center.
+
+Until the installer ships, the in-app **Setup Dashboard** mirrors this exact flow so the experience and the docs stay aligned. The installer wraps the same setup state and storage model; it does not introduce a second, divergent setup.
+
 ### M4.R — first launch actually opens setup
 
 Until M4.R, setup was only reachable as a **Setup** tab in the nav rail, so a new user could miss it entirely. M4.R adds the routing seam that makes first launch behave like an installer-style onboarding:

@@ -133,7 +133,7 @@
                     </Grid>
 
                     <StackPanel Spacing="6">
-                        <TextBlock Style="{StaticResource VayuMutedText}" Text="Local AI is OFF by default. Detection is read-only — no installs, no model downloads." />
+                        <TextBlock Style="{StaticResource VayuMutedText}" Text="Local AI is off by default. Vayu detects Ollama and shows installed models; nothing installs or downloads without your permission." />
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <TextBlock Style="{StaticResource VayuMutedText}" Text="Endpoint:" />
                             <TextBlock x:Name="EndpointDisplayText" Style="{StaticResource VayuBodyText}" Text="http://localhost:11434" />
@@ -254,7 +254,7 @@
                         <TextBlock Style="{StaticResource VayuSectionText}" Text="ONLINE PROVIDER REGISTRY" VerticalAlignment="Center" />
                     </StackPanel>
                     <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
-                               Text="Choose optional cloud providers. Gemini works now; other connectors are planned. Cloud calls require Allow once consent — Vayu is not tied to any single vendor." />
+                               Text="Choose an optional online AI provider. Cloud calls require Allow-once consent — Vayu is not tied to any single vendor." />
 
                     <ItemsControl x:Name="ProviderRegistryItems">
                         <ItemsControl.ItemTemplate>
@@ -374,8 +374,33 @@
                                   Toggled="OnTtsToggled" />
                     <TextBlock x:Name="VoiceTtsStatusText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
                                Text="Text-to-speech: off by default. Short neutral phrases only — Vayu never speaks secrets or user content." />
+                    <!-- "Hey Vayu" wake word (real, on-device Vosk; opt-in, off by default) -->
+                    <Border Style="{StaticResource VayuGlassCardElevated}">
+                        <StackPanel Spacing="8">
+                            <TextBlock Style="{StaticResource VayuSectionText}" Text="HEY VAYU WAKE WORD" />
+                            <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
+                                       Text="A real on-device wake word (Vosk). Opt-in and off by default — enabling it is the only thing that opens the mic for monitoring, shown by the desktop sphere's listening dot. A trigger only starts a listen; every command still passes through permission and audit." />
+                            <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
+                                       Text="Vayu can download a verified Vosk model (alphacephei.com) into the local models folder. Nothing downloads without your click." />
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <ComboBox x:Name="WakeModelCatalogCombo" MinWidth="240" />
+                                <Button x:Name="DownloadWakeModelButton" Content="Download"
+                                        Click="OnDownloadWakeModelClick" Style="{StaticResource AccentButtonStyle}" />
+                                <Button x:Name="CancelWakeDownloadButton" Content="Cancel"
+                                        Click="OnCancelWakeDownloadClick" IsEnabled="False" />
+                            </StackPanel>
+                            <ProgressBar x:Name="WakeDownloadProgressBar" Minimum="0" Maximum="100" Value="0"
+                                         Visibility="Collapsed" Foreground="{StaticResource VayuAccentCyanBrush}" />
+                            <TextBlock x:Name="WakeDownloadMessageText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap" Text="" />
+                            <ToggleSwitch x:Name="WakeWordToggle"
+                                          Header="Enable “Hey Vayu” wake word"
+                                          OffContent="Off" OnContent="On"
+                                          Toggled="OnWakeWordToggled" />
+                            <TextBlock x:Name="WakeWordStatusText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
+                                       Text="Wake word: off. Enable it after installing a model to use “Hey Vayu”." />
+                        </StackPanel>
+                    </Border>
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Border Style="{StaticResource VayuChip}"><TextBlock Style="{StaticResource VayuChipText}" Text="WAKE WORD · PLANNED" /></Border>
                         <Border Style="{StaticResource VayuChip}"><TextBlock Style="{StaticResource VayuChipText}" Text="CLAP TRIGGER · PLANNED" /></Border>
                         <Border Style="{StaticResource VayuChipAmber}"><TextBlock Style="{StaticResource VayuChipText}" Text="ALWAYS-LISTENING · OFF" /></Border>
                     </StackPanel>

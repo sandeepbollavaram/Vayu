@@ -8,11 +8,13 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="Vayu"
     mc:Ignorable="d">
+    <!-- macOS-style frosted glass: the desktop shows through a translucent
+         Mica surface. No gradient fill, no solid cards over it. -->
     <Window.SystemBackdrop>
-        <MicaBackdrop />
+        <MicaBackdrop Kind="BaseAlt" />
     </Window.SystemBackdrop>
 
-    <Grid Background="{StaticResource VayuShellGradient}">
+    <Grid Background="Transparent">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />

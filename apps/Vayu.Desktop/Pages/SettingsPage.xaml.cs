@@ -77,6 +77,14 @@ public sealed partial class SettingsPage : Page
             Loaded += OnSttStatusLoaded;
         }
 
+        // Voice Setup: "Hey Vayu" wake word (real Vosk, opt-in, off by default).
+        _wakeDownload = App.Services?.GetService<VoskModelDownloadService>();
+        _wakeConfig = App.Services?.GetService<WakeWordConfigState>();
+        _wakeService = App.Services?.GetService<IWakeWordService>();
+        _wakeCoordinator = App.Services?.GetService<WakeWordCoordinator>();
+        PopulateWakeCatalog();
+        SyncWakeWordUi();
+
         // M4.4: TTS opt-in toggle (off by default).
         _ttsState = App.Services?.GetService<VoiceTtsState>();
         if (_ttsState is not null)
@@ -93,6 +101,14 @@ public sealed partial class SettingsPage : Page
     private CancellationTokenSource? _downloadCts;
     private CancellationTokenSource? _testSttCts;
     private bool _suppressModeChange;
+
+    // Voice Setup: "Hey Vayu" wake word (real Vosk, opt-in, off by default).
+    private readonly VoskModelDownloadService? _wakeDownload;
+    private readonly WakeWordConfigState? _wakeConfig;
+    private readonly IWakeWordService? _wakeService;
+    private readonly WakeWordCoordinator? _wakeCoordinator;
+    private CancellationTokenSource? _wakeDownloadCts;
+    private bool _suppressWakeToggle;
 
     private void OnTtsToggled(object sender, RoutedEventArgs e)
     {
@@ -338,6 +354,156 @@ public sealed partial class SettingsPage : Page
 
     private void OnCancelDownloadClick(object sender, RoutedEventArgs e)
         => _downloadCts?.Cancel();
+
+    // ---- "Hey Vayu" wake word: model download + enable/disable ----
+
+    private void PopulateWakeCatalog()
+    {
+        foreach (var model in VoskModelCatalog.All)
+        {
+            WakeModelCatalogCombo.Items.Add(new ComboBoxItem
+            {
+                Content = $"{model.DisplayName} · ~{model.ApproxSizeMb} MB — {model.Note}",
+                Tag = model.Id,
+            });
+        }
+        WakeModelCatalogCombo.SelectedIndex = 0; // small-en-us (recommended)
+        DownloadWakeModelButton.IsEnabled = _wakeDownload is not null;
+    }
+
+    private void SyncWakeWordUi()
+    {
+        if (_wakeConfig is null)
+        {
+            WakeWordToggle.IsEnabled = false;
+            WakeWordStatusText.Text = "Wake word is not available in this build.";
+            return;
+        }
+        _suppressWakeToggle = true;
+        try { WakeWordToggle.IsOn = _wakeConfig.Options.EnableWakeWord; }
+        finally { _suppressWakeToggle = false; }
+        WakeWordStatusText.Text = _wakeService?.StatusMessage
+            ?? "Wake word: off. Enable it after installing a model to use “Hey Vayu”.";
+    }
+
+    private string WakeModelDirectory()
+        => _wakeConfig?.Options.ModelPath ?? Path.Combine(ModelsDirectory(), "vosk-wake");
+
+    private async void OnDownloadWakeModelClick(object sender, RoutedEventArgs e)
+    {
+        if (_wakeDownload is null || _wakeConfig is null)
+        {
+            WakeDownloadMessageText.Text = "Wake-model download is not available in this build.";
+            return;
+        }
+        if (WakeModelCatalogCombo.SelectedItem is not ComboBoxItem item || item.Tag is not string id
+            || VoskModelCatalog.TryGet(id) is not { } model)
+        {
+            WakeDownloadMessageText.Text = "Pick a model to download.";
+            return;
+        }
+
+        var destination = WakeModelDirectory();
+        var consent = new ContentDialog
+        {
+            Title = $"Download {model.DisplayName}?",
+            Content = $"Source: {model.DownloadUrl}\nSize: ~{model.ApproxSizeMb} MB\nInstalled to: {destination}\n\nThe download runs only on your confirmation.",
+            PrimaryButtonText = "Download",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = XamlRoot,
+        };
+        if (await consent.ShowAsync() != ContentDialogResult.Primary)
+        {
+            return;
+        }
+
+        _wakeDownloadCts = new CancellationTokenSource();
+        DownloadWakeModelButton.IsEnabled = false;
+        CancelWakeDownloadButton.IsEnabled = true;
+        WakeDownloadProgressBar.Visibility = Visibility.Visible;
+        WakeDownloadProgressBar.Value = 0;
+        WakeDownloadMessageText.Text = "Starting download…";
+
+        var progress = new Progress<ModelDownloadProgress>(p =>
+        {
+            if (p.Fraction is { } f)
+            {
+                WakeDownloadProgressBar.IsIndeterminate = false;
+                WakeDownloadProgressBar.Value = f * 100;
+                WakeDownloadMessageText.Text = $"Downloading… {f * 100:0}%";
+            }
+            else
+            {
+                WakeDownloadProgressBar.IsIndeterminate = true;
+                WakeDownloadMessageText.Text = $"Downloading… {p.BytesReceived / (1024 * 1024)} MB";
+            }
+        });
+
+        ModelDownloadResult result;
+        try
+        {
+            result = await _wakeDownload
+                .DownloadAsync(model, destination, progress, _wakeDownloadCts.Token)
+                .ConfigureAwait(true);
+        }
+        finally
+        {
+            _wakeDownloadCts?.Dispose();
+            _wakeDownloadCts = null;
+            DownloadWakeModelButton.IsEnabled = true;
+            CancelWakeDownloadButton.IsEnabled = false;
+            WakeDownloadProgressBar.Visibility = Visibility.Collapsed;
+        }
+
+        WakeDownloadMessageText.Text = result.Message;
+        if (result.Status == ModelDownloadStatus.Completed && result.FilePath is not null)
+        {
+            _wakeConfig.SetModelPath(result.FilePath);
+            WakeDownloadMessageText.Text = $"{result.Message} Turn on the wake word to start listening.";
+        }
+    }
+
+    private void OnCancelWakeDownloadClick(object sender, RoutedEventArgs e)
+        => _wakeDownloadCts?.Cancel();
+
+    private async void OnWakeWordToggled(object sender, RoutedEventArgs e)
+    {
+        if (_suppressWakeToggle || _wakeConfig is null)
+        {
+            return;
+        }
+
+        if (!WakeWordToggle.IsOn)
+        {
+            _wakeConfig.Disable();
+            if (_wakeCoordinator is not null)
+            {
+                await _wakeCoordinator.StopAsync().ConfigureAwait(true);
+            }
+            WakeWordStatusText.Text = "Wake word: off.";
+            return;
+        }
+
+        _wakeConfig.Enable();
+        if (_wakeCoordinator is null)
+        {
+            WakeWordStatusText.Text = "Wake word enabled, but the listener is not available in this build.";
+            return;
+        }
+
+        // Arming opens the mic only when a model is present. If it is missing the
+        // engine reports an honest Error — never a fake "ready" — and we revert.
+        var state = await _wakeCoordinator.StartAsync().ConfigureAwait(true);
+        if (state != WakeWordState.Armed)
+        {
+            _wakeConfig.Disable();
+            _suppressWakeToggle = true;
+            try { WakeWordToggle.IsOn = false; }
+            finally { _suppressWakeToggle = false; }
+        }
+        WakeWordStatusText.Text = _wakeService?.StatusMessage ?? state.ToString();
+    }
 
     private async void OnTestSttClick(object sender, RoutedEventArgs e)
     {

@@ -10,84 +10,71 @@
     mc:Ignorable="d">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <Grid Padding="36,28,36,32" RowSpacing="22">
+        <Grid Padding="40,28,40,32" RowSpacing="24">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!-- ============== TOP ============== -->
+            <!-- ============== STATUS STRIP ============== -->
             <Grid Grid.Row="0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0" Spacing="4">
-                    <TextBlock Text="VAYU COMMAND CENTER" Style="{StaticResource VayuTitleText}" />
-                    <TextBlock Text="local-first AI desktop tool system · windows" Style="{StaticResource VayuSubtitleText}" />
+                <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                    <TextBlock Text="Vayu" Style="{StaticResource VayuTitleText}" FontSize="34" />
+                    <TextBlock Text="local-first AI command center" Style="{StaticResource VayuSubtitleText}" />
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                     <Border Style="{StaticResource VayuChip}">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <Ellipse Width="8" Height="8" Fill="{StaticResource VayuAccentCyanBrush}" />
+                        <StackPanel Orientation="Horizontal" Spacing="7">
+                            <Ellipse Width="7" Height="7" Fill="{StaticResource VayuAccentTealBrush}" />
                             <TextBlock x:Name="ModeChipText" Style="{StaticResource VayuChipText}" Text="AI MODE · LOCAL" />
                         </StackPanel>
                     </Border>
-                    <Border Style="{StaticResource VayuChipTeal}">
+                    <Border Style="{StaticResource VayuChip}">
                         <TextBlock x:Name="ProviderChipText" Style="{StaticResource VayuChipText}" Text="PROVIDER · LOCAL-FIRST" />
                     </Border>
                     <Border x:Name="RuntimeChip" Style="{StaticResource VayuChip}">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <Ellipse x:Name="RuntimeDot" Width="8" Height="8" Fill="{StaticResource VayuAccentTealBrush}" />
+                        <StackPanel Orientation="Horizontal" Spacing="7">
+                            <Ellipse x:Name="RuntimeDot" Width="7" Height="7" Fill="{StaticResource VayuAccentTealBrush}" />
                             <TextBlock x:Name="RuntimeChipText" Style="{StaticResource VayuChipText}" Text="RUNTIME · READY" />
                         </StackPanel>
                     </Border>
                     <Border Style="{StaticResource VayuChip}">
                         <TextBlock x:Name="VoiceChipText" Style="{StaticResource VayuChipText}" Text="VOICE · IDLE" />
                     </Border>
-                    <Border Style="{StaticResource VayuChipTeal}">
+                    <Border Style="{StaticResource VayuChip}">
                         <TextBlock Style="{StaticResource VayuChipText}" Text="PERMISSION GUARD · ON" />
                     </Border>
-                    <Border Style="{StaticResource VayuChipViolet}">
-                        <TextBlock Style="{StaticResource VayuChipText}" Text="AUDIT LOG · LOCAL" />
+                    <Border Style="{StaticResource VayuChip}">
+                        <TextBlock Style="{StaticResource VayuChipText}" Text="AUDIT · LOCAL" />
                     </Border>
                 </StackPanel>
             </Grid>
 
-            <!-- ============== MAIN ============== -->
-            <Grid Grid.Row="1" ColumnSpacing="22">
+            <!-- ============== CORE + ACTIVITY ============== -->
+            <Grid Grid.Row="1" ColumnSpacing="24">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="320" />
+                    <ColumnDefinition Width="300" />
                 </Grid.ColumnDefinitions>
 
-                <!-- LEFT: sphere + console -->
-                <Border Grid.Column="0" Style="{StaticResource VayuGlassCard}" Padding="28">
-                    <Grid RowSpacing="20">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
+                <!-- LEFT: sphere · command · voice · result -->
+                <Border Grid.Column="0" Style="{StaticResource VayuGlassCard}" Padding="32,28">
+                    <StackPanel Spacing="20">
 
-                        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10">
-                            <Border Width="3" Height="14" Background="{StaticResource VayuAccentCyanBrush}" />
-                            <TextBlock Style="{StaticResource VayuSectionText}" Text="AI CORE" VerticalAlignment="Center" />
-                        </StackPanel>
-
-                        <Grid Grid.Row="1" Height="320">
+                        <!-- Sphere -->
+                        <Grid Height="300">
                             <controls:VayuSphere x:Name="Sphere" HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Grid>
 
                         <!-- Command input -->
-                        <Grid Grid.Row="2" ColumnSpacing="10">
+                        <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
@@ -95,77 +82,91 @@
                             <TextBox Grid.Column="0"
                                      x:Name="CommandBox"
                                      Style="{StaticResource VayuConsoleTextBox}"
-                                     PlaceholderText="Ask Vayu to open apps, run workflows, or control your desktop…"
+                                     PlaceholderText="Ask Vayu — or hold Push to talk and speak…"
                                      KeyDown="CommandBox_OnKeyDown" />
                             <Button Grid.Column="1"
                                     Style="{StaticResource VayuAccentButton}"
                                     Click="OnRun"
-                                    Content="RUN ›" />
+                                    Content="Run" />
                         </Grid>
 
-                        <!-- Examples -->
-                        <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="8">
+                        <!-- Voice control strip (push-to-talk + wake + enable) -->
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" x:Name="PushToTalkButton" Content="Push to talk"
+                                    Click="OnPushToTalkClick" />
+                            <Button Grid.Column="1" x:Name="StopVoiceButton" Content="Stop"
+                                    Click="OnStopVoiceClick" IsEnabled="False" />
+                            <Border Grid.Column="2" Style="{StaticResource VayuChip}" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <TextBlock x:Name="VoiceStateText" Style="{StaticResource VayuChipText}" Text="VOICE · IDLE" />
+                            </Border>
+                            <ToggleSwitch Grid.Column="3" x:Name="VoiceCommandsToggle"
+                                          OffContent="Transcribe only" OnContent="Run my voice commands"
+                                          Toggled="OnVoiceCommandsToggled" />
+                        </Grid>
+                        <!-- Hidden state badge kept for code-behind compatibility. -->
+                        <Border x:Name="VoiceStateBadge" Visibility="Collapsed" />
+
+                        <!-- Try suggestions -->
+                        <StackPanel Orientation="Horizontal" Spacing="8">
                             <TextBlock Style="{StaticResource VayuMutedText}" Text="try" VerticalAlignment="Center" />
-                            <Button Style="{StaticResource VayuGhostButton}" Content="open notepad"  Click="OnExampleClick" Tag="open notepad" />
-                            <Button Style="{StaticResource VayuGhostButton}" Content="open vscode"   Click="OnExampleClick" Tag="open vscode" />
-                            <Button Style="{StaticResource VayuGhostButton}" Content="show logs"     Click="OnExampleClick" Tag="show logs" />
-                            <Button Style="{StaticResource VayuGhostButton}" Content="show settings" Click="OnExampleClick" Tag="show settings" />
+                            <Button Style="{StaticResource VayuGhostButton}" Content="open notepad" Click="OnExampleClick" Tag="open notepad" />
+                            <Button Style="{StaticResource VayuGhostButton}" Content="open notepad and write hello" Click="OnExampleClick" Tag="open notepad and write hello" />
+                            <Button Style="{StaticResource VayuGhostButton}" Content="show logs" Click="OnExampleClick" Tag="show logs" />
                         </StackPanel>
 
-                        <!-- Last result card -->
-                        <Border Grid.Row="4" x:Name="ResultCard" Style="{StaticResource VayuGlassCardElevated}">
+                        <!-- Result / transcript console -->
+                        <Border x:Name="ResultCard" Style="{StaticResource VayuGlassCardElevated}">
                             <Grid ColumnSpacing="14">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-
                                 <Ellipse Grid.Column="0" x:Name="ResultIndicator"
-                                         Width="10" Height="10"
-                                         Fill="{StaticResource VayuAccentCyanBrush}"
-                                         VerticalAlignment="Center" />
-
-                                <StackPanel Grid.Column="1" Spacing="2">
+                                         Width="9" Height="9"
+                                         Fill="{StaticResource VayuAccentTealBrush}"
+                                         VerticalAlignment="Top" Margin="0,4,0,0" />
+                                <StackPanel Grid.Column="1" Spacing="3">
                                     <StackPanel Orientation="Horizontal" Spacing="10">
-                                        <TextBlock x:Name="ResultStatus"
-                                                   Style="{StaticResource VayuSectionText}"
-                                                   Text="LAST RESULT · READY" />
+                                        <TextBlock x:Name="ResultStatus" Style="{StaticResource VayuSectionText}" Text="LAST RESULT · READY" />
                                         <TextBlock x:Name="ResultAgent" Style="{StaticResource VayuMutedText}" Text="" />
                                         <TextBlock x:Name="ResultRisk" Style="{StaticResource VayuMutedText}" Text="" />
                                     </StackPanel>
-                                    <TextBlock x:Name="ResultMessage"
-                                               Style="{StaticResource VayuBodyText}"
-                                               Text="Type a command above and press Enter." />
+                                    <TextBlock x:Name="ResultMessage" Style="{StaticResource VayuBodyText}"
+                                               Text="Type a command, press Run, or hold Push to talk and speak." />
+                                    <TextBlock x:Name="VoiceTranscriptText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
+                                               Text="" />
+                                    <TextBlock x:Name="VoiceCommandResultText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap" Text="" />
                                 </StackPanel>
-
-                                <TextBlock Grid.Column="2"
-                                           x:Name="ResultTimestamp"
-                                           Style="{StaticResource VayuMutedText}"
-                                           VerticalAlignment="Center"
-                                           Text="" />
+                                <TextBlock Grid.Column="2" x:Name="ResultTimestamp" Style="{StaticResource VayuMutedText}"
+                                           VerticalAlignment="Top" Text="" />
                             </Grid>
                         </Border>
-                    </Grid>
+                    </StackPanel>
                 </Border>
 
-                <!-- RIGHT: Vayu Activity (live activity feed placeholder) -->
+                <!-- RIGHT: activity rail -->
                 <StackPanel Grid.Column="1" Spacing="14">
                     <Border Style="{StaticResource VayuGlassCard}">
-                        <StackPanel Spacing="10">
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <Border Width="3" Height="14" Background="{StaticResource VayuAccentTealBrush}" />
-                                <TextBlock Style="{StaticResource VayuSectionText}" Text="VAYU ACTIVITY" VerticalAlignment="Center" />
-                            </StackPanel>
-                            <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
-                                       Text="What Vayu is doing right now. The live agent/task feed lands here — running agents, model calls, downloads, and background work, each with its own stop control." />
-                            <Border x:Name="ActivityNowCard" Style="{StaticResource VayuGlassCardElevated}">
-                                <StackPanel Spacing="2">
-                                    <TextBlock Style="{StaticResource VayuSectionText}" Text="NOW" />
-                                    <TextBlock x:Name="ActivityNowText" Style="{StaticResource VayuBodyText}" TextWrapping="Wrap"
-                                               Text="Idle — waiting for a command." />
-                                </StackPanel>
-                            </Border>
+                        <StackPanel Spacing="8">
+                            <TextBlock Style="{StaticResource VayuSectionText}" Text="NOW" />
+                            <TextBlock x:Name="ActivityNowText" Style="{StaticResource VayuBodyText}" TextWrapping="Wrap"
+                                       Text="Idle — waiting for a command." />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource VayuGlassCard}">
+                        <StackPanel Spacing="6">
+                            <TextBlock Style="{StaticResource VayuSectionText}" Text="VOICE" />
+                            <TextBlock x:Name="VoiceMicStatusText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap" Text="Microphone: checking…" />
+                            <TextBlock x:Name="VoiceSttStatusText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap" Text="Local STT: checking…" />
+                            <TextBlock x:Name="VoiceTtsStatusText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap" Text="Text-to-speech: checking…" />
                         </StackPanel>
                     </Border>
 
@@ -173,89 +174,38 @@
                         <StackPanel Spacing="6">
                             <TextBlock Style="{StaticResource VayuSectionText}" Text="AGENT QUEUE" />
                             <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
-                                       Text="No agents queued. Coordinated agents, model calls, downloads, and builds will appear here with per-item approval and stop controls." />
+                                       Text="No agents queued. Running agents and tasks appear here with stop controls." />
                         </StackPanel>
                     </Border>
 
                     <Border Style="{StaticResource VayuGlassCard}">
                         <StackPanel Spacing="6">
                             <TextBlock Style="{StaticResource VayuSectionText}" Text="AI RUNTIME" />
-                            <TextBlock x:Name="ProviderSummaryText" Style="{StaticResource VayuBodyText}" TextWrapping="Wrap"
-                                       Text="Local-first. Local AI (Ollama), Online AI (Gemini), and Hybrid routing are available — pick a mode in Settings → AI Mode. Cloud calls ask for consent every time." />
+                            <TextBlock x:Name="ProviderSummaryText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
+                                       Text="Local-first. Local, Online, and Hybrid AI are available — choose a mode in Settings. Cloud calls ask for consent." />
                         </StackPanel>
                     </Border>
 
                     <Border Style="{StaticResource VayuGlassCard}">
                         <StackPanel Spacing="6">
                             <TextBlock Style="{StaticResource VayuSectionText}" Text="TRUST GUARD" />
-                            <TextBlock Style="{StaticResource VayuBodyText}" TextWrapping="Wrap"
-                                       Text="Every action is permission-gated and audit-logged. L0–L2 auto-allow; L3+ ask first; L6 is disabled. Vayu never runs arbitrary commands." />
+                            <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
+                                       Text="Every action is permission-gated and audit-logged. Higher-risk actions ask first. Vayu never runs arbitrary commands." />
                         </StackPanel>
                     </Border>
 
-                    <Border Style="{StaticResource VayuGlassCard}">
-                        <StackPanel Spacing="6">
-                            <TextBlock Style="{StaticResource VayuSectionText}" Text="SETUP HEALTH" />
-                            <TextBlock Style="{StaticResource VayuBodyText}" TextWrapping="Wrap"
-                                       Text="First launch opens the Setup Dashboard automatically. Re-run it any time from Settings → Open Setup Dashboard to check Local AI, download a model (with permission), or add an Online AI key." />
-                        </StackPanel>
-                    </Border>
+                    <!-- Hidden TTS controls kept for code-behind compatibility. -->
+                    <StackPanel Orientation="Horizontal" Spacing="10" Visibility="Collapsed">
+                        <Button x:Name="SpeakStatusButton" Content="Speak status" Click="OnSpeakStatusClick" />
+                        <Button x:Name="StopSpeakingButton" Content="Stop speaking" Click="OnStopSpeakingClick" />
+                    </StackPanel>
                 </StackPanel>
             </Grid>
 
-            <!-- ============== VOICE ============== -->
-            <Border Grid.Row="2" Style="{StaticResource VayuGlassCard}">
-                <StackPanel Spacing="12">
-                    <StackPanel Orientation="Horizontal" Spacing="10">
-                        <Border Width="3" Height="14" Background="{StaticResource VayuAccentVioletBrush}" />
-                        <TextBlock Style="{StaticResource VayuSectionText}" Text="VOICE SETUP" VerticalAlignment="Center" />
-                        <Border x:Name="VoiceStateBadge" Style="{StaticResource VayuChip}" VerticalAlignment="Center">
-                            <TextBlock x:Name="VoiceStateText" Style="{StaticResource VayuChipText}" Text="IDLE" />
-                        </Border>
-                    </StackPanel>
-                    <TextBlock x:Name="VoiceMicStatusText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
-                               Text="Microphone status: checking…" />
-                    <TextBlock x:Name="VoiceSttStatusText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
-                               Text="Local STT: not configured yet — push-to-talk captures, but a real speech-to-text runtime is required before words become a transcript." />
-                    <StackPanel Orientation="Horizontal" Spacing="12">
-                        <Button x:Name="PushToTalkButton" Content="Push to talk"
-                                Click="OnPushToTalkClick" Style="{StaticResource AccentButtonStyle}" />
-                        <Button x:Name="StopVoiceButton" Content="Stop / Cancel"
-                                Click="OnStopVoiceClick" IsEnabled="False" />
-                    </StackPanel>
-                    <ToggleSwitch x:Name="VoiceCommandsToggle"
-                                  Header="Enable voice commands"
-                                  OffContent="Off — transcribe only"
-                                  OnContent="On — dispatch through the permission engine"
-                                  Toggled="OnVoiceCommandsToggled" />
-                    <Border Style="{StaticResource VayuGlassCardElevated}">
-                        <StackPanel Spacing="4">
-                            <TextBlock Style="{StaticResource VayuSectionText}" Text="TRANSCRIPT" />
-                            <TextBlock x:Name="VoiceTranscriptText" Style="{StaticResource VayuBodyText}" TextWrapping="Wrap"
-                                       Text="Press Push to talk, then Stop. The transcript will appear here." />
-                            <TextBlock x:Name="VoiceCommandResultText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap" Text="" />
-                        </StackPanel>
-                    </Border>
-                    <TextBlock x:Name="VoiceTtsStatusText" Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
-                               Text="Text-to-speech: checking…" />
-                    <StackPanel Orientation="Horizontal" Spacing="12">
-                        <Button x:Name="SpeakStatusButton" Content="Speak status"
-                                Click="OnSpeakStatusClick" />
-                        <Button x:Name="StopSpeakingButton" Content="Stop speaking"
-                                Click="OnStopSpeakingClick" />
-                    </StackPanel>
-                    <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
-                               Text="Wake word (&quot;Hey Vayu&quot;) and clap trigger: planned, opt-in, and off by default — Vayu is never always-listening." />
-                    <TextBlock Style="{StaticResource VayuMutedText}" TextWrapping="Wrap"
-                               Text="Honest state: push-to-talk and text-to-speech are wired; a local speech-to-text runtime is NOT configured yet, so push-to-talk produces no transcript and voice commands stay inert until one is set up. When a real transcript exists, it is dispatched through the same permission/audit pipeline as a typed command — voice never bypasses it. Wake word and clap trigger are planned and opt-in; Vayu is never always-listening. Audio stays on this device and is never logged; no secrets are spoken; Stop always stops." />
-                </StackPanel>
-            </Border>
-
             <!-- ============== RECENT ACTIVITY ============== -->
-            <Border Grid.Row="3" Style="{StaticResource VayuGlassCard}">
+            <Border Grid.Row="2" Style="{StaticResource VayuGlassCard}">
                 <StackPanel Spacing="10">
                     <StackPanel Orientation="Horizontal" Spacing="10">
-                        <Border Width="3" Height="14" Background="{StaticResource VayuAccentTealBrush}" />
                         <TextBlock Style="{StaticResource VayuSectionText}" Text="RECENT ACTIVITY" VerticalAlignment="Center" />
                         <TextBlock x:Name="RecentCountText" Style="{StaticResource VayuMutedText}" VerticalAlignment="Center" Text="" />
                     </StackPanel>
@@ -271,18 +221,10 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-                    <TextBlock x:Name="RecentEmpty"
-                               Style="{StaticResource VayuMutedText}"
-                               Text="No audit rows yet. Run a command to populate the log."
-                               Visibility="Visible" />
+                    <TextBlock x:Name="RecentEmpty" Style="{StaticResource VayuMutedText}"
+                               Text="No audit rows yet. Run a command to populate the log." Visibility="Visible" />
                 </StackPanel>
             </Border>
-
-            <!-- Footer notice -->
-            <TextBlock Grid.Row="4"
-                       Style="{StaticResource VayuMutedText}"
-                       HorizontalAlignment="Center"
-                       Text="vayu · local-first · permission-gated · audit-logged · cloud only with consent" />
         </Grid>
     </ScrollViewer>
 </Page>

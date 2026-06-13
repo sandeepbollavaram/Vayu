@@ -41,6 +41,9 @@ public partial class App : Application
         InitializeComponent();
     }
 
+    /// <summary>The free-floating desktop sphere overlay.</summary>
+    public static SphereOverlayWindow? SphereOverlay { get; private set; }
+
     /// <inheritdoc />
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
@@ -48,6 +51,32 @@ public partial class App : Application
         _window = new MainWindow();
         MainWindow = _window;
         _window.Activate();
+
+        // Free-floating desktop sphere: a control surface that opens/focuses the
+        // Command Center. It never captures audio or automates on its own.
+        var overlay = new SphereOverlayWindow();
+        overlay.OpenRequested += (_, _) =>
+        {
+            _window.AppWindow.Show();
+            _window.Activate();
+        };
+        var coordinator = Services.GetService<Services.WakeWordCoordinator>();
+        overlay.StartListeningRequested += async (_, _) =>
+        {
+            if (coordinator is not null)
+            {
+                await coordinator.StartAsync();
+            }
+        };
+        overlay.StopListeningRequested += async (_, _) =>
+        {
+            if (coordinator is not null)
+            {
+                await coordinator.StopAsync();
+            }
+        };
+        overlay.Activate();
+        SphereOverlay = overlay;
     }
 
     private static IServiceProvider BuildServices()
@@ -237,6 +266,28 @@ public partial class App : Application
         });
         // Consented model download (HttpClient is the only network seam).
         services.AddSingleton(_ => new WhisperModelDownloadService(new HttpClient()));
+
+        // --- Wake word ("Hey Vayu", Vosk, off by default, on-device) ---
+        // Off by default; the user enables it and points at a local Vosk model.
+        // The default model path is a "wake" folder under the active models dir.
+        services.AddSingleton(sp =>
+        {
+            var models = sp.GetService<IVayuStoragePathProvider>()?.ActivePaths.ModelsPath
+                         ?? System.IO.Path.Combine(
+                             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                             "Vayu", "models");
+            return new WakeWordConfigState(new WakeWordOptions
+            {
+                EnableWakeWord = false,
+                ModelPath = System.IO.Path.Combine(models, "vosk-wake"),
+            });
+        });
+        services.AddSingleton<IWakeWordService>(sp =>
+            new VoskWakeWordEngine(sp.GetRequiredService<WakeWordConfigState>()));
+        services.AddSingleton(sp => new WakeWordCoordinator(
+            sp.GetRequiredService<IWakeWordService>(), sp));
+        // Consented Vosk wake-model download + extract (HttpClient is the only network seam).
+        services.AddSingleton(_ => new VoskModelDownloadService(new HttpClient()));
 
         // --- M4.4: system TTS (off by default; opt-in via the Settings toggle/VoiceTtsState) ---
         services.AddSingleton(new TextToSpeechOptions());
