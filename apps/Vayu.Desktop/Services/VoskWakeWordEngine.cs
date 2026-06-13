@@ -21,10 +21,11 @@ namespace Vayu_Desktop.Services;
 /// </summary>
 public sealed class VoskWakeWordEngine : IWakeWordService, IDisposable
 {
-    private readonly WakeWordOptions _options;
-    private readonly WakeWordStateMachine _machine;
+    private readonly WakeWordConfigState _config;
     private readonly object _gate = new();
 
+    private WakeWordStateMachine _machine;
+    private WakeWordOptions _active;
     private AudioGraph? _graph;
     private AudioDeviceInputNode? _input;
     private AudioFrameOutputNode? _output;
@@ -32,10 +33,11 @@ public sealed class VoskWakeWordEngine : IWakeWordService, IDisposable
     private VoskRecognizer? _recognizer;
     private bool _listening;
 
-    public VoskWakeWordEngine(WakeWordOptions options)
+    public VoskWakeWordEngine(WakeWordConfigState config)
     {
-        _options = options ?? new WakeWordOptions();
-        _machine = new WakeWordStateMachine(_options);
+        _config = config ?? new WakeWordConfigState();
+        _active = _config.Options;
+        _machine = new WakeWordStateMachine(_active);
     }
 
     /// <inheritdoc />
@@ -53,6 +55,11 @@ public sealed class VoskWakeWordEngine : IWakeWordService, IDisposable
     /// <inheritdoc />
     public async Task<WakeWordState> StartAsync(CancellationToken cancellationToken = default)
     {
+        // Snapshot the live config so a freshly enabled wake word or a newly
+        // installed model takes effect on this arm without restarting Vayu.
+        _active = _config.Options;
+        _machine = new WakeWordStateMachine(_active);
+
         // Arm (pure state machine validates enabled + model present).
         var armed = _machine.Arm();
         RaiseState();
@@ -63,7 +70,7 @@ public sealed class VoskWakeWordEngine : IWakeWordService, IDisposable
 
         try
         {
-            _model = new Model(_options.ModelPath);
+            _model = new Model(_active.ModelPath!);
             _recognizer = new VoskRecognizer(_model, 16000.0f);
             await StartCaptureAsync(cancellationToken).ConfigureAwait(true);
             _listening = true;
@@ -205,7 +212,7 @@ public sealed class VoskWakeWordEngine : IWakeWordService, IDisposable
 
     private async Task ReArmAfterCooldownAsync()
     {
-        await Task.Delay(_options.CooldownMs).ConfigureAwait(true);
+        await Task.Delay(_active.CooldownMs).ConfigureAwait(true);
         _recognizer?.Reset();
         _machine.ReArm();
         RaiseState();
